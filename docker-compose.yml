@@ -20,7 +20,7 @@ services:
     volumes:
       - ./logs:/app/logs
     networks:
-      - caddy-proxy
+      - caddy_proxy
       - internal
     depends_on:
       - postgres
