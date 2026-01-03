@@ -9,7 +9,9 @@ RUN bun install --frozen-lockfile
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+
 COPY . .
+
 RUN --mount=type=secret,id=discord_public_key \
     --mount=type=secret,id=discord_bot_token \
     bun run build
