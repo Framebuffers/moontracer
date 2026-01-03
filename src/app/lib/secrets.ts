@@ -1,36 +1,33 @@
 import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
 
 export function getSecretSync(name: string): string {
+  // Production: Read from Docker secrets (mounted at runtime)
   const dockerSecretPath = `/run/secrets/${name}`;
   
   if (existsSync(dockerSecretPath)) {
     try {
       const value = readFileSync(dockerSecretPath, 'utf8').trim();
-      console.log(`✓ Loaded secret '${name}' from ${dockerSecretPath}`);
+      console.log(`✓ Loaded secret '${name}' from Docker secrets`);
       return value;
     } catch (error) {
-      console.error(`✗ Failed to read ${dockerSecretPath}:`, error);
+      const err = error as NodeJS.ErrnoException;
+      console.error(`✗ Failed to read Docker secret '${name}':`, err.message);
+      throw error;  // Don't fall back - this is a real error
     }
   }
   
-  // Fall back to local secrets -- they **must** end in .txt
-  const localSecretPath = join(process.cwd(), 'secrets', `${name}.txt`);
-  
-  if (existsSync(localSecretPath)) {
-    try {
+  // Development fallback (only when Docker secrets don't exist)
+  // This should ONLY run in local dev with `bun run dev`
+  if (process.env.NODE_ENV !== 'production') {
+    const { join } = require('path');
+    const localSecretPath = join(process.cwd(), 'secrets', `${name}.txt`);
+    
+    if (existsSync(localSecretPath)) {
       const value = readFileSync(localSecretPath, 'utf8').trim();
-      console.log(`✓ Loaded secret '${name}' from ${localSecretPath}`);
+      console.log(`✓ Loaded secret '${name}' from local dev file`);
       return value;
-    } catch (error) {
-      console.error(`✗ Failed to read ${localSecretPath}:`, error);
     }
   }
   
-  // Neither location worked
-  const errorMsg = `Secret '${name}' not found. Checked:\n` +
-    `  - ${dockerSecretPath} (${existsSync(dockerSecretPath) ? 'exists but unreadable' : 'not found'})\n` +
-    `  - ${localSecretPath} (${existsSync(localSecretPath) ? 'exists but unreadable' : 'not found'})`;
-  
-  throw new Error(errorMsg);
+  throw new Error(`Secret '${name}' not found in /run/secrets/ or local dev files`);
 }
