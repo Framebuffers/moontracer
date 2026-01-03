@@ -16,7 +16,6 @@ export function getSecretSync(name: string): string {
     }
   }
   
-  // Development fallback (only when Docker secrets don't exist)
   // This should ONLY run in local dev with `bun run dev`
   if (process.env.NODE_ENV !== 'production') {
     const { join } = require('path');
