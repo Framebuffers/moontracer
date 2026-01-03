@@ -20,6 +20,7 @@ services:
     volumes:
       - ./logs:/app/logs
     networks:
+      - caddy-proxy
       - internal
     depends_on:
       - postgres
@@ -37,7 +38,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:
-      - internal
+      - moontracer-internal
 
 secrets:
   discord_public_key:
@@ -52,8 +53,12 @@ secrets:
     file: ./secrets/postgres_password.txt
 
 networks:
-  internal:
+  moontracer-internal:
     driver: bridge
+
+  caddy_proxy:
+    external: true
+    name: caddy_proxy
 
 volumes:
   db_data:
