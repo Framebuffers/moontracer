@@ -1,29 +1,37 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
-    try {
-        const contentType = request.headers.get('content-type');
-
-        if (!contentType?.includes('application-json')) {
-            return NextResponse.json({
-                error: 'Content type must be application/json'
-            }, { status: 400 })
-        }
-
-        const body = await request.json();
-
-        if (body.type === 1) {
-            return NextResponse.json({ type: 1 });
-        }
-
-        if (body.type === 4) {
-            return NextResponse.json({
-                type: 4,
-                data: { content: 'Received interaction.' }
-            });
-        }
-    } catch(error) {
-        console.log('Error: ', error);
-        return NextResponse.json({error: 'Failed to process'}, {status: 500});
+  try {
+    const bodyText = await request.text();
+    if (!bodyText || bodyText.trim() === '') {
+      return NextResponse.json({ 
+        error: 'Empty request body',
+        hint: 'There should be a Discord payload here'
+      }, { status: 400 });
     }
+    
+    const body = JSON.parse(bodyText);
+    if (body.type === 1) {
+      return NextResponse.json({ type: 1 });
+    }
+    
+    return NextResponse.json({
+      type: 4,
+      data: { content: 'awoo!' }
+    });
+    
+  } catch (error) {
+    console.error('Interaction error:', error);
+    return NextResponse.json({ 
+      error: error instanceof Error ? error.message : 'Unknown error' 
+    }, { status: 500 });
+  }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    message: 'Discord interactions endpoint',
+    method: 'POST only',
+    path: '/api/v1/discord/interactions'
+  });
 }
