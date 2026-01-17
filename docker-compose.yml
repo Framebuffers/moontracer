@@ -24,6 +24,9 @@ services:
       - moontracer_internal
     depends_on:
       - postgres
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/v1/test"]
+      interval: 30s
 
   postgres:
     image: postgres:16-alpine
