@@ -5,7 +5,7 @@ export async function GET() {
   const secrets: Record<string, boolean> = {};
   const errors: string[] = [];
 
-  const secretNames = ['discord_bot_token', 'discord_public_key', 'database_url', 'api_secret_key'];
+  const secretNames = ['discord_bot_token', 'discord_public_key', 'api_secret_key'];
   
   for (const name of secretNames) {
     try {

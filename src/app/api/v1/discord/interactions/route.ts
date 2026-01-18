@@ -17,18 +17,18 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    if (!body || body.trim() === '') {
+    if (!body || typeof body !== 'object') {
       return NextResponse.json({
-        error: 'Empty request body',
-        hint: 'There should be a Discord payload here. It is a mystery.'
+        error: 'Invalid request body',
+        hint: 'Expected a JSON object with Discord interaction data.'
       }, { status: 400 });
     }
 
     switch (body.type) {
-      case body.type === 1:
+      case 1:
         // verification ping
         return NextResponse.json({ type: 1 });
-      case body.type === 2:
+      case 2:
         // slash command
         const response = await handleCommand(body);
         return NextResponse.json(response);
