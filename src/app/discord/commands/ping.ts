@@ -1,13 +1,11 @@
-import {
-    SlashCommandBuilder,
-    ChatInputCommandInteraction,
-    InteractionResponse
-} from 'discord.js';
+export const data = {
+  name: 'ping',
+  description: 'Replies with Pong!',
+};
 
-export const data = new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('pong!');
-
-export async function execute(interaction: ChatInputCommandInteraction): Promise<InteractionResponse> {
-    return interaction.reply('pong');
+export function execute(interaction: any) {
+  return {
+    type: 4,
+    data: { content: 'pong!' }
+  };
 }
