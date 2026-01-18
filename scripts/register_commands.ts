@@ -1,6 +1,5 @@
-
-import { REST, Routes } from 'discord.js';
-import { describe } from 'node:test';
+const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN!;
+const DISCORD_APPLICATION_ID = process.env.DISCORD_APPLICATION_ID;
 
 const commands = [
     {
@@ -14,26 +13,28 @@ const commands = [
 ]
 
 async function registerCommands() {
-    const token = process.env.DISCORD_BOT_TOKEN;
-    const applicationId = process.env.DISCORD_APPLICATION_ID;
-
-    if (!token || !applicationId) {
-        console.error('Missing DISCORD_BOT_TOKEN or DISCORD_APPLICATION_ID env variables.');
-        process.exit(1);
-    }
-
-    const rest = new REST({ version: '10'}).setToken(token);
     try {
-        console.log('Trying to register commands');
-        const data = await rest.put(
-            Routes.applicationCommands(applicationId),
-            { body: commands }
-        );
+        const url = `https://discord.com/api/v10/applications/${DISCORD_APPLICATION_ID}/commands`;
 
-        console.log('Successfully registered ${commands.length} commands!');
-        console.log('Commands: ', commands.map(x => x.name).join(', '));
-    } catch (error) {
-        console.error('Failed to register commands: ', error);
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
+                'Content-Type': 'application_json'
+            },
+            body: JSON.stringify(commands)
+        });
+
+        if (response.ok) {
+            console.log('Command registered successfully!');
+            const data = await response.json();
+            console.log('Registered: ', data.map((x: any) => x.name).join(', '));
+        } else {
+            console.error('Failed to register commands');
+            console.error(await response.text());
+        }
+    } catch (err) {
+        console.error('Could not register commands: ', err)
     }
 }
 
