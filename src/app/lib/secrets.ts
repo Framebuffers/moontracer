@@ -1,3 +1,4 @@
+// src/app/lib/secrets.ts
 import { readFileSync, existsSync } from 'fs';
 
 export function getSecretSync(name: string): string {
@@ -12,11 +13,11 @@ export function getSecretSync(name: string): string {
     } catch (error) {
       const err = error as NodeJS.ErrnoException;
       console.error(`✗ Failed to read Docker secret '${name}':`, err.message);
-      throw error;  // Don't fall back - this is a real error
+      throw error;
     }
   }
   
-  // This should ONLY run in local dev with `bun run dev`
+  // Development fallback
   if (process.env.NODE_ENV !== 'production') {
     const { join } = require('path');
     const localSecretPath = join(process.cwd(), 'secrets', `${name}.txt`);
