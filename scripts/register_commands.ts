@@ -20,7 +20,7 @@ async function registerCommands() {
             method: 'PUT',
             headers: {
                 'Authorization': `Bot ${DISCORD_BOT_TOKEN}`,
-                'Content-Type': 'application_json'
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify(commands)
         });
