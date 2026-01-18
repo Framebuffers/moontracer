@@ -29,9 +29,18 @@ export async function POST(request: Request) {
         // verification ping
         return NextResponse.json({ type: 1 });
       case 2:
+        const token = body.token;
+        const applicationId = body.application_id;
+        const deferResponse = Response.json({
+          type: 5, // DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+        });
+
+        handleCommandDeferred(body, token, applicationId).catch(console.error);
+
+      return deferResponse;
         // slash command
-        const response = await handleCommand(body);
-        return NextResponse.json(response);
+        // const response = await handleCommand(body);
+        // return NextResponse.json(response);
       // case body.type === 3:
       //   // button
       //   // return handleButton(body);
@@ -59,3 +68,36 @@ export async function GET() {
     interactions: ['slash_commands', 'buttons', 'modals']
   });
 };
+
+async function handleCommandDeferred(
+  interaction: any,
+  token: string,
+  applicationId: string
+) {
+  try {
+    const result = await handleCommand(interaction);
+    
+    const webhookUrl = `https://discord.com/api/v10/webhooks/${applicationId}/${token}`;
+    
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: result.data.content,
+      flags: 64
+      }),
+    });
+  } catch (error) {
+    console.error('Command execution failed:', error);
+    
+    const webhookUrl = `https://discord.com/api/v10/webhooks/${applicationId}/${token}`;
+    await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        content: '❌ Command failed to execute',
+        flags: 64,
+      }),
+    }).catch(() => {});
+  }
+}
