@@ -24,11 +24,11 @@ export async function POST(request: Request) {
     return new Response('Invalid request signature', { status: 401 });
   }
 
-  const body = JSON.parse(rawBody); // Parse after verification
+  const body = JSON.parse(rawBody);
   return handleInteraction(body);
 }
 
-function handleInteraction(body: any) {
+async function handleInteraction(body: any) {
   if (!body || typeof body !== 'object') {
     return new Response('Invalid request body', { status: 400 });
   }
@@ -40,43 +40,20 @@ function handleInteraction(body: any) {
 
   // APPLICATION_COMMAND
   if (body.type === 2) {
-    const token = body.token;
-    const applicationId = body.application_id;
-
-    // Defer response
-    handleCommandDeferred(body, token, applicationId).catch(console.error);
-    return Response.json({ type: 5 });
+    try {
+      const result = await handleCommand(body);
+      return Response.json(result);
+    } catch (error) {
+      console.error('Command execution failed:', error);
+      return Response.json({
+        type: 4,
+        data: {
+          content: '❌ Command failed to execute',
+          flags: 64, // Ephemeral
+        },
+      });
+    }
   }
 
   return new Response('Unknown interaction type', { status: 400 });
-}
-
-async function handleCommandDeferred(
-  interaction: any,
-  token: string,
-  applicationId: string
-) {
-  try {
-    const result = await handleCommand(interaction);
-    const webhookUrl = `https://discord.com/api/v10/webhooks/${applicationId}/${token}`;
-    
-    await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: result.data.content,
-      }),
-    });
-  } catch (error) {
-    console.error('Command execution failed:', error);
-    const webhookUrl = `https://discord.com/api/v10/webhooks/${applicationId}/${token}`;
-    await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        content: '❌ Command failed to execute',
-        flags: 64,
-      }),
-    }).catch(() => {});
-  }
 }

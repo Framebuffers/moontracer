@@ -1,4 +1,3 @@
-// src/app/lib/secrets.ts
 import { readFileSync, existsSync } from 'fs';
 
 export function getSecretSync(name: string): string {
