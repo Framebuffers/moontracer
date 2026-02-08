@@ -2,22 +2,28 @@ package main
 
 import (
 	"log"
-	"net/http"
 	"os"
+
+	"moontracer/internal/discord"
 )
 
 func main() {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
+	token := os.Getenv("DISCORD_TOKEN")
+	if token == "" {
+		log.Fatal("DISCORD_TOKEN is required")
 	}
 
-	mux := http.NewServeMux()
+	guildID := os.Getenv("DISCORD_GUILD_ID")
+	if guildID == "" {
+		log.Fatal("DISCORD_GUILD_ID is required")
+	}
 
-	mux.HandleFunc("GET /api/v1/test", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("ok"))
-	})
+	bot, err := discord.New(token, guildID)
+	if err != nil {
+		log.Fatalf("failed to create bot: %v", err)
+	}
 
-	log.Printf("listening on :%s", port)
-	log.Fatal(http.ListenAndServe(":"+port, mux))
+	if err := bot.Run(); err != nil {
+		log.Fatalf("bot error: %v", err)
+	}
 }
