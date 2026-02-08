@@ -1,47 +1,11 @@
-# Dependencies
-node_modules/
-.pnp
-.pnp.js
+# Old TypeScript codebase
+.old/
 
-# Bun
-bun.lockb
-.bun/
+# Go
+/moontracer
+/bin/
 
-# Testing
-coverage/
-.nyc_output/
-*.lcov
-
-# Next.js
-.next/
-out/
-build/
-dist/
-
-# Production
-*.tsbuildinfo
-next-env.d.ts
-
-# Misc
-.DS_Store
-*.pem
-Thumbs.db
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-lerna-debug.log*
-
-# Local env files
-.env
-.env.*
-!.env.example
-!.env.template
-
-# Secrets
-# (CRITICAL - never ever ever **ever** commit)
+# Secrets (CRITICAL - never commit)
 secrets/
 *.key
 *.pem
@@ -49,20 +13,14 @@ secrets/
 *.p12
 *.pfx
 
-# Vercel
-.vercel
+# Env
+.env
+.env.*
+!.env.example
 
-# TypeScript
-*.tsbuildinfo
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# OS
+.DS_Store
+Thumbs.db
 
 # IDE
 .vscode/
@@ -72,47 +30,18 @@ lerna-debug.log*
 *.swp
 *.swo
 *~
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-.fleet/
-
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-desktop.ini
 
 # Docker
 .dockerignore
 
-# Old/archived files
-.old/
-*.old
-*~
-.backup/
-*.backup
-*.bak
-
-# Temporary build directories
+# Temp
 /tmp/
-temp/
-.tmp/
+.cache/
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
 
-# Misc
-.cache/
-.parcel-cache/
-.turbo/
-*.tar
+# Logs
+*.log
