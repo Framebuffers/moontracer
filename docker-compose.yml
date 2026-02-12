@@ -1,0 +1,20 @@
+services:
+  moontracer:
+    build: .
+    image: moontracer:latest
+    container_name: moontracer
+    restart: unless-stopped
+    secrets:
+      - discord_bot_token
+      - discord_guild_id
+    volumes:
+      - db_data:/app/data
+
+secrets:
+  discord_bot_token:
+    file: ./secrets/discord_bot_token.txt
+  discord_guild_id:
+    file: ./secrets/discord_guild_id.txt
+
+volumes:
+  db_data:

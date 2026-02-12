@@ -132,7 +132,6 @@ func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 	}
 }
 
-func getScheduledCampaigns(c models.Player) (*models.Campaign, error) {
-	var schedule models.CampaignSchedule
-
-}
+// TODO: implement getScheduledCampaigns
+// func getScheduledCampaigns(c models.Player) (*models.Campaign, error) {
+// }
