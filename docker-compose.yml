@@ -8,13 +8,17 @@ services:
       - discord_bot_token
       - discord_guild_id
     volumes:
-      - db_data:/app/data
+      - /mnt/bladesinger/moontracer:/app/data
+    networks:
+      - caddy_proxy
+
+networks:
+  caddy_proxy:
+    external: true
 
 secrets:
   discord_bot_token:
-    file: ./secrets/discord_bot_token.txt
+    file: /mnt/bladesinger/moontracer/secrets/discord_bot_token.txt
   discord_guild_id:
-    file: ./secrets/discord_guild_id.txt
+    file: /mnt/bladesinger/moontracer/secrets/discord_guild_id.txt
 
-volumes:
-  db_data:
