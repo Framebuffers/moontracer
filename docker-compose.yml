@@ -8,13 +8,17 @@ services:
       - discord_bot_token
       - discord_guild_id
     volumes:
-      - db_data:/app/data
+      - /var/lib/moontracer-secrets/moontracer:/app/data
+    networks:
+      - web_proxy
+
+networks:
+  web_proxy:
+    external: true
 
 secrets:
   discord_bot_token:
-    file: ./secrets/discord_bot_token.txt
+    file: /var/lib/moontracer-secrets/moontracer/secrets/discord_bot_token.txt
   discord_guild_id:
-    file: ./secrets/discord_guild_id.txt
+    file: /var/lib/moontracer-secrets/moontracer/secrets/discord_guild_id.txt
 
-volumes:
-  db_data:
