@@ -8,6 +8,7 @@ RUN CGO_ENABLED=0 go build -o /moontracer ./cmd/moontracer
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates
 
+RUN mkdir -p /app/data && chown moontracer:moontracer /app/data
 RUN adduser -D -h /app moontracer
 WORKDIR /app
 
