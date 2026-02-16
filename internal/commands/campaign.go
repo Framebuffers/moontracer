@@ -10,6 +10,13 @@ import (
 	"moontracer/internal/manager/models"
 )
 
+/*
+	Campaign
+		Campaigns are defined as a set event or series of events that can happen once or at a set interval, with a given set of players, all mastered by a Dungeon/Game Master.
+		They have a series of properties, like the books it uses, trigger warnings, game format, rules, and others.
+		Just like any event, they have a schedule on which they can be started, about to start, or finished. When a user is banned from a game, it is set as a fourth state, similar to finished but applies only to that user.
+*/
+
 type campaignCommand struct{}
 
 func (c *campaignCommand) Data() *discordgo.ApplicationCommand {

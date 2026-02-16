@@ -1,8 +1,10 @@
 package models
 
 import (
+	"context"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 )
 
@@ -69,3 +71,88 @@ const (
 	Quarterly CampaignFrequency = "quarterly"
 	Yearly    CampaignFrequency = "yearly"
 )
+
+func (c *Campaign) CreateCampaign(
+	db *bun.DB,
+	dmID string,
+	playerIDs []string,
+	description string,
+	conf *GameConfig,
+	slots int,
+	isOpen bool,
+	isOneshot bool,
+	warnings []string,
+	extraInfo string,
+	schedule *CampaignSchedule,
+	links []string,
+	vtt string,
+	books []string,
+	otherGameInfo []string,
+) (*Campaign, error) {
+	ctx := context.Background()
+
+	// get DM from DB
+	var dm Player
+	err := db.NewSelect().Model(&dm).Where("id = ?", dmID).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// get players from DB
+	var players []Player
+	err = db.NewSelect().Model(&players).Where("id IN (?)", bun.In(playerIDs)).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// create campaign entry on DB
+	campaign := &Campaign{
+		ID:            uuid.NewString(),
+		DungeonMaster: dmID,
+		DM:            &dm,
+		Description:   description,
+		Game:          *conf,
+		Slots:         slots,
+		IsOpen:        isOpen,
+		IsOneshot:     isOneshot,
+		Warnings:      warnings,
+		Extra:         extraInfo,
+		Schedule:      *schedule,
+		Links:         links,
+		VTTLink:       vtt,
+	}
+
+	_, err = db.NewInsert().Model(campaign).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// create CampaignPlayer entries for each player
+	for _, p := range players {
+		cp := &CampaignPlayer{
+			PlayerID:   p.ID,
+			CampaignID: campaign.ID,
+			Role:       RolePlayer,
+			Status:     StatusActive,
+		}
+		_, err = db.NewInsert().Model(cp).Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// also add the DM as a CampaignPlayer
+	// dm's are players too :)
+	dmEntry := &CampaignPlayer{
+		PlayerID:   dmID,
+		CampaignID: campaign.ID,
+		Role:       RoleDM,
+		Status:     StatusActive,
+	}
+	_, err = db.NewInsert().Model(dmEntry).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return campaign, nil
+}
