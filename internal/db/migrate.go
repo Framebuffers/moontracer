@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"log"
+	"strings"
 
 	"github.com/uptrace/bun"
 
@@ -27,6 +28,30 @@ func Migrate(db *bun.DB) error {
 		}
 	}
 
+	// Add columns that may be missing from earlier schema versions.
+	alterStmts := []string{
+		"ALTER TABLE campaigns ADD COLUMN name TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN tag TEXT NOT NULL DEFAULT ''",
+	}
+	for _, stmt := range alterStmts {
+		if _, err := db.ExecContext(ctx, stmt); err != nil {
+			// "duplicate column name" means it already exists — safe to ignore.
+			if !isDuplicateColumn(err) {
+				return err
+			}
+		}
+	}
+
+	// Ensure the unique index on tag exists.
+	_, err := db.ExecContext(ctx, "CREATE UNIQUE INDEX IF NOT EXISTS campaigns_tag_unique ON campaigns (tag)")
+	if err != nil {
+		return err
+	}
+
 	log.Println("database migration complete")
 	return nil
+}
+
+func isDuplicateColumn(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "duplicate column name")
 }
