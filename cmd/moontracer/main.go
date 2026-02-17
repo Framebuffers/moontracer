@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"moontracer/internal/db"
 	"moontracer/internal/discord"
 )
 
@@ -18,7 +19,18 @@ func main() {
 		log.Fatal("DISCORD_GUILD_ID is required")
 	}
 
-	bot, err := discord.New(token, guildID)
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "moontracer.db"
+	}
+
+	var dbm db.DatabaseManager
+	bunDB, err := dbm.Get(dbPath)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %v", err)
+	}
+
+	bot, err := discord.New(token, guildID, bunDB)
 	if err != nil {
 		log.Fatalf("failed to create bot: %v", err)
 	}

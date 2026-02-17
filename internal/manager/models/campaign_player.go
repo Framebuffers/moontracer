@@ -1,6 +1,10 @@
 package models
 
-import "github.com/uptrace/bun"
+import (
+	"context"
+
+	"github.com/uptrace/bun"
+)
 
 // CampaignPlayerRole distinguishes players from DMs within a campaign.
 // Players can be DMs.
@@ -46,4 +50,38 @@ type CampaignPlayer struct {
 
 	SessionsPlayed   int    `bun:",notnull,default:0" json:"sessions_played"`
 	DiceThrowPicture string `bun:",nullzero" json:"dice_throw_picture,omitempty"`
+}
+
+func GetCampaignPlayers(db *bun.DB, campaignID string) ([]CampaignPlayer, error) {
+	ctx := context.Background()
+	var players []CampaignPlayer
+	err := db.NewSelect().Model(&players).
+		Relation("Player").
+		Where("campaign_id = ?", campaignID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return players, nil
+}
+
+func GetPlayerCampaigns(db *bun.DB, playerID string) ([]CampaignPlayer, error) {
+	ctx := context.Background()
+	var campaigns []CampaignPlayer
+	err := db.NewSelect().Model(&campaigns).
+		Relation("Campaign").
+		Where("player_id = ?", playerID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return campaigns, nil
+}
+
+func RemoveCampaignPlayer(db *bun.DB, playerID, campaignID string) error {
+	ctx := context.Background()
+	_, err := db.NewDelete().Model((*CampaignPlayer)(nil)).
+		Where("player_id = ? AND campaign_id = ?", playerID, campaignID).
+		Exec(ctx)
+	return err
 }
