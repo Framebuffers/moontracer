@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -17,8 +18,8 @@ type playerCommand struct {
 
 func (p *playerCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
-		Name:        "mycampaigns",
-		Description: "List the campaigns you're part of.",
+		Name:        messages.MyCampaignsCommandName,
+		Description: messages.MyCampaignsCommandDesc,
 	}
 }
 
@@ -62,22 +63,20 @@ func (p *playerCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 	// Discord limits ActionsRow to 5 buttons
 	var rows []discordgo.MessageComponent
 	for idx := 0; idx < len(buttons); idx += 5 {
-		end := idx + 5
-		if end > len(buttons) {
-			end = len(buttons)
-		}
+		end := min(idx+5, len(buttons))
 		rows = append(rows, discordgo.ActionsRow{Components: buttons[idx:end]})
 	}
 
-	content := "Your campaigns:\n"
+	var content strings.Builder
+	content.WriteString("Your campaigns:\n")
 	for _, l := range lines {
-		content += l + "\n"
+		content.WriteString(l + "\n")
 	}
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content:    content,
+			Content:    content.String(),
 			Components: rows,
 			Flags:      discordgo.MessageFlagsEphemeral,
 		},

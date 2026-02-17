@@ -26,11 +26,12 @@ type Campaign struct {
 	Game GameConfig `bun:"embed:"`
 
 	// Details about your campaign, like open slots, the style, trigger warnings, extra info by the DM to be added to the Campaign's description.
-	Slots     int      `bun:",notnull,default:0" json:"slots"`
-	IsOpen    bool     `bun:",notnull,default:false" json:"is_open"`
-	IsOneshot bool     `bun:",notnull,default:false" json:"is_oneshot"`
-	Warnings  []string `bun:",array,type:jsonb" json:"warnings,omitempty"`
-	Extra     string   `bun:",default:''" json:"extra,omitempty"`
+	Slots       int      `bun:",notnull,default:0" json:"slots"`
+	IsOpen      bool     `bun:",notnull,default:false" json:"is_open"`
+	IsOneshot   bool     `bun:",notnull,default:false" json:"is_oneshot"`
+	IsWestmarch bool     `bun:",notnull,default:false" json:"is_westmarch"`
+	Warnings    []string `bun:",array,type:jsonb" json:"warnings,omitempty"`
+	Extra       string   `bun:",default:''" json:"extra,omitempty"`
 
 	// Campaign schedule.
 	Schedule CampaignSchedule `bun:"embed:"`
@@ -72,6 +73,7 @@ const (
 	Monthly   CampaignFrequency = "monthly"
 	Quarterly CampaignFrequency = "quarterly"
 	Yearly    CampaignFrequency = "yearly"
+	Westmarch CampaignFrequency = "westmarch"
 )
 
 func (c *Campaign) CreateCampaign(

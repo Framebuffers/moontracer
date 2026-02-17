@@ -1,13 +1,17 @@
 package commands
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+
+	"moontracer/internal/messages"
+)
 
 type pingCommand struct{}
 
 func (c *pingCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
-		Name:        "ping",
-		Description: "Replies with pong!",
+		Name:        messages.PingCommandName,
+		Description: messages.PingCommandDesc,
 	}
 }
 

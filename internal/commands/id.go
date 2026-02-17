@@ -19,13 +19,13 @@ type campaignCommand struct {
 
 func (c *campaignCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
-		Name:        "campaign",
-		Description: "Show campaign details.",
+		Name:        messages.CampaignCommandName,
+		Description: messages.CampaignCommandDesc,
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        "id",
-				Description: "Campaign ID to look up",
+				Name:        messages.IDCommandName,
+				Description: messages.IDCommandDesc,
 				Required:    true,
 			},
 		},
@@ -77,10 +77,9 @@ func campaignButtons(callerID string, c models.Campaign, players []models.Campai
 	var buttons []discordgo.MessageComponent
 
 	if c.DungeonMaster == callerID {
-		// DM buttons
-		toggleLabel := "Open Campaign"
+		toggleLabel := messages.OpenCampaignLabel
 		if c.IsOpen {
-			toggleLabel = "Close Campaign"
+			toggleLabel = messages.ClosedCampaignLabel
 		}
 		buttons = append(buttons,
 			discordgo.Button{
@@ -92,24 +91,23 @@ func campaignButtons(callerID string, c models.Campaign, players []models.Campai
 		return buttons
 	}
 
-	// Check if caller is a member of this campaign
-	isMember := false
+	isCallerMember := false
 	for _, p := range players {
 		if p.PlayerID == callerID && p.Status == models.StatusActive {
-			isMember = true
+			isCallerMember = true
 			break
 		}
 	}
 
-	if isMember {
+	if isCallerMember {
 		buttons = append(buttons, discordgo.Button{
-			Label:    "Leave Campaign",
+			Label:    messages.LeaveCampaignLabel,
 			Style:    discordgo.DangerButton,
 			CustomID: fmt.Sprintf("campaign_leave:%s", c.ID),
 		})
 	} else if c.IsOpen {
 		buttons = append(buttons, discordgo.Button{
-			Label:    "Join Campaign",
+			Label:    messages.JoinCampaignLabel,
 			Style:    discordgo.SuccessButton,
 			CustomID: fmt.Sprintf("campaign_join:%s", c.ID),
 		})
@@ -119,14 +117,18 @@ func campaignButtons(callerID string, c models.Campaign, players []models.Campai
 }
 
 func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordgo.MessageEmbed {
-	status := "Closed"
+	status := messages.ClosedStatusLabel
 	if c.IsOpen {
-		status = "Open"
+		status = messages.OpenStatusLabel
 	}
 
-	campaignType := "Campaign"
+	campaignType := messages.CampaignLabel
 	if c.IsOneshot {
-		campaignType = "One-shot"
+		campaignType = messages.CampaignTypeOneShotLabel
+	}
+
+	if c.IsWestmarch {
+		campaignType = messages.CampaignTypeWestmarchLabel
 	}
 
 	var playerLines []string
@@ -134,17 +136,17 @@ func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 		playerLines = append(playerLines, fmt.Sprintf("<@%s> — %s (%s, %d sessions)",
 			p.PlayerID, p.Role, p.Status, p.SessionsPlayed))
 	}
-	playersValue := "None"
+	playersValue := messages.NoneLabel
 	if len(playerLines) > 0 {
 		playersValue = strings.Join(playerLines, "\n")
 	}
 
-	warnings := "None"
+	warnings := messages.NoneLabel
 	if len(c.Warnings) > 0 {
 		warnings = strings.Join(c.Warnings, ", ")
 	}
 
-	books := "None specified"
+	books := messages.NoBooksSpecifiedLabel
 	if len(c.Game.BooksAllowed) > 0 {
 		books = strings.Join(c.Game.BooksAllowed, ", ")
 	}
@@ -174,7 +176,7 @@ func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 	return &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("%s — %s", campaignType, c.ID),
 		Description: c.Description,
-		Color:       0x5865F2,
+		Color:       messages.EmbedColor,
 		Fields:      fields,
 	}
 }
