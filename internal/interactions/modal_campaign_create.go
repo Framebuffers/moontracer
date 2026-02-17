@@ -18,7 +18,7 @@ type modalCampaignCreate struct {
 }
 
 func (m *modalCampaignCreate) CustomIDPrefix() string {
-	return "modal_campaign_create"
+	return messages.NewCampaignModalCustomID
 }
 
 func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -30,15 +30,15 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		for _, comp := range row.(*discordgo.ActionsRow).Components {
 			input := comp.(*discordgo.TextInput)
 			switch input.CustomID {
-			case "description":
+			case messages.FieldDescriptionID:
 				description = input.Value
-			case "edition":
+			case messages.FieldEditionID:
 				edition = input.Value
-			case "rules":
+			case messages.FieldRulesID:
 				rules = input.Value
-			case "slots":
+			case messages.FieldSlotsID:
 				slotsStr = input.Value
-			case "warnings":
+			case messages.FieldWarningsID:
 				warningsStr = input.Value
 			}
 		}

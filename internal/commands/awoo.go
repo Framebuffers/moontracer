@@ -1,13 +1,17 @@
 package commands
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"github.com/bwmarrin/discordgo"
+
+	"moontracer/internal/messages"
+)
 
 type awooCommand struct{}
 
 func (c *awooCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
-		Name:        "awoo",
-		Description: "do a heccin awoo.",
+		Name:        messages.AwooCommandName,
+		Description: messages.AwooCommandDesc,
 	}
 }
 

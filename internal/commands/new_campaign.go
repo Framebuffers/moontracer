@@ -15,8 +15,8 @@ type newCampaign struct {
 
 func (n *newCampaign) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
-		Name:        "newcampaign",
-		Description: "Create a new campaign (you will be the DM).",
+		Name:        messages.NewCampaignCommandName,
+		Description: messages.NewCampaignCommandDesc,
 	}
 }
 
@@ -37,55 +37,55 @@ func (n *newCampaign) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
-			CustomID: "modal_campaign_create",
-			Title:    "Create a New Campaign",
+			CustomID: messages.NewCampaignModalCustomID,
+			Title:    messages.NewCampaignModalTitle,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:    "description",
-						Label:       "Description",
+						CustomID:    messages.FieldDescriptionID,
+						Label:       messages.FieldDescriptionLabel,
 						Style:       discordgo.TextInputParagraph,
-						Placeholder: "Describe your campaign setting and premise...",
+						Placeholder: messages.FieldDescriptionPlaceholder,
 						Required:    true,
 						MaxLength:   1000,
 					},
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:    "edition",
-						Label:       "Edition",
+						CustomID:    messages.FieldEditionID,
+						Label:       messages.FieldEditionLabel,
 						Style:       discordgo.TextInputShort,
-						Placeholder: "e.g. 5e, 3.5e, PF2e",
+						Placeholder: messages.FieldEditionPlaceholder,
 						Required:    true,
 						MaxLength:   20,
 					},
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:    "rules",
-						Label:       "Rules",
+						CustomID:    messages.FieldRulesID,
+						Label:       messages.FieldRulesLabel,
 						Style:       discordgo.TextInputShort,
-						Placeholder: "e.g. 2024, 2014, homebrew",
+						Placeholder: messages.FieldRulesPlaceholder,
 						Required:    false,
 						MaxLength:   50,
 					},
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:    "slots",
-						Label:       "Player Slots",
+						CustomID:    messages.FieldSlotsID,
+						Label:       messages.FieldSlotsLabel,
 						Style:       discordgo.TextInputShort,
-						Placeholder: "e.g. 4",
+						Placeholder: messages.FieldSlotsPlaceholder,
 						Required:    true,
 						MaxLength:   3,
 					},
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:    "warnings",
-						Label:       "Content Warnings (comma-separated)",
+						CustomID:    messages.FieldWarningsID,
+						Label:       messages.FieldWarningsLabel,
 						Style:       discordgo.TextInputShort,
-						Placeholder: "e.g. Violence, Horror, Permadeath",
+						Placeholder: messages.FieldWarningsPlaceholder,
 						Required:    false,
 						MaxLength:   200,
 					},

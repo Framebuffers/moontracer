@@ -18,8 +18,8 @@ type registerCommand struct {
 
 func (r *registerCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
-		Name:        "register",
-		Description: "Register as a player so you can join and create campaigns.",
+		Name:        messages.RegisterCommandName,
+		Description: messages.RegisterCommandDesc,
 	}
 }
 
