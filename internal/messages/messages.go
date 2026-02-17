@@ -94,8 +94,8 @@ const (
 
 // Campaign embed UI labels
 const (
-	OpenCampaignLabel          = "Open Campaign"
-	ClosedCampaignLabel        = "Closed Campaign"
+	OpenCampaignLabel          = "Set as Open Campaign"
+	ClosedCampaignLabel        = "Set as Closed Campaign"
 	LeaveCampaignLabel         = "Leave Campaign"
 	JoinCampaignLabel          = "Join Campaign"
 	EmbedColor                 = 0x5865F2
