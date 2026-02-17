@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/uptrace/bun"
 
 	"moontracer/internal/manager/models"
 )
@@ -17,7 +18,9 @@ import (
 		Just like any event, they have a schedule on which they can be started, about to start, or finished. When a user is banned from a game, it is set as a fourth state, similar to finished but applies only to that user.
 */
 
-type campaignCommand struct{}
+type campaignCommand struct {
+	db *bun.DB
+}
 
 func (c *campaignCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{

@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/uptrace/bun"
 
 	"moontracer/internal/commands"
 )
@@ -15,22 +16,23 @@ import (
 type Bot struct {
 	session    *discordgo.Session
 	guildID    string
+	db         *bun.DB
 	registered []*discordgo.ApplicationCommand
 }
 
-// New creates a Bot with the given token and guild ID.
-func New(token, guildID string) (*Bot, error) {
+// New creates a Bot with the given token, guild ID, and database connection.
+func New(token, guildID string, db *bun.DB) (*Bot, error) {
 	s, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{session: s, guildID: guildID}, nil
+	return &Bot{session: s, guildID: guildID, db: db}, nil
 }
 
 // Run opens the gateway, registers guild-scoped commands, blocks until
 // SIGINT/SIGTERM, then removes commands and closes the session.
 func (b *Bot) Run() error {
-	b.session.AddHandler(NewHandler(commands.All()))
+	b.session.AddHandler(NewHandler(commands.All(b.db)))
 
 	if err := b.session.Open(); err != nil {
 		return err
@@ -57,7 +59,7 @@ func (b *Bot) Run() error {
 }
 
 func (b *Bot) registerCommands(appID string) error {
-	for _, cmd := range commands.All() {
+	for _, cmd := range commands.All(b.db) {
 		created, err := b.session.ApplicationCommandCreate(appID, b.guildID, cmd.Data())
 		if err != nil {
 			return err
