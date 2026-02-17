@@ -27,15 +27,15 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		respondInteraction(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
-	campaignID := parts[1]
+	tag := parts[1]
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
 		respondInteraction(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
-	players, err := models.GetCampaignPlayers(h.db, campaignID)
+	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
 		log.Printf("%s %v", messages.PlayerFetchErrorMessage, err)
 		respondInteraction(s, i, messages.CampaignLoadFailureErrorMessage)
@@ -74,7 +74,7 @@ func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *dis
 	}
 
 	return &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("%s — %s", campaignType, c.ID),
+		Title:       fmt.Sprintf("%s — %s", campaignType, c.Name),
 		Description: c.Description,
 		Color:       0x5865F2,
 		Fields: []*discordgo.MessageEmbedField{

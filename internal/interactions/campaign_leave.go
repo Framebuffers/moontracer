@@ -27,11 +27,11 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 		respondInteraction(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
-	campaignID := parts[1]
+	tag := parts[1]
 	userID := i.Member.User.ID
 
 	// DMs cannot leave their own campaign
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
 		respondInteraction(s, i, messages.CampaignNotFoundMessage)
 		return
@@ -41,11 +41,11 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 		return
 	}
 
-	if err := models.RemoveCampaignPlayer(h.db, userID, campaignID); err != nil {
+	if err := models.RemoveCampaignPlayer(h.db, userID, campaign.ID); err != nil {
 		log.Printf("%s %v", messages.LeavingCampaignErrorMessage, err)
 		respondInteraction(s, i, messages.FailedToLeaveCampaignErrorMessage)
 		return
 	}
 
-	respondInteraction(s, i, fmt.Sprintf("%s **%s**.", messages.PlayerLeftCampaignMessage, campaignID))
+	respondInteraction(s, i, fmt.Sprintf("%s **%s**.", messages.PlayerLeftCampaignMessage, campaign.Name))
 }

@@ -17,6 +17,16 @@ func GetByID[T any](db *bun.DB, id string) (*T, error) {
 	return &model, nil
 }
 
+func GetByTag[T any](db *bun.DB, tag string) (*T, error) {
+	ctx := context.Background()
+	var model T
+	err := db.NewSelect().Model(&model).Where("tag = ?", tag).Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &model, nil
+}
+
 func GetAll[T any](db *bun.DB) ([]T, error) {
 	ctx := context.Background()
 	var models []T

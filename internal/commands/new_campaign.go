@@ -42,6 +42,26 @@ func (n *newCampaign) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
+						CustomID:    messages.FieldNameID,
+						Label:       messages.FieldNameLabel,
+						Style:       discordgo.TextInputShort,
+						Placeholder: messages.FieldNamePlaceholder,
+						Required:    true,
+						MaxLength:   100,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.FieldTagID,
+						Label:       messages.FieldTagLabel,
+						Style:       discordgo.TextInputShort,
+						Placeholder: messages.FieldTagPlaceholder,
+						Required:    true,
+						MaxLength:   30,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
 						CustomID:    messages.FieldDescriptionID,
 						Label:       messages.FieldDescriptionLabel,
 						Style:       discordgo.TextInputParagraph,
@@ -62,32 +82,12 @@ func (n *newCampaign) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:    messages.FieldRulesID,
-						Label:       messages.FieldRulesLabel,
-						Style:       discordgo.TextInputShort,
-						Placeholder: messages.FieldRulesPlaceholder,
-						Required:    false,
-						MaxLength:   50,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
 						CustomID:    messages.FieldSlotsID,
 						Label:       messages.FieldSlotsLabel,
 						Style:       discordgo.TextInputShort,
 						Placeholder: messages.FieldSlotsPlaceholder,
 						Required:    true,
 						MaxLength:   3,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.FieldWarningsID,
-						Label:       messages.FieldWarningsLabel,
-						Style:       discordgo.TextInputShort,
-						Placeholder: messages.FieldWarningsPlaceholder,
-						Required:    false,
-						MaxLength:   200,
 					},
 				}},
 			},

@@ -25,21 +25,21 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	data := i.ModalSubmitData()
 	userID := i.Member.User.ID
 
-	var description, edition, rules, slotsStr, warningsStr string
+	var name, tag, description, edition, slotsStr string
 	for _, row := range data.Components {
 		for _, comp := range row.(*discordgo.ActionsRow).Components {
 			input := comp.(*discordgo.TextInput)
 			switch input.CustomID {
+			case messages.FieldNameID:
+				name = input.Value
+			case messages.FieldTagID:
+				tag = input.Value
 			case messages.FieldDescriptionID:
 				description = input.Value
 			case messages.FieldEditionID:
 				edition = input.Value
-			case messages.FieldRulesID:
-				rules = input.Value
 			case messages.FieldSlotsID:
 				slotsStr = input.Value
-			case messages.FieldWarningsID:
-				warningsStr = input.Value
 			}
 		}
 	}
@@ -50,19 +50,9 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
-	var warnings []string
-	if warningsStr != "" {
-		for _, w := range strings.Split(warningsStr, ",") {
-			w = strings.TrimSpace(w)
-			if w != "" {
-				warnings = append(warnings, w)
-			}
-		}
-	}
-
 	conf := &models.GameConfig{
 		Edition: edition,
-		Rules:   rules,
+		Rules:   "",
 	}
 	schedule := &models.CampaignSchedule{
 		Frequency: models.Weekly,
@@ -73,12 +63,14 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		m.db,
 		userID,
 		nil, // no initial players
+		name,
+		tag,
 		description,
 		conf,
 		slots,
 		true, // open by default
 		false,
-		warnings,
+		nil,
 		"",
 		schedule,
 		nil,
@@ -92,7 +84,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
-	respondInteraction(s, i, fmt.Sprintf("%s **%s** Use `/campaign id:%s` to view it.", messages.CampaignCreationMessage, created.ID, created.ID))
+	respondInteraction(s, i, fmt.Sprintf("%s **%s** Use `/campaign tag:%s` to view it.", messages.CampaignCreationMessage, created.Name, created.Tag))
 }
 
 func respondInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {

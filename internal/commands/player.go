@@ -52,11 +52,17 @@ func (p *playerCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 	var buttons []discordgo.MessageComponent
 	var lines []string
 	for _, e := range entries {
-		lines = append(lines, fmt.Sprintf("**%s** — %s (%s)", e.CampaignID, e.Role, e.Status))
+		campaignName := e.CampaignID
+		campaignTag := e.CampaignID
+		if e.Campaign != nil {
+			campaignName = e.Campaign.Name
+			campaignTag = e.Campaign.Tag
+		}
+		lines = append(lines, fmt.Sprintf("**%s** — %s (%s)", campaignName, e.Role, e.Status))
 		buttons = append(buttons, discordgo.Button{
-			Label:    e.CampaignID,
+			Label:    campaignName,
 			Style:    discordgo.PrimaryButton,
-			CustomID: fmt.Sprintf("campaign_view:%s", e.CampaignID),
+			CustomID: fmt.Sprintf("campaign_view:%s", campaignTag),
 		})
 	}
 

@@ -15,6 +15,12 @@ type Campaign struct {
 	// Server-generated unique identifier. This is the ID that will be used throughout to identify this particular campaign.
 	ID string `bun:",pk,notnull" json:"id"`
 
+	// Display name for the campaign.
+	Name string `bun:",notnull" json:"name"`
+
+	// Short, user-facing identifier for lookups (e.g. "strahd", "avalon", "itzaal", "nuevosur").
+	Tag string `bun:",unique,notnull" json:"tag"`
+
 	// Player FK of the user (DM) who created the campaign.
 	DungeonMaster string  `bun:",notnull" json:"dm"`
 	DM            *Player `bun:"rel:belongs-to,join:dungeon_master=id" json:"dm_player,omitempty"`
@@ -80,6 +86,8 @@ func (c *Campaign) CreateCampaign(
 	db *bun.DB,
 	dmID string,
 	playerIDs []string,
+	name string,
+	tag string,
 	description string,
 	conf *GameConfig,
 	slots int,
@@ -114,6 +122,8 @@ func (c *Campaign) CreateCampaign(
 	// create campaign entry on DB
 	campaign := &Campaign{
 		ID:            uuid.NewString(),
+		Name:          name,
+		Tag:           tag,
 		DungeonMaster: dmID,
 		DM:            &dm,
 		Description:   description,

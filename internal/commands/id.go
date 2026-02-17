@@ -24,8 +24,8 @@ func (c *campaignCommand) Data() *discordgo.ApplicationCommand {
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        messages.IDCommandName,
-				Description: messages.IDCommandDesc,
+				Name:        messages.TagCommandName,
+				Description: messages.TagCommandDesc,
 				Required:    true,
 			},
 		},
@@ -33,23 +33,23 @@ func (c *campaignCommand) Data() *discordgo.ApplicationCommand {
 }
 
 func (c *campaignCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	var id string
+	var tag string
 	for _, opt := range i.ApplicationCommandData().Options {
-		if opt.Name == "id" {
-			id = opt.StringValue()
+		if opt.Name == messages.TagCommandName {
+			tag = opt.StringValue()
 		}
 	}
 
-	campaign, err := db.GetByID[models.Campaign](c.db, id)
+	campaign, err := db.GetByTag[models.Campaign](c.db, tag)
 	if err != nil {
-		log.Printf(messages.CampaignFetchError+"%v", id, err)
+		log.Printf(messages.CampaignFetchError+"%v", tag, err)
 		respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
-	players, err := models.GetCampaignPlayers(c.db, id)
+	players, err := models.GetCampaignPlayers(c.db, campaign.ID)
 	if err != nil {
-		log.Printf("%s %s: %v", messages.PlayerFetchErrorMessage, id, err)
+		log.Printf("%s %s: %v", messages.PlayerFetchErrorMessage, tag, err)
 		respond(s, i, messages.CampaignPlayersLoadError)
 		return
 	}
@@ -85,7 +85,7 @@ func campaignButtons(callerID string, c models.Campaign, players []models.Campai
 			discordgo.Button{
 				Label:    toggleLabel,
 				Style:    discordgo.SecondaryButton,
-				CustomID: fmt.Sprintf("campaign_toggle:%s", c.ID),
+				CustomID: fmt.Sprintf("campaign_toggle:%s", c.Tag),
 			},
 		)
 		return buttons
@@ -103,13 +103,13 @@ func campaignButtons(callerID string, c models.Campaign, players []models.Campai
 		buttons = append(buttons, discordgo.Button{
 			Label:    messages.LeaveCampaignLabel,
 			Style:    discordgo.DangerButton,
-			CustomID: fmt.Sprintf("campaign_leave:%s", c.ID),
+			CustomID: fmt.Sprintf("campaign_leave:%s", c.Tag),
 		})
 	} else if c.IsOpen {
 		buttons = append(buttons, discordgo.Button{
 			Label:    messages.JoinCampaignLabel,
 			Style:    discordgo.SuccessButton,
-			CustomID: fmt.Sprintf("campaign_join:%s", c.ID),
+			CustomID: fmt.Sprintf("campaign_join:%s", c.Tag),
 		})
 	}
 
@@ -174,7 +174,7 @@ func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 	)
 
 	return &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("%s — %s", campaignType, c.ID),
+		Title:       fmt.Sprintf("%s — %s", campaignType, c.Name),
 		Description: c.Description,
 		Color:       messages.EmbedColor,
 		Fields:      fields,

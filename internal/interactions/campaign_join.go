@@ -29,7 +29,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		respondInteraction(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
-	campaignID := parts[1]
+	tag := parts[1]
 	userID := i.Member.User.ID
 
 	// is the player registered?
@@ -40,7 +40,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	}
 
 	// does the campaign exist and is it active?
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
 		respondInteraction(s, i, messages.CampaignNotFoundMessage)
 		return
@@ -51,7 +51,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	}
 
 	// is the player already a member?
-	players, err := models.GetCampaignPlayers(h.db, campaignID)
+	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
 		log.Printf("%s: %v", messages.PlayerFetchErrorMessage, err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
@@ -82,7 +82,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 
 	cp := &models.CampaignPlayer{
 		PlayerID:   userID,
-		CampaignID: campaignID,
+		CampaignID: campaign.ID,
 		Role:       models.RolePlayer,
 		Status:     models.StatusActive,
 	}
@@ -92,5 +92,5 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
-	respondInteraction(s, i, fmt.Sprintf("%s **%s**!", messages.PlayerJoinedCampaignMessage, campaignID))
+	respondInteraction(s, i, fmt.Sprintf("%s **%s**!", messages.PlayerJoinedCampaignMessage, campaign.Name))
 }
