@@ -22,7 +22,7 @@ type Token struct {
 	ID string `bun:",pk,notnull" json:"id"`
 
 	// FK to the Player who owns this token.
-	OwnerID string `bun:",notnull" json:"owner_id"`
+	OwnerID string  `bun:",notnull" json:"owner_id"`
 	Owner   *Player `bun:"rel:belongs-to,join:owner_id=id" json:"owner,omitempty"`
 
 	// Image or text content (base64 or plain string).

@@ -9,5 +9,7 @@ func All(db *bun.DB) []Command {
 		&awooCommand{},
 		&campaignCommand{db: db},
 		&playerCommand{db: db},
+		&registerCommand{db: db},
+		&newCampaign{db: db},
 	}
 }
