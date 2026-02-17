@@ -10,6 +10,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/commands"
+	"moontracer/internal/interactions"
 )
 
 // Bot wraps a discordgo session and manages its lifecycle.
@@ -32,7 +33,11 @@ func New(token, guildID string, db *bun.DB) (*Bot, error) {
 // Run opens the gateway, registers guild-scoped commands, blocks until
 // SIGINT/SIGTERM, then removes commands and closes the session.
 func (b *Bot) Run() error {
-	b.session.AddHandler(NewHandler(commands.All(b.db)))
+	b.session.AddHandler(NewHandler(
+		commands.All(b.db),
+		interactions.AllComponents(b.db),
+		interactions.AllModals(b.db),
+	))
 
 	if err := b.session.Open(); err != nil {
 		return err

@@ -58,6 +58,8 @@ type CampaignSchedule struct {
 	Frequency   CampaignFrequency `bun:",notnull,default:'weekly'" json:"frequency"`
 	CreatedAt   time.Time         `bun:",notnull,default:current_timestamp" json:"created_at"`
 	LastSession time.Time         `bun:",nullzero" json:"last_session"`
+	NextSession time.Time         `bun:",nullzero" json:"next_session"`
+	AlertSent   bool              `bun:",notnull,default:false" json:"alert_sent"`
 }
 
 // CampaignFrequency defines how often will sessions in this Campaign will occur.
@@ -100,9 +102,11 @@ func (c *Campaign) CreateCampaign(
 
 	// get players from DB
 	var players []Player
-	err = db.NewSelect().Model(&players).Where("id IN (?)", bun.In(playerIDs)).Scan(ctx)
-	if err != nil {
-		return nil, err
+	if len(playerIDs) > 0 {
+		err = db.NewSelect().Model(&players).Where("id IN (?)", bun.In(playerIDs)).Scan(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// create campaign entry on DB

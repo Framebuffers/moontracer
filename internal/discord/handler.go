@@ -2,31 +2,68 @@ package discord
 
 import (
 	"log"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 
 	"moontracer/internal/commands"
+	"moontracer/internal/interactions"
 )
 
-// NewHandler returns a discordgo event handler that dispatches interaction
-// creates to the matching Command.Execute.
-func NewHandler(cmds []commands.Command) func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	lookup := make(map[string]commands.Command, len(cmds))
+// NewHandler returns a discordgo event handler that dispatches slash commands,
+// component interactions (buttons), and modal submissions.
+func NewHandler(cmds []commands.Command, components []interactions.ComponentHandler, modals []interactions.ModalHandler) func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	cmdLookup := make(map[string]commands.Command, len(cmds))
 	for _, cmd := range cmds {
-		lookup[cmd.Data().Name] = cmd
+		cmdLookup[cmd.Data().Name] = cmd
+	}
+
+	compLookup := make(map[string]interactions.ComponentHandler, len(components))
+	for _, c := range components {
+		compLookup[c.CustomIDPrefix()] = c
+	}
+
+	modalLookup := make(map[string]interactions.ModalHandler, len(modals))
+	for _, m := range modals {
+		modalLookup[m.CustomIDPrefix()] = m
 	}
 
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-		if i.Type != discordgo.InteractionApplicationCommand {
-			return
-		}
+		switch i.Type {
+		case discordgo.InteractionApplicationCommand:
+			name := i.ApplicationCommandData().Name
+			cmd, ok := cmdLookup[name]
+			if !ok {
+				log.Printf("unknown command: /%s", name)
+				return
+			}
+			cmd.Execute(s, i)
 
-		name := i.ApplicationCommandData().Name
-		cmd, ok := lookup[name]
-		if !ok {
-			log.Printf("unknown command: /%s", name)
-			return
+		case discordgo.InteractionMessageComponent:
+			customID := i.MessageComponentData().CustomID
+			prefix := customID
+			if idx := strings.Index(customID, ":"); idx != -1 {
+				prefix = customID[:idx]
+			}
+			handler, ok := compLookup[prefix]
+			if !ok {
+				log.Printf("unknown component: %s", customID)
+				return
+			}
+			handler.HandleComponents(s, i)
+
+		case discordgo.InteractionModalSubmit:
+			customID := i.ModalSubmitData().CustomID
+			prefix := customID
+			if idx := strings.Index(customID, ":"); idx != -1 {
+				prefix = customID[:idx]
+			}
+			handler, ok := modalLookup[prefix]
+			if !ok {
+				log.Printf("unknown modal: %s", customID)
+				return
+			}
+			handler.HandleModal(s, i)
 		}
-		cmd.Execute(s, i)
 	}
 }

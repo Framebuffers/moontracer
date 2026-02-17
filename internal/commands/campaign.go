@@ -2,21 +2,16 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"strings"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/db"
 	"moontracer/internal/manager/models"
+	"moontracer/internal/messages"
 )
-
-/*
-	Campaign
-		Campaigns are defined as a set event or series of events that can happen once or at a set interval, with a given set of players, all mastered by a Dungeon/Game Master.
-		They have a series of properties, like the books it uses, trigger warnings, game format, rules, and others.
-		Just like any event, they have a schedule on which they can be started, about to start, or finished. When a user is banned from a game, it is set as a fourth state, similar to finished but applies only to that user.
-*/
 
 type campaignCommand struct {
 	db *bun.DB
@@ -25,70 +20,102 @@ type campaignCommand struct {
 func (c *campaignCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        "campaign",
-		Description: "Show campaign details (mock data)",
+		Description: "Show campaign details.",
 		Options: []*discordgo.ApplicationCommandOption{
 			{
 				Type:        discordgo.ApplicationCommandOptionString,
 				Name:        "id",
 				Description: "Campaign ID to look up",
-				Required:    false,
+				Required:    true,
 			},
 		},
 	}
 }
 
 func (c *campaignCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// Read optional ID (ignored for now, always returns mock data)
 	var id string
 	for _, opt := range i.ApplicationCommandData().Options {
 		if opt.Name == "id" {
 			id = opt.StringValue()
 		}
 	}
-	if id == "" {
-		id = "moontracer-mock-campaign"
+
+	campaign, err := db.GetByID[models.Campaign](c.db, id)
+	if err != nil {
+		log.Printf(messages.CampaignFetchError+"%v", id, err)
+		respond(s, i, messages.CampaignNotFoundMessage)
+		return
 	}
 
-	campaign, players := mockCampaign(id)
-	embed := campaignEmbed(campaign, players)
+	players, err := models.GetCampaignPlayers(c.db, id)
+	if err != nil {
+		log.Printf("%s %s: %v", messages.PlayerFetchErrorMessage, id, err)
+		respond(s, i, messages.CampaignPlayersLoadError)
+		return
+	}
 
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	embed := campaignEmbed(*campaign, players)
+	buttons := campaignButtons(i.Member.User.ID, *campaign, players)
+
+	resp := &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{embed},
 		},
-	})
+	}
+
+	if len(buttons) > 0 {
+		resp.Data.Components = []discordgo.MessageComponent{
+			discordgo.ActionsRow{Components: buttons},
+		}
+	}
+
+	s.InteractionRespond(i.Interaction, resp)
 }
 
-func mockCampaign(id string) (models.Campaign, []models.CampaignPlayer) {
-	campaign := models.Campaign{
-		ID:            id,
-		DungeonMaster: "123456789",
-		Description:   "A fantasy about a dog howling at the moon. Be careful, he can be (very) soft.",
-		Game: models.GameConfig{
-			Edition:      "5e",
-			Rules:        "2024",
-			VTT:          "owlbear-legacy",
-			BooksAllowed: []string{"PHB", "DMG", "MM", "XGE", "TCE"},
-		},
-		Slots:     5,
-		IsOpen:    true,
-		IsOneshot: false,
-		Warnings:  []string{"Softness Alert", "Permadeath"},
-		Schedule: models.CampaignSchedule{
-			Frequency:   models.Weekly,
-			CreatedAt:   time.Date(2026, 1, 15, 0, 0, 0, 0, time.UTC),
-			LastSession: time.Date(2026, 2, 5, 0, 0, 0, 0, time.UTC),
-		},
+func campaignButtons(callerID string, c models.Campaign, players []models.CampaignPlayer) []discordgo.MessageComponent {
+	var buttons []discordgo.MessageComponent
+
+	if c.DungeonMaster == callerID {
+		// DM buttons
+		toggleLabel := "Open Campaign"
+		if c.IsOpen {
+			toggleLabel = "Close Campaign"
+		}
+		buttons = append(buttons,
+			discordgo.Button{
+				Label:    toggleLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("campaign_toggle:%s", c.ID),
+			},
+		)
+		return buttons
 	}
 
-	players := []models.CampaignPlayer{
-		{PlayerID: "123456789", CampaignID: id, Role: models.RoleDM, Status: models.StatusActive, SessionsPlayed: 4},
-		{PlayerID: "987654321", CampaignID: id, Role: models.RolePlayer, Status: models.StatusActive, SessionsPlayed: 4},
-		{PlayerID: "111222333", CampaignID: id, Role: models.RolePlayer, Status: models.StatusHiatus, SessionsPlayed: 2},
+	// Check if caller is a member of this campaign
+	isMember := false
+	for _, p := range players {
+		if p.PlayerID == callerID && p.Status == models.StatusActive {
+			isMember = true
+			break
+		}
 	}
 
-	return campaign, players
+	if isMember {
+		buttons = append(buttons, discordgo.Button{
+			Label:    "Leave Campaign",
+			Style:    discordgo.DangerButton,
+			CustomID: fmt.Sprintf("campaign_leave:%s", c.ID),
+		})
+	} else if c.IsOpen {
+		buttons = append(buttons, discordgo.Button{
+			Label:    "Join Campaign",
+			Style:    discordgo.SuccessButton,
+			CustomID: fmt.Sprintf("campaign_join:%s", c.ID),
+		})
+	}
+
+	return buttons
 }
 
 func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordgo.MessageEmbed {
@@ -102,46 +129,52 @@ func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 		campaignType = "One-shot"
 	}
 
-	// build the campaign:
-	// 1. add players list
 	var playerLines []string
 	for _, p := range players {
 		playerLines = append(playerLines, fmt.Sprintf("<@%s> — %s (%s, %d sessions)",
 			p.PlayerID, p.Role, p.Status, p.SessionsPlayed))
 	}
+	playersValue := "None"
+	if len(playerLines) > 0 {
+		playersValue = strings.Join(playerLines, "\n")
+	}
 
-	// 2. add warnings
 	warnings := "None"
 	if len(c.Warnings) > 0 {
 		warnings = strings.Join(c.Warnings, ", ")
 	}
 
-	// 3. add books
 	books := "None specified"
 	if len(c.Game.BooksAllowed) > 0 {
 		books = strings.Join(c.Game.BooksAllowed, ", ")
 	}
 
+	fields := []*discordgo.MessageEmbedField{
+		{Name: "DM", Value: fmt.Sprintf("<@%s>", c.DungeonMaster), Inline: true},
+		{Name: "Status", Value: status, Inline: true},
+		{Name: "Slots", Value: fmt.Sprintf("%d", c.Slots), Inline: true},
+		{Name: "Edition", Value: c.Game.Edition, Inline: true},
+	}
+
+	if c.Game.Rules != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{Name: "Rules", Value: c.Game.Rules, Inline: true})
+	}
+	if c.Game.VTT != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{Name: "VTT", Value: c.Game.VTT, Inline: true})
+	}
+
+	fields = append(fields,
+		&discordgo.MessageEmbedField{Name: "Books", Value: books, Inline: false},
+		&discordgo.MessageEmbedField{Name: "Schedule", Value: fmt.Sprintf("%s (last session: %s)",
+			c.Schedule.Frequency, c.Schedule.LastSession.Format("2006-01-02")), Inline: false},
+		&discordgo.MessageEmbedField{Name: "Warnings", Value: warnings, Inline: false},
+		&discordgo.MessageEmbedField{Name: fmt.Sprintf("Players (%d)", len(players)), Value: playersValue, Inline: false},
+	)
+
 	return &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("%s — %s", campaignType, c.ID),
 		Description: c.Description,
 		Color:       0x5865F2,
-		Fields: []*discordgo.MessageEmbedField{
-			{Name: "DM", Value: fmt.Sprintf("<@%s>", c.DungeonMaster), Inline: true},
-			{Name: "Status", Value: status, Inline: true},
-			{Name: "Slots", Value: fmt.Sprintf("%d", c.Slots), Inline: true},
-			{Name: "Edition", Value: c.Game.Edition, Inline: true},
-			{Name: "Rules", Value: c.Game.Rules, Inline: true},
-			{Name: "VTT", Value: c.Game.VTT, Inline: true},
-			{Name: "Books", Value: books, Inline: false},
-			{Name: "Schedule", Value: fmt.Sprintf("%s (last session: %s)",
-				c.Schedule.Frequency, c.Schedule.LastSession.Format("2006-01-02")), Inline: false},
-			{Name: "Warnings", Value: warnings, Inline: false},
-			{Name: fmt.Sprintf("Players (%d)", len(players)), Value: strings.Join(playerLines, "\n"), Inline: false},
-		},
+		Fields:      fields,
 	}
 }
-
-// TODO: implement getScheduledCampaigns
-// func getScheduledCampaigns(c models.Player) (*models.Campaign, error) {
-// }
