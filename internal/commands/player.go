@@ -17,5 +17,10 @@ func (p *playerCommand) Data() *discordgo.ApplicationCommand {
 }
 
 func (p *playerCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
-
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Not implemented yet.",
+		},
+	})
 }
