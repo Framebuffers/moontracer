@@ -30,6 +30,10 @@ func main() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
+	if err := db.Migrate(bunDB); err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
+	}
+
 	bot, err := discord.New(token, guildID, bunDB)
 	if err != nil {
 		log.Fatalf("failed to create bot: %v", err)
