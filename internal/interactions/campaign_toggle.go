@@ -27,10 +27,10 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 		respondInteraction(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
-	campaignID := parts[1]
+	tag := parts[1]
 	userID := i.Member.User.ID
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
 		respondInteraction(s, i, messages.CampaignNotFoundMessage)
 		return
@@ -52,5 +52,5 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 	if campaign.IsOpen {
 		status = "open"
 	}
-	respondInteraction(s, i, fmt.Sprintf("%s **%s** is now **%s**.", messages.CampaignStatusMessage, campaignID, status))
+	respondInteraction(s, i, fmt.Sprintf("%s **%s** is now **%s**.", messages.CampaignStatusMessage, campaign.Name, status))
 }

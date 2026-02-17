@@ -29,8 +29,8 @@ const (
 	MyCampaignsCommandDesc = "List the campaigns you're part of."
 	AddPlayerCommandName   = "add_player"
 	AddPlayerCommandDesc   = "Adds a new player to a Campaign."
-	IDCommandName          = "id"
-	IDCommandDesc          = "Campaign ID to look up."
+	TagCommandName = "tag"
+	TagCommandDesc = "Campaign tag to look up."
 )
 
 // Registration
@@ -119,27 +119,27 @@ const (
 
 // New campaign modal field IDs
 const (
+	FieldNameID        = "name"
+	FieldTagID         = "tag"
 	FieldDescriptionID = "description"
 	FieldEditionID     = "edition"
-	FieldRulesID       = "rules"
 	FieldSlotsID       = "slots"
-	FieldWarningsID    = "warnings"
 )
 
 // New campaign modal labels
 const (
+	FieldNameLabel        = "Name"
+	FieldTagLabel         = "Tag"
 	FieldDescriptionLabel = "Description"
 	FieldEditionLabel     = "Edition"
-	FieldRulesLabel       = "Rules"
 	FieldSlotsLabel       = "Player Slots"
-	FieldWarningsLabel    = "Content Warnings (comma-separated)"
 )
 
 // New campaign modal placeholders
 const (
+	FieldNamePlaceholder        = "e.g. Curse of Strahd"
+	FieldTagPlaceholder         = "e.g. curse-of-strahd (short, no spaces)"
 	FieldDescriptionPlaceholder = "Describe your campaign setting and premise..."
 	FieldEditionPlaceholder     = "e.g. 5e, 3.5e, PF2e"
-	FieldRulesPlaceholder       = "e.g. 2024, 2014, homebrew"
 	FieldSlotsPlaceholder       = "e.g. 4"
-	FieldWarningsPlaceholder    = "e.g. Violence, Horror, Permadeath"
 )

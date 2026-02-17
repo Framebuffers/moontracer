@@ -7,6 +7,8 @@ services:
     secrets:
       - discord_bot_token
       - discord_guild_id
+    environment:
+      DB_PATH: /app/data/moontracer.db
     volumes:
       - /mnt/shared/suncaster/moontracer:/app/data
     networks:
