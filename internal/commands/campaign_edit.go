@@ -12,3 +12,4 @@ type campaignEdit struct {
 func (r *campaignEdit) Data() *discordgo.ApplicationCommand { return nil }
 
 func (r *campaignEdit) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {}
+

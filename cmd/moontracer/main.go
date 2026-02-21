@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"moontracer/internal/commands"
 	"moontracer/internal/db"
 	"moontracer/internal/discord"
 )
@@ -32,6 +33,10 @@ func main() {
 
 	if err := db.Migrate(bunDB); err != nil {
 		log.Fatalf("failed to migrate database: %v", err)
+	}
+
+	if err := commands.RegisterCommands(bunDB); err != nil {
+		log.Fatalf("failed to register commands: %v", err)
 	}
 
 	bot, err := discord.New(token, guildID, bunDB)

@@ -6,6 +6,7 @@ import (
 	"moontracer/internal/messages"
 )
 
+// pingCommand tests the connectivity between client and server. Responds with 'pong!' when successful.
 type pingCommand struct{}
 
 func (c *pingCommand) Data() *discordgo.ApplicationCommand {

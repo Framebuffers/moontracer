@@ -19,3 +19,4 @@ func (r *addPlayer) Data() *discordgo.ApplicationCommand {
 }
 
 func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {}
+

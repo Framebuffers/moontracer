@@ -78,6 +78,7 @@ func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *dis
 		Description: c.Description,
 		Color:       0x5865F2,
 		Fields: []*discordgo.MessageEmbedField{
+			{Name: "Tag", Value: c.Tag, Inline: true},
 			{Name: "DM", Value: fmt.Sprintf("<@%s>", c.DungeonMaster), Inline: true},
 			{Name: "Status", Value: status, Inline: true},
 			{Name: "Slots", Value: fmt.Sprintf("%d", c.Slots), Inline: true},
