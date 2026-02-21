@@ -13,6 +13,7 @@ func All(db *bun.DB) []Command {
 	return []Command{
 		&pingCommand{},
 		&awooCommand{},
+		&helpCommand{db: *db},
 		&campaignCommand{db: db},
 		&playerCommand{db: db},
 		&registerCommand{db: db},

@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -24,15 +25,16 @@ func (h *helpCommand) Data() *discordgo.ApplicationCommand {
 func (c *helpCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	commands := All(&c.db)
 
-	helpText := "**Available Commands: **\n"
+	var helpText strings.Builder
+	helpText.WriteString("**Available Commands: **\n")
 	for _, cmd := range commands {
 		data := cmd.Data()
-		helpText += fmt.Sprintf("**/%s** - %s\n", data.Name, data.Description)
+		fmt.Fprintf(&helpText, "**/%s** - %s\n", data.Name, data.Description)
 	}
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: helpText,
+			Content: helpText.String(),
 		},
 	})
 }
