@@ -13,6 +13,18 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		1. User runs `/newcampaign` command.
+		2. Bot responds with a modal (form) to fill in campaign details (name, tag, description, edition, slots).
+		3. User submits the modal, triggering `modal_campaign_create`.
+		4. `modalCampaignCreate` parses form fields, validates inputs (slot count > 0, tag uniqueness).
+		5. Creates Campaign in DB with IsApproved=false (pending admin approval).
+		6. Finds all users with the ADMIN_ROLE_NAME role and sends them DMs with Approve/Deny buttons.
+		7. Responds to creator ephemerally: "Your campaign request has been submitted for admin approval."
+*/
+
+// modalCampaignCreate handles the modal submission from `/newcampaign` to create a new campaign.
 type modalCampaignCreate struct {
 	db *bun.DB
 }

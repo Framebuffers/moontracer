@@ -4,12 +4,12 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func AllComponents(db *bun.DB, guildID, adminRole string) []ComponentHandler {
+func AllComponents(db *bun.DB, guildID string, adminRoleName string) []ComponentHandler {
 	return []ComponentHandler{
-		&campaignJoin{db: db},
-		&campaignLeave{db: db},
-		&campaignToggle{db: db},
-		&campaignView{db: db},
+		&campaignJoin{db: db, guildID: guildID, adminRoleName: adminRoleName},
+		&campaignLeave{db: db, guildID: guildID, adminRoleName: adminRoleName},
+		&campaignToggle{db: db, guildID: guildID, adminRoleName: adminRoleName},
+		&campaignView{db: db, guildID: guildID, adminRoleName: adminRoleName},
 	}
 }
 

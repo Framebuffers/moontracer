@@ -13,14 +13,31 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		1. User clicks `/mycampaigns`, getting a list of which ones the Player is a part of.
+		2. User clicks a button, like `campaign_view:suvachi`
+		3. `campaignView` catches it, parses the tag given by `CustomID`
+		4. Fetches Player and Campaign data from the DB.
+		5. Respons with an ephemeral view (only the player can see it).
+
+*/
+
+// campaignView is a ComponentHandler that shows campaign details **only to the user** through an ephemeral embed.
+// It's a quick preview of the campaigns a user is present on.
+// The difference with `/campaign` is that it is a quick, private, simplified view of a Campaign data.
 type campaignView struct {
-	db *bun.DB
+	db            *bun.DB
+	guildID       string
+	adminRoleName string
 }
 
+// CustomIDPrefix is the unique identifier used to route it through `handler.go`, identifying it as a ComponentHandler.
 func (h *campaignView) CustomIDPrefix() string {
 	return "campaign_view"
 }
 
+// HandleComponents handles the process of fetching data from the DB and composing the final interaction to be returned to Discord.
 func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
 	if len(parts) < 2 {
@@ -53,6 +70,7 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	})
 }
 
+// buildCampaignEmbed builds the ephemeral embed that the user will see, with all the Campaigns the Player is a player on.
 func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordgo.MessageEmbed {
 	status := "Closed"
 	if c.IsOpen {
