@@ -20,6 +20,11 @@ func main() {
 		log.Fatal("DISCORD_GUILD_ID is required")
 	}
 
+	adminRole := os.Getenv("ADMIN_ROLE_NAME")
+	if adminRole == "" {
+		log.Fatal("ADMIN_ROLE_NAME is required")
+	}
+
 	dbPath := os.Getenv("DB_PATH")
 	if dbPath == "" {
 		dbPath = "moontracer.db"
@@ -39,7 +44,7 @@ func main() {
 		log.Fatalf("failed to register commands: %v", err)
 	}
 
-	bot, err := discord.New(token, guildID, bunDB)
+	bot, err := discord.New(token, guildID, adminRole, bunDB)
 	if err != nil {
 		log.Fatalf("failed to create bot: %v", err)
 	}

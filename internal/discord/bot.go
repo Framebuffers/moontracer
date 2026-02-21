@@ -18,16 +18,17 @@ type Bot struct {
 	session    *discordgo.Session
 	guildID    string
 	db         *bun.DB
+	role       string
 	registered []*discordgo.ApplicationCommand
 }
 
-// New creates a Bot with the given token, guild ID, and database connection.
-func New(token, guildID string, db *bun.DB) (*Bot, error) {
+// New creates a Bot with the given token, guild ID, admin role name, and database connection.
+func New(token, guildID, adminRole string, db *bun.DB) (*Bot, error) {
 	s, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{session: s, guildID: guildID, db: db}, nil
+	return &Bot{session: s, guildID: guildID, db: db, role: adminRole}, nil
 }
 
 // Run opens the gateway, registers guild-scoped commands, blocks until
@@ -35,8 +36,8 @@ func New(token, guildID string, db *bun.DB) (*Bot, error) {
 func (b *Bot) Run() error {
 	b.session.AddHandler(NewHandler(
 		commands.All(b.db),
-		interactions.AllComponents(b.db),
-		interactions.AllModals(b.db),
+		interactions.AllComponents(b.db, b.guildID, b.role),
+		interactions.AllModals(b.db, b.guildID, b.role),
 	))
 
 	if err := b.session.Open(); err != nil {
