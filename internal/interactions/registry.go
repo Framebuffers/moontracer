@@ -4,7 +4,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func AllComponents(db *bun.DB) []ComponentHandler {
+func AllComponents(db *bun.DB, guildID, adminRole string) []ComponentHandler {
 	return []ComponentHandler{
 		&campaignJoin{db: db},
 		&campaignLeave{db: db},
@@ -13,7 +13,7 @@ func AllComponents(db *bun.DB) []ComponentHandler {
 	}
 }
 
-func AllModals(db *bun.DB) []ModalHandler {
+func AllModals(db *bun.DB, guildID, adminRole string) []ModalHandler {
 	return []ModalHandler{
 		&modalCampaignCreate{db: db},
 	}

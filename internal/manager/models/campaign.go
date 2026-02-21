@@ -49,6 +49,9 @@ type Campaign struct {
 
 	// Has-many relation.
 	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=campaign_id" json:"campaign_players,omitempty"`
+
+	// Has this campaign been approved to be published?
+	IsApproved bool `bun:",notnull,default:false"`
 }
 
 // GameConfig holds the game system details for a campaign.

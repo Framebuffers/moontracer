@@ -27,6 +27,7 @@ const (
 	StatusCancelled CampaignPlayerStatus = "cancelled"
 	StatusFinished  CampaignPlayerStatus = "finished"
 	StatusBanned    CampaignPlayerStatus = "banned"
+	StatusPending   CampaignPlayerStatus = "pending"
 )
 
 // CampaignPlayer is the join table between Player and Campaign.
