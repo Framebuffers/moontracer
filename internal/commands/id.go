@@ -13,6 +13,7 @@ import (
 	"moontracer/internal/messages"
 )
 
+// campaignCommand returns an embed with the details of a Campaign.
 type campaignCommand struct {
 	db *bun.DB
 }

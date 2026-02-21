@@ -29,8 +29,8 @@ const (
 	MyCampaignsCommandDesc = "List the campaigns you're part of."
 	AddPlayerCommandName   = "add_player"
 	AddPlayerCommandDesc   = "Adds a new player to a Campaign."
-	TagCommandName = "tag"
-	TagCommandDesc = "Campaign tag to look up."
+	TagCommandName         = "tag"
+	TagCommandDesc         = "Campaign tag to look up."
 )
 
 // Registration
@@ -142,4 +142,10 @@ const (
 	FieldDescriptionPlaceholder = "Describe your campaign setting and premise..."
 	FieldEditionPlaceholder     = "e.g. 5e, 3.5e, PF2e"
 	FieldSlotsPlaceholder       = "e.g. 4"
+)
+
+// Help command
+const (
+	HelpCommandName = "Help"
+	HelpCommandDesc = "Get a list of all available commands."
 )

@@ -18,7 +18,7 @@ type Campaign struct {
 	// Display name for the campaign.
 	Name string `bun:",notnull" json:"name"`
 
-	// Short, user-facing identifier for lookups (e.g. "strahd", "avalon", "itzaal", "nuevosur").
+	// Short, user-facing identifier for lookups (e.g. "strahd", "avalon", "itzaal", "nuevosur", "suvachi").
 	Tag string `bun:",unique,notnull" json:"tag"`
 
 	// Player FK of the user (DM) who created the campaign.

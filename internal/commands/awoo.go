@@ -23,3 +23,4 @@ func (c *awooCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 		},
 	})
 }
+

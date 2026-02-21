@@ -9,6 +9,7 @@ import (
 	"moontracer/internal/messages"
 )
 
+// newCampaign creates a modal to input information needed to create a new Campaign.
 type newCampaign struct {
 	db *bun.DB
 }

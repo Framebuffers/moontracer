@@ -15,6 +15,7 @@ func Migrate(db *bun.DB) error {
 	ctx := context.Background()
 
 	tables := []interface{}{
+		(*models.CommandRecord)(nil),
 		(*models.Player)(nil),
 		(*models.Token)(nil),
 		(*models.Campaign)(nil),
@@ -29,13 +30,13 @@ func Migrate(db *bun.DB) error {
 	}
 
 	// Add columns that may be missing from earlier schema versions.
+	// This fixes an issue where, when deploying the bot, it didn't migrate new commands or players.
 	alterStmts := []string{
 		"ALTER TABLE campaigns ADD COLUMN name TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE campaigns ADD COLUMN tag TEXT NOT NULL DEFAULT ''",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
-			// "duplicate column name" means it already exists — safe to ignore.
 			if !isDuplicateColumn(err) {
 				return err
 			}
