@@ -13,8 +13,20 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		1. User clicks `/campaign tag:X` to view campaign details.
+		2. User clicks the "Join Campaign" button, triggering `campaign_join:X`.
+		3. `campaignJoin` validates: user is registered, campaign exists & is open, user not already in it.
+		4. Inserts CampaignPlayer record with StatusPending (awaiting DM approval).
+		5. Responds to user ephemerally: "Your join request has been sent to the DM for approval."
+*/
+
+// campaignJoin handles when a player clicks "Join Campaign" on an open campaign.
 type campaignJoin struct {
-	db *bun.DB
+	db            *bun.DB
+	guildID       string
+	adminRoleName string
 }
 
 func (h *campaignJoin) CustomIDPrefix() string {

@@ -13,8 +13,20 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		1. User clicks `/campaign tag:X` to view campaign details.
+		2. User clicks the "Leave Campaign" button, triggering `campaign_leave:X`.
+		3. `campaignLeave` validates: campaign exists, user is active member, user is not the DM.
+		4. Deletes the CampaignPlayer record for that user.
+		5. Responds to user ephemerally: "You have left campaign <Name>".
+*/
+
+// campaignLeave handles when a player clicks "Leave Campaign" to remove themselves.
 type campaignLeave struct {
-	db *bun.DB
+	db            *bun.DB
+	guildID       string
+	adminRoleName string
 }
 
 func (h *campaignLeave) CustomIDPrefix() string {
