@@ -146,6 +146,6 @@ const (
 
 // Help command
 const (
-	HelpCommandName = "Help"
+	HelpCommandName = "help"
 	HelpCommandDesc = "Get a list of all available commands."
 )
