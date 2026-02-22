@@ -31,6 +31,17 @@ func New(token, guildID, adminRole string, db *bun.DB) (*Bot, error) {
 	return &Bot{session: s, guildID: guildID, db: db, role: adminRole}, nil
 }
 
+/*
+	Flow (Run):
+		1. Add the main event handler to the session (command dispatcher + component/modal router).
+		2. Open the Discord gateway connection.
+		3. Log in and get the app ID.
+		4. Register all commands with Discord for the guild (creates /, /campaign, /newcampaign, etc.).
+		5. Block waiting for SIGINT/SIGTERM (Ctrl+C).
+		6. On shutdown signal, remove all registered commands from Discord.
+		7. Close the gateway connection and return.
+*/
+
 // Run opens the gateway, registers guild-scoped commands, blocks until
 // SIGINT/SIGTERM, then removes commands and closes the session.
 func (b *Bot) Run() error {

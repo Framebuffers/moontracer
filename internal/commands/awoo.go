@@ -8,6 +8,7 @@ import (
 
 type awooCommand struct{}
 
+// Data is the command metadata that Discord shows to users.
 func (c *awooCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        messages.AwooCommandName,
@@ -15,6 +16,7 @@ func (c *awooCommand) Data() *discordgo.ApplicationCommand {
 	}
 }
 
+// Execute is the logic that runs when the user invokes that command.
 func (c *awooCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -23,4 +25,3 @@ func (c *awooCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 		},
 	})
 }
-

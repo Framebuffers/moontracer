@@ -15,6 +15,7 @@ type helpCommand struct {
 	db bun.DB
 }
 
+// Data is the command metadata that Discord shows to users.
 func (h *helpCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        msg.HelpCommandName,
@@ -22,6 +23,7 @@ func (h *helpCommand) Data() *discordgo.ApplicationCommand {
 	}
 }
 
+// Execute is the logic that runs when the user invokes that command.
 func (c *helpCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	commands := All(&c.db)
 
