@@ -4,6 +4,7 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// AllComponents returns an array with all the `ComponentHandler`s available to the bot.
 func AllComponents(db *bun.DB, guildID string, adminRoleName string) []ComponentHandler {
 	return []ComponentHandler{
 		&campaignJoin{db: db, guildID: guildID, adminRoleName: adminRoleName},
@@ -13,6 +14,7 @@ func AllComponents(db *bun.DB, guildID string, adminRoleName string) []Component
 	}
 }
 
+// AllModals returns an array with all the ModalHandlers available to the bot.
 func AllModals(db *bun.DB, guildID, adminRole string) []ModalHandler {
 	return []ModalHandler{
 		&modalCampaignCreate{db: db},

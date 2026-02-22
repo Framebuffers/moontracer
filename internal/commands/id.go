@@ -18,6 +18,7 @@ type campaignCommand struct {
 	db *bun.DB
 }
 
+// Data is the command metadata that Discord shows to users.
 func (c *campaignCommand) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        messages.CampaignCommandName,
@@ -33,6 +34,7 @@ func (c *campaignCommand) Data() *discordgo.ApplicationCommand {
 	}
 }
 
+// Execute is the logic that runs when the user invokes that command.
 func (c *campaignCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	var tag string
 	for _, opt := range i.ApplicationCommandData().Options {

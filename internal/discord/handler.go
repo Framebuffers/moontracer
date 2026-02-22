@@ -10,6 +10,18 @@ import (
 	"moontracer/internal/interactions"
 )
 
+/*
+	Flow:
+		1. NewHandler receives all registered commands, component handlers, and modal handlers.
+		2. Builds three lookup maps: cmdLookup (by command name), compLookup (by CustomIDPrefix), modalLookup (by CustomIDPrefix).
+		3. Returns a closure that acts as the main Discord event handler — this closure receives ALL interactions.
+		4. For each interaction:
+			a. If ApplicationCommand: look up by command name, call Execute().
+			b. If MessageComponent (button): extract prefix from CustomID (split on ":"), look up handler, call HandleComponents().
+			c. If ModalSubmit: extract prefix from CustomID, look up handler, call HandleModal().
+		5. Unknown interactions are logged and ignored.
+*/
+
 // NewHandler returns a discordgo event handler that dispatches slash commands,
 // component interactions (buttons), and modal submissions.
 func NewHandler(cmds []commands.Command, components []interactions.ComponentHandler, modals []interactions.ModalHandler) func(s *discordgo.Session, i *discordgo.InteractionCreate) {

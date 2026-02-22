@@ -15,10 +15,12 @@ const (
 	RoleDM     CampaignPlayerRole = "dm"
 )
 
-// CampaignPlayerStatus tracks a participant's standing in a campaign.
-// Campaigns can have four (4) stages: active, on hiatus, cancelled or finished.
-// But, since player can be players as well, a fifth state, `banned`, is added.
-// This way, the player <-> DM relationship is satisfied.
+// CampaignPlayerStatus tracks a participant's (DM or Player) standing in a campaign.
+// Before a Campaign is approved to be listed as active, it remanins by default as "pending".
+// After it gets approved, it becomes "active".
+// A campaign then can change to be on "hiatus" (paused by the DM until further notice), "cancelled" or "finished".
+// Since this type also defines the relationship between player and DM, a sixth status is added: "banned".
+// This last status is used when a user is permanently banned from a campaign, satisfying the player <-> DM relationship.
 type CampaignPlayerStatus string
 
 const (

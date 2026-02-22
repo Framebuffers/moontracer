@@ -15,6 +15,9 @@ func main() {
 	populateDB()
 }
 
+// populateDB opens or creates a DB for persistent data.
+// Foreign Key constraint enforcement is enabled. This will make SQLite reject any insert/update operation that has an invalid Campaign ID,
+// and to prevent deleting a campaign with players still on it by accident (orphaned records).
 func populateDB() {
 	sqldb, err := sql.Open(sqliteshim.ShimName, "file:data/moontracer.db?_pragma=foreign_keys(1)")
 	if err != nil {
