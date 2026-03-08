@@ -9,6 +9,7 @@ services:
       - discord_guild_id
     environment:
       DB_PATH: /app/data/moontracer.db
+      ADMIN_ROLE_NAME: ${ADMIN_ROLE_NAME}
     volumes:
       - /mnt/shared/suncaster/moontracer:/app/data
     networks:
