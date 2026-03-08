@@ -36,13 +36,13 @@ func New(token, guildID, adminRole string, db *bun.DB) (*Bot, error) {
 		1. Add the main event handler to the session (command dispatcher + component/modal router).
 		2. Open the Discord gateway connection.
 		3. Log in and get the app ID.
-		4. Register all commands with Discord for the guild (creates /, /campaign, /newcampaign, etc.).
+		4. Register all commands globally with Discord (creates /, /campaign, /newcampaign, etc.).
 		5. Block waiting for SIGINT/SIGTERM (Ctrl+C).
 		6. On shutdown signal, remove all registered commands from Discord.
 		7. Close the gateway connection and return.
 */
 
-// Run opens the gateway, registers guild-scoped commands, blocks until
+// Run opens the gateway, registers global commands, blocks until
 // SIGINT/SIGTERM, then removes commands and closes the session.
 func (b *Bot) Run() error {
 	b.session.AddHandler(NewHandler(
@@ -77,19 +77,19 @@ func (b *Bot) Run() error {
 
 func (b *Bot) registerCommands(appID string) error {
 	for _, cmd := range commands.All(b.db) {
-		created, err := b.session.ApplicationCommandCreate(appID, b.guildID, cmd.Data())
+		created, err := b.session.ApplicationCommandCreate(appID, "", cmd.Data())
 		if err != nil {
 			return err
 		}
 		b.registered = append(b.registered, created)
-		log.Printf("registered /%s", created.Name)
+		log.Printf("registered /%s (global)", created.Name)
 	}
 	return nil
 }
 
 func (b *Bot) removeCommands(appID string) {
 	for _, cmd := range b.registered {
-		if err := b.session.ApplicationCommandDelete(appID, b.guildID, cmd.ID); err != nil {
+		if err := b.session.ApplicationCommandDelete(appID, "", cmd.ID); err != nil {
 			log.Printf("failed to remove /%s: %v", cmd.Name, err)
 		} else {
 			log.Printf("removed /%s", cmd.Name)
