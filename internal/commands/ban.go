@@ -5,12 +5,12 @@ import (
 	"github.com/uptrace/bun"
 )
 
-type kick struct {
+type ban struct {
 	db *bun.DB
 }
 
 // Data is the command metadata that Discord shows to users.
-func (r *kick) Data() *discordgo.ApplicationCommand { return nil }
+func (r *ban) Data() *discordgo.ApplicationCommand { return nil }
 
 // Execute is the logic that runs when the user invokes that command.
-func (r *kick) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {}
+func (r *ban) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {}
