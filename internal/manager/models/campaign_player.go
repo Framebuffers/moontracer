@@ -6,13 +6,24 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// CampaignPlayerRole distinguishes players from DMs within a campaign.
+// Role distinguishes players from DMs within a campaign.
 // Players can be DMs.
-type CampaignPlayerRole string
+type Role string
 
+// Permissions are hierarchical: admins can override mod permissions, mod can override DMs and so on.
+// e.g. to authorise a campaign, a DM has to ask a mod for permission.
+// But, if a mod account gets compromised, an admin can override any mod and act as the final decisionmaker of the whole permissions chain.
+// Every new member starts as a player, with the server admin as the only admin account.
+// On Moontracer's config, a Moderator role can be used to automatically give mod access to the bot.
+// A player becomes a DM when: 1) uploads a request for a new campaign (filling the new campaign form), and 2) gets authorised by a mod.
+// A player can be part of a Campaign if:
+//  1. the campaign is active and properly authorised by a mod/admin.
+//  2. the DM is active, authorised as such, owner of the campaign and is not banned.
 const (
-	RolePlayer CampaignPlayerRole = "player"
-	RoleDM     CampaignPlayerRole = "dm"
+	RolePlayer    Role = "player"
+	RoleDM        Role = "dm"
+	RoleModerator Role = "mod"
+	RoleAdmin     Role = "admin"
 )
 
 // CampaignPlayerStatus tracks a participant's (DM or Player) standing in a campaign.
@@ -44,7 +55,7 @@ type CampaignPlayer struct {
 	CampaignID string    `bun:",pk,notnull" json:"campaign_id"`
 	Campaign   *Campaign `bun:"rel:belongs-to,join:campaign_id=id" json:"campaign,omitempty"`
 
-	Role CampaignPlayerRole `bun:",notnull,default:'player'" json:"role"`
+	Role Role `bun:",notnull,default:'player'" json:"role"`
 
 	TokenID string `bun:",nullzero" json:"token_id,omitempty"`
 	Token   *Token `bun:"rel:belongs-to,join:token_id=id" json:"token,omitempty"`

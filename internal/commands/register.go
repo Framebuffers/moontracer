@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"moontracer/internal/auth"
 	"moontracer/internal/db"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
@@ -28,7 +29,7 @@ func (r *registerCommand) Data() *discordgo.ApplicationCommand {
 func (r *registerCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	userID := i.Member.User.ID
 
-	registered, err := isRegistered(r.db, userID)
+	registered, err := auth.Authorize(r.db, userID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("%s %v", messages.RegistrationCheckError, err)
 		respond(s, i, messages.GenericErrorMessage)

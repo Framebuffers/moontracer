@@ -8,6 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
 	"moontracer/internal/db"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
@@ -44,9 +45,14 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	tag := parts[1]
 	userID := i.Member.User.ID
 
-	// is the player registered?
-	_, err := db.GetByID[models.Player](h.db, userID)
+	// Is the player registered and not globally banned?
+	ok, err := auth.Authorize(h.db, userID, auth.ScopePlayer, "")
 	if err != nil {
+		log.Printf("auth check failed: %v", err)
+		respondInteraction(s, i, messages.GenericErrorMessage)
+		return
+	}
+	if !ok {
 		respondInteraction(s, i, messages.NotRegisteredMessage)
 		return
 	}

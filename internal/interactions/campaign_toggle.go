@@ -8,6 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
 	"moontracer/internal/db"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
@@ -49,7 +50,14 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
-	if campaign.DungeonMaster != userID {
+	// DM of this campaign or a server mod/admin can toggle status.
+	ok, err := auth.AuthorizeAny(h.db, userID, campaign.ID, auth.ScopeDM, auth.ScopeMod)
+	if err != nil {
+		log.Printf("auth check failed: %v", err)
+		respondInteraction(s, i, messages.GenericErrorMessage)
+		return
+	}
+	if !ok {
 		respondInteraction(s, i, messages.MasterCanToggleStatusErrorMessage)
 		return
 	}

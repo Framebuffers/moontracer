@@ -54,6 +54,28 @@ type Campaign struct {
 	IsApproved bool `bun:",notnull,default:false"`
 }
 
+// PlayerMap returns a map of player ID to CampaignPlayer for quick lookups.
+// Requires CampaignPlayers to be loaded (via Relation).
+func (c *Campaign) PlayerMap() map[string]*CampaignPlayer {
+	m := make(map[string]*CampaignPlayer, len(c.CampaignPlayers))
+	for i := range c.CampaignPlayers {
+		m[c.CampaignPlayers[i].PlayerID] = &c.CampaignPlayers[i]
+	}
+	return m
+}
+
+// DMMap returns a map of player ID to CampaignPlayer for DMs only.
+// Requires CampaignPlayers to be loaded (via Relation).
+func (c *Campaign) DMMap() map[string]*CampaignPlayer {
+	m := make(map[string]*CampaignPlayer)
+	for i := range c.CampaignPlayers {
+		if c.CampaignPlayers[i].Role == RoleDM {
+			m[c.CampaignPlayers[i].PlayerID] = &c.CampaignPlayers[i]
+		}
+	}
+	return m
+}
+
 // GameConfig holds the game system details for a campaign.
 type GameConfig struct {
 	Edition      string   `bun:",notnull,default:''" json:"edition"`

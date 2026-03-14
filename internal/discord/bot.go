@@ -9,6 +9,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
 	"moontracer/internal/commands"
 	"moontracer/internal/interactions"
 )
@@ -51,6 +52,13 @@ func (b *Bot) Run() error {
 		interactions.AllModals(b.db, b.guildID, b.role),
 	))
 
+	// Re-sync a single player's role when their Discord guild roles change.
+	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
+		if err := auth.SyncServerRoles(b.db, s, e.GuildID, b.role); err != nil {
+			log.Printf("warning: role sync on member update failed: %v", err)
+		}
+	})
+
 	if err := b.session.Open(); err != nil {
 		return err
 	}
@@ -61,6 +69,15 @@ func (b *Bot) Run() error {
 
 	if err := b.registerCommands(appID); err != nil {
 		return err
+	}
+
+	// Sync server roles from Discord into the database.
+	if b.guildID != "" {
+		if err := auth.SyncServerRoles(b.db, b.session, b.guildID, b.role); err != nil {
+			log.Printf("warning: failed to sync server roles: %v", err)
+		} else {
+			log.Println("server roles synced from Discord")
+		}
 	}
 
 	log.Println("bot is running — press Ctrl+C to exit")

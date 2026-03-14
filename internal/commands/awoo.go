@@ -6,6 +6,12 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Test command:
+		- Checks for connectivity with the VPS/Docker container.
+		- Note: the bot uses WebHooks only.
+*/
+
 type awooCommand struct{}
 
 // Data is the command metadata that Discord shows to users.

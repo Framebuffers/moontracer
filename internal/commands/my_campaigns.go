@@ -8,6 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -29,7 +30,7 @@ func (p *playerCommand) Data() *discordgo.ApplicationCommand {
 func (p *playerCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	userID := i.Member.User.ID
 
-	registered, err := isRegistered(p.db, userID)
+	registered, err := auth.Authorize(p.db, userID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("%s %v", messages.RegistrationCheckError, err)
 		respond(s, i, messages.GenericErrorMessage)

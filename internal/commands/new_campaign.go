@@ -6,6 +6,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
 	"moontracer/internal/messages"
 )
 
@@ -26,7 +27,7 @@ func (n *newCampaign) Data() *discordgo.ApplicationCommand {
 func (n *newCampaign) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	userID := i.Member.User.ID
 
-	registered, err := isRegistered(n.db, userID)
+	registered, err := auth.Authorize(n.db, userID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("%s %v", messages.RegistrationCheckError, err)
 		respond(s, i, messages.GenericErrorMessage)
