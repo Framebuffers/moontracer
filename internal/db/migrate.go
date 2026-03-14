@@ -36,6 +36,9 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE campaigns ADD COLUMN tag TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE campaigns ADD COLUMN is_approved INTEGER NOT NULL DEFAULT 0",
 		"UPDATE campaigns SET is_approved = 1 WHERE is_approved = 0",
+		"ALTER TABLE players ADD COLUMN role TEXT NOT NULL DEFAULT 'player'",
+		"ALTER TABLE players ADD COLUMN is_banned INTEGER NOT NULL DEFAULT 0",
+		"ALTER TABLE players ADD COLUMN ban_reason TEXT",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {

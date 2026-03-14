@@ -8,6 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
 	"moontracer/internal/db"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
@@ -42,13 +43,20 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	tag := parts[1]
 	userID := i.Member.User.ID
 
-	// DMs cannot leave their own campaign
 	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
 		respondInteraction(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
-	if campaign.DungeonMaster == userID {
+
+	// DMs cannot leave their own campaign.
+	isDM, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaign.ID)
+	if err != nil {
+		log.Printf("auth check failed: %v", err)
+		respondInteraction(s, i, messages.GenericErrorMessage)
+		return
+	}
+	if isDM {
 		respondInteraction(s, i, messages.MasterIsLeavingCampaignErrorMessage)
 		return
 	}

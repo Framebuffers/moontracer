@@ -1,6 +1,9 @@
 package auth
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
@@ -8,12 +11,22 @@ import (
 	"moontracer/internal/manager/models"
 )
 
+/*
+	Flow:
+		1. Loads Player.
+		2. Checks if Player has a GlobalBan.
+		3. Switches on scope: Player (if it exists and is not banned), Member, DM, Mod, Admin.
+		4. Returns a bool if authorized or not.
+
+	Note:
+		In the case a composite query if two or more permissions are set, use `AuthorizeAny()`
+*/
+
 // Scope represents a permission level required to perform an action.
-// Scopes are independent — each is checked against its own data source.
 type Scope string
 
 const (
-	// ScopePlayer — any registered player (exists in players table).
+	// ScopePlayer — any registered player (exists in players table, not banned).
 	ScopePlayer Scope = "player"
 
 	// ScopeMember — an active participant in a specific campaign.
@@ -22,21 +35,82 @@ const (
 	// ScopeDM — the dungeon master of a specific campaign.
 	ScopeDM Scope = "dm"
 
-	// ScopeMod — a user with the admin/mod Discord role in the guild.
+	// ScopeMod — a user with the mod or admin server role.
 	ScopeMod Scope = "mod"
+
+	// ScopeAdmin — a user with the admin server role.
+	ScopeAdmin Scope = "admin"
 )
 
-// TODO(human): Implement the Authorize function.
 // Authorize checks whether a user has the required scope.
-// For ScopePlayer and ScopeMod, campaignID can be empty.
+// For ScopePlayer, ScopeMod, and ScopeAdmin, campaignID can be empty.
 // For ScopeMember and ScopeDM, campaignID is required.
-func Authorize(database *bun.DB, s *discordgo.Session, userID, guildID, adminRole string, required Scope, campaignID string) (bool, error) {
+// Loads the player in a single query, filtering CampaignPlayers to the
+// relevant campaign when needed.
+func Authorize(database *bun.DB, userID string, required Scope, campaignID string) (bool, error) {
+	ctx := context.Background()
+
+	var player models.Player
+	q := database.NewSelect().Model(&player).Where("id = ?", userID)
+
+	// Only eager-load campaign memberships when the scope needs them.
+	if required == ScopeMember || required == ScopeDM {
+		q = q.Relation("CampaignPlayers", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("campaign_id = ?", campaignID)
+		})
+	}
+
+	err := q.Scan(ctx)
+	if err != nil {
+		return false, nil // player not found = not authorized
+	}
+
+	// Global ban blocks everything.
+	if player.IsBanned {
+		return false, nil
+	}
+
+	switch required {
+	case ScopePlayer:
+		return true, nil // exists and not banned
+
+	case ScopeMember:
+		return player.IsMemberOf(campaignID), nil
+
+	case ScopeDM:
+		return player.IsDMOf(campaignID), nil
+
+	case ScopeMod:
+		return player.IsMod(), nil
+
+	case ScopeAdmin:
+		return player.IsAdmin(), nil
+
+	default:
+		return false, fmt.Errorf("unknown scope: %s", required)
+	}
+}
+
+// AuthorizeAny returns true if the user has ANY of the provided scopes.
+// Useful for compound checks like "DM or Mod can do this", because: everyone is a Player.
+func AuthorizeAny(database *bun.DB, userID string, campaignID string, scopes ...Scope) (bool, error) {
+	for _, scope := range scopes {
+		ok, err := Authorize(database, userID, scope, campaignID)
+		if err != nil {
+			return false, err
+		}
+		if ok {
+			return true, nil
+		}
+	}
 	return false, nil
 }
 
 // Resolve returns all user IDs that match the given scope for a campaign.
 // Used by the notification system to determine who should receive a message.
 func Resolve(database *bun.DB, s *discordgo.Session, campaignID, guildID, adminRole string, scope Scope) ([]string, error) {
+	ctx := context.Background()
+
 	switch scope {
 	case ScopePlayer:
 		players, err := db.GetAll[models.Player](database)
@@ -69,8 +143,23 @@ func Resolve(database *bun.DB, s *discordgo.Session, campaignID, guildID, adminR
 		}
 		return []string{campaign.DungeonMaster}, nil
 
-	case ScopeMod:
-		return adminsWithRole(s, guildID, adminRole)
+	case ScopeMod, ScopeAdmin:
+		// Query the DB for players with the matching server role.
+		var players []models.Player
+		q := database.NewSelect().Model(&players)
+		if scope == ScopeAdmin {
+			q = q.Where("role = ?", models.ServerRoleAdmin)
+		} else {
+			q = q.Where("role IN (?)", bun.In([]models.ServerRole{models.ServerRoleMod, models.ServerRoleAdmin}))
+		}
+		if err := q.Scan(ctx); err != nil {
+			return nil, err
+		}
+		ids := make([]string, len(players))
+		for i, p := range players {
+			ids[i] = p.ID
+		}
+		return ids, nil
 
 	default:
 		return nil, nil
@@ -78,6 +167,7 @@ func Resolve(database *bun.DB, s *discordgo.Session, campaignID, guildID, adminR
 }
 
 // adminsWithRole returns user IDs of guild members who have the given role name.
+// Used by SyncServerRoles, not by Authorize (which uses the DB).
 func adminsWithRole(s *discordgo.Session, guildID, roleName string) ([]string, error) {
 	roles, err := s.GuildRoles(guildID)
 	if err != nil {
