@@ -1,0 +1,65 @@
+# things to do
+
+role select -> select who can be mod, admin, player or DM
+
+## commands
+- new name: /managecampaigns
+    - check if the player is the DM of *any* campaign.
+    - let player choose which one
+    - options:
+        - edit: re-open creation modal
+        - delete: delete campaign from registry
+        - announce: send a DM to all players
+        - reschedule: change schedule of next session (or all)
+        - ban: ban a member
+search campaigns:
+- lookup: /availablecampaigns args:genre,type
+    - show buttons with styles (campaign, oneshot, westmarch, all, etc)
+    - show a list of groups with the basic info of every available campaign. can be large, limit to 5 with next button
+- /mycampaigns
+    - user focused
+    - similar to the admin one without the edit or ban
+    - add token admin (/tokens [campaign_tag])
+        - add // when joining a campaign, prompt to create their token.
+        - remove
+        - new
+        - list
+- user management:
+    - /ban -> UserSelect
+        - select which one
+        - automatically remove permissions and roles
+        - send notification to Player, can add reason (optional)
+        - log these operations for auditing
+    - /notify -> TextModal + Role Select (IMPORTANT: lock down to campaigns the Player is a member of)
+    - /joincampaign
+        - select from a modal which one
+        - check if there are open slots, if not, it will send a notification to the DM. these can be disabled.
+        - notify the DM only with a DM
+        - DM authorises from within the console, or with a response within the DM itself (if possible)
+    - /leavecampaign
+        - select from modal which one
+        - the DM can choose if it has to be requested or not. this is useful for westmarches where users come and go
+        - remove permissions for the Player, remove DM notifs
+- player control panel composes from role permissions
+- note: it is common to issue a role to players of a campaign, this can be used as a way to manage permissions.
+    - for role selection, permission composing applies: if a player is a DM of more than one campaign, it should be able to select only those on which they are a DM on, it cannot see all roles.
+- plan for audit log
+- configure permissions from within the bot: /admin
+    - set permissions (promote/demote mods, ban players)
+    - admin campaigns (inherit the same controls from DMs, but add all available campaigns)
+    - see current status of all campaigns: how many sessions, last one, banned members, reschedules, announcements
+- testing:
+    - check for currently set roles for each permission tier
+    - only admin has access to test from within its panel (debug only)
+    - check how could I mock these tests
+- future:
+    - send direct messages to players
+        - use permission system
+        - see if responses via message can be done (for notifs)
+        - things like if its gonna go or not to a rescheduled session, send a message to a DM using the modal instead.
+    - threads
+        - this is a big one:
+        - create channels for each new campaign
+        - add threads for roleplay, announcements, character descriptions, etc.
+        - set to read-only/DM only
+        - add campaign to server events

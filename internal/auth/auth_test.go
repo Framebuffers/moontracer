@@ -1,0 +1,286 @@
+package auth
+
+import (
+	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"moontracer/internal/manager/models"
+	"moontracer/internal/testutil"
+)
+
+// --- test helpers ---
+
+func newPlayer(id string, role models.ServerRole, banned bool) *models.Player {
+	return &models.Player{
+		ID:       id,
+		Role:     role,
+		IsBanned: banned,
+	}
+}
+
+func newCampaignPlayer(playerID, campaignID string, role models.Role, status models.CampaignPlayerStatus) *models.CampaignPlayer {
+	return &models.CampaignPlayer{
+		PlayerID:   playerID,
+		CampaignID: campaignID,
+		Role:       role,
+		Status:     status,
+	}
+}
+
+func newCampaign(id, name, tag, dmID string) *models.Campaign {
+	return &models.Campaign{
+		ID:            id,
+		Name:          name,
+		Tag:           tag,
+		DungeonMaster: dmID,
+	}
+}
+
+/*
+truth table: should be DM?
+
+	| 	  campA	 	|	  campB		|
+	+---------------+---------------+
+
+usr1|		T		|		F		|
+----+---------------+---------------+
+usr2|		F		|		T		|
+----+---------------+---------------+
+*/
+func TestCrossCampaignIsolation(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	// usr1
+	_, err := database.NewInsert().Model(newPlayer("dm1", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+
+	// usr2
+	_, err = database.NewInsert().Model(newPlayer("dm2", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+
+	// campaign A
+	// assign campA to dm1
+	_, err = database.NewInsert().Model(newCampaign("campA", "Test Campaign 1", "test1", "dm1")).Exec(ctx)
+	require.NoError(t, err)
+
+	// campaign B
+	// assign campB to dm2
+	_, err = database.NewInsert().Model(newCampaign("campB", "Test Campaign 2", "test2", "dm2")).Exec(ctx)
+	require.NoError(t, err)
+
+	// add DMs
+	// campaignA -> dm1
+	_, err = database.NewInsert().Model(newCampaignPlayer("dm1", "campA", models.RoleDM, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	// campaignB -> dm2
+	_, err = database.NewInsert().Model(newCampaignPlayer("dm2", "campB", models.RoleDM, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	// is dm1 DM of campaignA? should be true
+	authDM1campaignA, err := Authorize(database, "dm1", ScopeDM, "campA")
+	require.NoError(t, err)
+	assert.True(t, authDM1campaignA, "DM1 should be the master of CampaignA. DM1 is not authorized as master of this campaign.")
+
+	// is dm2 DM of campaignB? should be true
+	authDM2campaignB, err := Authorize(database, "dm2", ScopeDM, "campB")
+	require.NoError(t, err)
+	assert.True(t, authDM2campaignB, "DM2 should be the master of CampaignB. DM2 is not authorized as master of this campaign.")
+
+	// is dm1 DM of campaignB? should be false
+	authDM1campaignB, err := Authorize(database, "dm1", ScopeDM, "campB")
+	require.NoError(t, err)
+	assert.False(t, authDM1campaignB, "DM1 cannot be the master of CampaignB. DM1 is not authorized as a master of this campaign.")
+
+	// is dm2 DM of campaignA? should be false
+	authDM2campaignA, err := Authorize(database, "dm2", ScopeDM, "campA")
+	require.NoError(t, err)
+	assert.False(t, authDM2campaignA, "DM2 cannot be the master of CampaignA. DM2 is not authorized as the master of this campaign.")
+}
+
+// --- Authorize tests ---
+
+func TestAuthorize_UnregisteredUser(t *testing.T) {
+	database := testutil.NewTestDB(t)
+
+	ok, err := Authorize(database, "unknown-user", ScopePlayer, "")
+	require.NoError(t, err)
+	assert.False(t, ok, "unregistered user should not be authorized")
+}
+
+func TestAuthorize_RegisteredPlayer(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("user1", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "user1", ScopePlayer, "")
+	require.NoError(t, err)
+	assert.True(t, ok, "registered player should be authorized for ScopePlayer")
+}
+
+func TestAuthorize_GloballyBannedPlayer(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("banned1", models.ServerRoleAdmin, true)).Exec(ctx)
+	require.NoError(t, err)
+
+	scopes := []Scope{ScopePlayer, ScopeMod, ScopeAdmin}
+	for _, scope := range scopes {
+		ok, err := Authorize(database, "banned1", scope, "")
+		require.NoError(t, err)
+		assert.False(t, ok, "banned player should fail %s", scope)
+	}
+}
+
+func TestAuthorize_ActiveCampaignMember(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("user1", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaign("camp1", "Test Campaign", "test", "dm1")).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaignPlayer("user1", "camp1", models.RolePlayer, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "user1", ScopeMember, "camp1")
+	require.NoError(t, err)
+	assert.True(t, ok, "active member should be authorized")
+}
+
+func TestAuthorize_InactiveCampaignMember(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("user1", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaign("camp1", "Test Campaign", "test", "dm1")).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaignPlayer("user1", "camp1", models.RolePlayer, models.StatusHiatus)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "user1", ScopeMember, "camp1")
+	require.NoError(t, err)
+	assert.False(t, ok, "hiatus member should not be authorized as active member")
+}
+
+func TestAuthorize_DMOfCampaign(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("dm1", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaign("camp1", "DM Campaign", "dmcamp", "dm1")).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaignPlayer("dm1", "camp1", models.RoleDM, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "dm1", ScopeDM, "camp1")
+	require.NoError(t, err)
+	assert.True(t, ok, "DM of campaign should be authorized")
+}
+
+func TestAuthorize_PlayerIsNotDM(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("user1", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaign("camp1", "Campaign", "camp", "dm1")).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaignPlayer("user1", "camp1", models.RolePlayer, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "user1", ScopeDM, "camp1")
+	require.NoError(t, err)
+	assert.False(t, ok, "player role should not authorize as DM")
+}
+
+func TestAuthorize_ModRole(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("mod1", models.ServerRoleMod, false)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "mod1", ScopeMod, "")
+	require.NoError(t, err)
+	assert.True(t, ok, "mod should be authorized for ScopeMod")
+}
+
+func TestAuthorize_AdminImpliesMod(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("admin1", models.ServerRoleAdmin, false)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "admin1", ScopeMod, "")
+	require.NoError(t, err)
+	assert.True(t, ok, "admin should pass ScopeMod check (admin implies mod)")
+}
+
+func TestAuthorize_AdminScope(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("admin1", models.ServerRoleAdmin, false)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "admin1", ScopeAdmin, "")
+	require.NoError(t, err)
+	assert.True(t, ok, "admin should be authorized for ScopeAdmin")
+}
+
+func TestAuthorize_ModIsNotAdmin(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("mod1", models.ServerRoleMod, false)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "mod1", ScopeAdmin, "")
+	require.NoError(t, err)
+	assert.False(t, ok, "mod should not be authorized for ScopeAdmin")
+}
+
+// --- AuthorizeAny tests ---
+
+func TestAuthorizeAny_DMOrMod_IsDM(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("dm1", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaign("camp1", "Campaign", "camp", "dm1")).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaignPlayer("dm1", "camp1", models.RoleDM, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := AuthorizeAny(database, "dm1", "camp1", ScopeDM, ScopeMod)
+	require.NoError(t, err)
+	assert.True(t, ok, "DM should pass AuthorizeAny(DM, Mod)")
+}
+
+func TestAuthorizeAny_Neither(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("user1", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaign("camp1", "Campaign", "camp", "dm1")).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaignPlayer("user1", "camp1", models.RolePlayer, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := AuthorizeAny(database, "user1", "camp1", ScopeDM, ScopeMod)
+	require.NoError(t, err)
+	assert.False(t, ok, "plain player should fail AuthorizeAny(DM, Mod)")
+}
