@@ -144,6 +144,16 @@ const (
 	FieldSlotsPlaceholder       = "e.g. 4"
 )
 
+// Add player
+const (
+	AddPlayerNotDMOrModMessage     = "You must be the DM of this campaign (or a mod) to add players."
+	AddPlayerTargetNotRegistered   = "That user is not registered. They need to `/register` first."
+	AddPlayerAlreadyInCampaign     = "That player is already in this campaign."
+	AddPlayerCampaignFullMessage   = "This campaign is full."
+	AddPlayerFailureMessage        = "Failed to add player to campaign."
+	AddPlayerSuccessMessage        = "Added <@%s> to **%s**!"
+)
+
 // Help command
 const (
 	HelpCommandName = "help"

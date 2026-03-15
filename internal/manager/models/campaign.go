@@ -32,7 +32,7 @@ type Campaign struct {
 	Game GameConfig `bun:"embed:"`
 
 	// Details about your campaign, like open slots, the style, trigger warnings, extra info by the DM to be added to the Campaign's description.
-	Slots       int      `bun:",notnull,default:0" json:"slots"`
+	Slots       int      `bun:",notnull,default:0" json:"slots"` // note: if the campaign has unlimited slots (like a Westmarch), default to -1 (unlimited)
 	IsOpen      bool     `bun:",notnull,default:false" json:"is_open"`
 	IsOneshot   bool     `bun:",notnull,default:false" json:"is_oneshot"`
 	IsWestmarch bool     `bun:",notnull,default:false" json:"is_westmarch"`
@@ -49,6 +49,9 @@ type Campaign struct {
 
 	// Has-many relation.
 	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=campaign_id" json:"campaign_players,omitempty"`
+
+	// Can you add a new player *even if* the Campaign is full?
+	CanOverflow bool `bun:",notnull,default:false" json:"can_overflow"`
 
 	// Has this campaign been approved to be published?
 	IsApproved bool `bun:",notnull,default:false"`
@@ -193,6 +196,11 @@ func (c *Campaign) CreateCampaign(
 	_, err = db.NewInsert().Model(dmEntry).Exec(ctx)
 	if err != nil {
 		return nil, err
+	}
+
+	// if it is a Westmarch, default to unlimited slots
+	if campaign.IsWestmarch == true {
+		campaign.Slots = -1
 	}
 
 	return campaign, nil
