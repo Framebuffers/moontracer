@@ -13,6 +13,20 @@ const (
 	ServerRoleAdmin  ServerRole = "admin"
 )
 
+// Weight returns the numeric rank of a ServerRole for hierarchy comparisons.
+// Higher weight = higher authority. Used by ban protection to ensure
+// a user can only ban someone with a strictly lower role.
+func (r ServerRole) Weight() int {
+	switch r {
+	case ServerRoleAdmin:
+		return 2
+	case ServerRoleMod:
+		return 1
+	default:
+		return 0
+	}
+}
+
 // Player represents a Discord user participating in campaigns.
 // Player is the single owner of all role and permission data.
 // DM status is campaign-scoped via CampaignPlayer, while Mod/Admin are server-wide via Role.
