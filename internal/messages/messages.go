@@ -146,12 +146,26 @@ const (
 
 // Add player
 const (
-	AddPlayerNotDMOrModMessage     = "You must be the DM of this campaign (or a mod) to add players."
-	AddPlayerTargetNotRegistered   = "That user is not registered. They need to `/register` first."
-	AddPlayerAlreadyInCampaign     = "That player is already in this campaign."
-	AddPlayerCampaignFullMessage   = "This campaign is full."
-	AddPlayerFailureMessage        = "Failed to add player to campaign."
-	AddPlayerSuccessMessage        = "Added <@%s> to **%s**!"
+	AddPlayerNotDMOrModMessage   = "You must be the DM of this campaign (or a mod) to add players."
+	AddPlayerTargetNotRegistered = "That user is not registered. They need to `/register` first."
+	AddPlayerAlreadyInCampaign   = "That player is already in this campaign."
+	AddPlayerCampaignFullMessage = "This campaign is full."
+	AddPlayerFailureMessage      = "Failed to add player to campaign."
+	AddPlayerSuccessMessage      = "Added <@%s> to **%s**!"
+)
+
+// Ban
+const (
+	BanCommandName          = "ban"
+	BanCommandDesc          = "Globally ban a player from the server."
+	BanCannotBanSelf        = "You cannot ban yourself."
+	BanInsufficientRole     = "You cannot ban someone of equal or higher role."
+	BanTargetNotFound       = "That player is not registered."
+	BanPlayerNotInCampaign  = "The player ID is not valid for this campaign, or it does not belong to it."
+	BanTargetAlreadyBanned  = "That player is already banned."
+	BanFailureMessage       = "Failed to ban player."
+	BanSuccessMessage       = "Banned <@%s>. They can no longer interact with the bot."
+	BanSuccessReasonMessage = "Banned <@%s>: %s"
 )
 
 // Help command
