@@ -11,6 +11,10 @@ func AllComponents(db *bun.DB, guildID string, adminRoleName string) []Component
 		&campaignLeave{db: db, guildID: guildID, adminRoleName: adminRoleName},
 		&campaignToggle{db: db, guildID: guildID, adminRoleName: adminRoleName},
 		&campaignView{db: db, guildID: guildID, adminRoleName: adminRoleName},
+		&manageCampaignMenu{db: db, guildID: guildID, adminRoleName: adminRoleName},
+		&manageCampaignDelete{db: db, guildID: guildID, adminRoleName: adminRoleName},
+		&manageCampaignBan{db: db, guildID: guildID, adminRoleName: adminRoleName},
+		&manageCampaignBanSelect{db: db, guildID: guildID, adminRoleName: adminRoleName},
 	}
 }
 

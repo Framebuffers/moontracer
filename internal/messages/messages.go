@@ -168,6 +168,30 @@ const (
 	BanSuccessReasonMessage = "Banned <@%s>: %s"
 )
 
+// Manage campaigns
+const (
+	ManageCampaignsCommandName = "managecampaigns"
+	ManageCampaignsCommandDesc = "Manage campaigns you run as DM."
+	ManageNoDMCampaigns        = "You are not the DM of any campaigns."
+	ManageNotAuthorized        = "You must be the DM of this campaign (or a mod) to manage it."
+	ManageCampaignNotFound     = "Campaign not found."
+	ManageDeleteSuccess        = "Campaign **%s** has been deleted."
+	ManageDeleteFailure        = "Failed to delete campaign."
+	ManageBanNoMembers         = "This campaign has no members to ban."
+	ManageCampaignBanSuccess   = "Banned <@%s> from **%s**."
+	ManageCampaignBanFailure   = "Failed to ban player from campaign."
+	ManageSelectMember         = "Select a member to ban from **%s**:"
+)
+
+// Manage campaigns — button labels
+const (
+	ManageEditLabel       = "Edit"
+	ManageDeleteLabel     = "Delete"
+	ManageBanLabel        = "Ban Member"
+	ManageAnnounceLabel   = "Announce"
+	ManageRescheduleLabel = "Reschedule"
+)
+
 // Help command
 const (
 	HelpCommandName = "help"

@@ -17,6 +17,17 @@ type addPlayer struct {
 	db *bun.DB
 }
 
+/*
+	Flow:
+		1. DM or mod invokes `/addplayer @player [tag]`
+		2. Look up the Campaign by its tag.
+		3. Authorize: invoker must be a DM of that Campaign OR Mod (or higher)
+		4. Check if the target is a registered player.
+		5. Check if the target isn't already a player on that Campaign.
+		6. Checks if there are slots available (Slots == -1 means it has unlimited slots, like a Westmarch, else it counts active players).
+		7. Inserts CampaignPlayer with RolePlayer + StatusActive
+*/
+
 // Data is the command metadata that Discord shows to users.
 func (r *addPlayer) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{

@@ -14,6 +14,23 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		1. Someone with permissions (a mod/admin) invokes `/ban @player [reason]`
+		2. Check if you are trying to ban yourself, and that you are indeed authorized to ban someone.
+			a. Calls `Authorize()`
+			b. Checks that the invoker is, at least, a moderator.
+		3. Loads both players, and checks their 'role weight':
+			a. From less to more: unregistered -> member -> player -> DM -> mod -> admin
+			b. Privilege is issued through a composition chain: access to things are 'added' like a hat on top of your current permissions.
+			c. Putting a 'mod' hat on a player means that it *inherits* all the permissions granted from below.
+			d. DM is special: it grants privileges *only* on Campaigns, and only in those you own. However, a mod can override this.
+		4. Checks if the player is already banned. Bail out early if so.
+		5. Set `Player.IsBanned = true` + the reason in the DB.
+		6. Cascade through every single campaign this member is a player on, and set their state to `banned`.
+		7. Respond with either success or failure.
+*/
+
 type banCommand struct {
 	db *bun.DB
 }

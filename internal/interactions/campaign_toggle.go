@@ -50,7 +50,6 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
-	// DM of this campaign or a server mod/admin can toggle status.
 	ok, err := auth.AuthorizeAny(h.db, userID, campaign.ID, auth.ScopeDM, auth.ScopeMod)
 	if err != nil {
 		log.Printf("auth check failed: %v", err)
