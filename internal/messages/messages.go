@@ -141,7 +141,7 @@ const (
 	FieldTagPlaceholder         = "e.g. curse-of-strahd (short, no spaces)"
 	FieldDescriptionPlaceholder = "Describe your campaign setting and premise..."
 	FieldEditionPlaceholder     = "e.g. 5e, 3.5e, PF2e"
-	FieldSlotsPlaceholder       = "e.g. 4"
+	FieldSlotsPlaceholder       = "e.g. 4. Set 0 for open campaigns."
 )
 
 // Add player

@@ -57,9 +57,12 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	}
 
 	slots, err := strconv.Atoi(strings.TrimSpace(slotsStr))
-	if err != nil || slots < 1 {
+	if err != nil || slots < 0 {
 		respondInteraction(s, i, messages.SlotCountMismatchErrorMessage)
 		return
+	}
+	if slots == 0 {
+		slots = -1
 	}
 
 	conf := &models.GameConfig{
