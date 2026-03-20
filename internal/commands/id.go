@@ -45,7 +45,7 @@ func (c *campaignCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 
 	campaign, err := db.GetByTag[models.Campaign](c.db, tag)
 	if err != nil {
-		log.Printf("campaign: %s %s: %v", messages.CampaignFetchError, tag, err)
+		log.Printf("campaign: error fetching campaign %s: %v", tag, err)
 		respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
