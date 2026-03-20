@@ -269,6 +269,65 @@ func TestAuthorizeAny_DMOrMod_IsDM(t *testing.T) {
 	assert.True(t, ok, "DM should pass AuthorizeAny(DM, Mod)")
 }
 
+// --- Sovereignty tests: ScopeDM is denied to anyone who isn't the actual DM ---
+
+func TestAuthorize_ModCannotScopeDM(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("dm", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newPlayer("mod", models.ServerRoleMod, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaign("camp1", "Campaign", "camp", "dm")).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaignPlayer("dm", "camp1", models.RoleDM, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	// Mod as a regular player in the campaign — cannot claim DM.
+	_, err = database.NewInsert().Model(newCampaignPlayer("mod", "camp1", models.RolePlayer, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err := Authorize(database, "mod", ScopeDM, "camp1")
+	require.NoError(t, err)
+	assert.False(t, ok, "Mod who is a campaign member (RolePlayer) must not pass ScopeDM")
+
+	// Mod not in the campaign at all — still cannot claim DM.
+	_, err = database.NewInsert().Model(newPlayer("mod2", models.ServerRoleMod, false)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err = Authorize(database, "mod2", ScopeDM, "camp1")
+	require.NoError(t, err)
+	assert.False(t, ok, "Mod who is not in the campaign must not pass ScopeDM")
+}
+
+func TestAuthorize_AdminCannotScopeDM(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("dm", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newPlayer("admin", models.ServerRoleAdmin, false)).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaign("camp1", "Campaign", "camp", "dm")).Exec(ctx)
+	require.NoError(t, err)
+	_, err = database.NewInsert().Model(newCampaignPlayer("dm", "camp1", models.RoleDM, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	// Admin not in the campaign — cannot claim DM.
+	ok, err := Authorize(database, "admin", ScopeDM, "camp1")
+	require.NoError(t, err)
+	assert.False(t, ok, "Admin who is not in the campaign must not pass ScopeDM")
+
+	// Admin as a regular player in the campaign — still cannot claim DM.
+	_, err = database.NewInsert().Model(newCampaignPlayer("admin", "camp1", models.RolePlayer, models.StatusActive)).Exec(ctx)
+	require.NoError(t, err)
+
+	ok, err = Authorize(database, "admin", ScopeDM, "camp1")
+	require.NoError(t, err)
+	assert.False(t, ok, "Admin who is a campaign member (RolePlayer) must not pass ScopeDM")
+}
+
 func TestAuthorizeAny_Neither(t *testing.T) {
 	database := testutil.NewTestDB(t)
 	ctx := context.Background()

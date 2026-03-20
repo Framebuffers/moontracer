@@ -39,6 +39,7 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE players ADD COLUMN role TEXT NOT NULL DEFAULT 'player'",
 		"ALTER TABLE players ADD COLUMN is_banned INTEGER NOT NULL DEFAULT 0",
 		"ALTER TABLE players ADD COLUMN ban_reason TEXT",
+		"ALTER TABLE campaigns ADD COLUMN role_id TEXT DEFAULT ''",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {

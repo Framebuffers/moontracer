@@ -53,6 +53,10 @@ type Campaign struct {
 	// Can you add a new player *even if* the Campaign is full?
 	CanOverflow bool `bun:",notnull,default:false" json:"can_overflow"`
 
+	// Discord role ID that grants access to this campaign's channel.
+	// Empty string means no role has been linked yet.
+	RoleID string `bun:",default:''" json:"role_id"`
+
 	// Has this campaign been approved to be published?
 	IsApproved bool `bun:",notnull,default:false"`
 }

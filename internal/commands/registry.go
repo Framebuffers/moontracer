@@ -21,6 +21,7 @@ func All(db *bun.DB) []Command {
 		&addPlayer{db: db},
 		&banCommand{db: db},
 		&manageCampaigns{db: db},
+		&setCampaignRole{db: db},
 	}
 }
 
