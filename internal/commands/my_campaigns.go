@@ -32,7 +32,7 @@ func (p *playerCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 
 	registered, err := auth.Authorize(p.db, userID, auth.ScopePlayer, "")
 	if err != nil {
-		log.Printf("%s %v", messages.RegistrationCheckError, err)
+		log.Printf("my_campaigns: %s: %v", messages.RegistrationCheckError, err)
 		respond(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -43,7 +43,7 @@ func (p *playerCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 
 	entries, err := models.GetPlayerCampaigns(p.db, userID)
 	if err != nil {
-		log.Printf("%s %s: %v", messages.PlayerFetchErrorMessage, userID, err)
+		log.Printf("my_campaigns: %s %s: %v", messages.PlayerFetchErrorMessage, userID, err)
 		respond(s, i, messages.MyCampaignsLoadError)
 		return
 	}

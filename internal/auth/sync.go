@@ -68,7 +68,7 @@ func SyncServerRoles(database *bun.DB, s *discordgo.Session, guildID, adminRoleN
 			if err != nil {
 				return err
 			}
-			log.Printf("synced role for %s: %s -> %s", p.ID, p.Role, desired)
+			log.Printf("sync: synced role for %s: %s -> %s", p.ID, p.Role, desired)
 		}
 	}
 

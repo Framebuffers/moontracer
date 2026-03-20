@@ -54,7 +54,7 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 
 	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
-		log.Printf("%s %v", messages.PlayerFetchErrorMessage, err)
+		log.Printf("campaign_view: %s: %v", messages.PlayerFetchErrorMessage, err)
 		respondInteraction(s, i, messages.CampaignLoadFailureErrorMessage)
 		return
 	}

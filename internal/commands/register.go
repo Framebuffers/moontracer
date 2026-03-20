@@ -31,7 +31,7 @@ func (r *registerCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 
 	registered, err := auth.Authorize(r.db, userID, auth.ScopePlayer, "")
 	if err != nil {
-		log.Printf("%s %v", messages.RegistrationCheckError, err)
+		log.Printf("register: %s: %v", messages.RegistrationCheckError, err)
 		respond(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -42,7 +42,7 @@ func (r *registerCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 
 	player := &models.Player{ID: userID}
 	if err := db.Insert(r.db, player); err != nil {
-		log.Printf("%s %v", messages.RegistrationInsertError, err)
+		log.Printf("register: %s: %v", messages.RegistrationInsertError, err)
 		respond(s, i, messages.RegistrationFailureMessage)
 		return
 	}

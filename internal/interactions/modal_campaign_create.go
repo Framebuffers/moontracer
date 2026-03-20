@@ -91,7 +91,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		nil,
 	)
 	if err != nil {
-		log.Printf("%s %v", messages.CampaignCreationFailureErrorMessage, err)
+		log.Printf("modal_campaign_create: %s: %v", messages.CampaignCreationFailureErrorMessage, err)
 		respondInteraction(s, i, messages.CampaignAndRegistrationFailureErrorMessage)
 		return
 	}
