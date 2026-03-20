@@ -110,5 +110,12 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
+	// Assign the campaign's Discord role if one is linked.
+	if campaign.RoleID != "" {
+		if err := s.GuildMemberRoleAdd(h.guildID, userID, campaign.RoleID); err != nil {
+			log.Printf("campaign_join: failed to assign role %s to %s: %v", campaign.RoleID, userID, err)
+		}
+	}
+
 	respondInteraction(s, i, fmt.Sprintf("%s **%s**!", messages.PlayerJoinedCampaignMessage, campaign.Name))
 }

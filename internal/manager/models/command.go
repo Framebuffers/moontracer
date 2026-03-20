@@ -9,4 +9,5 @@ type CommandRecord struct {
 	ID          int    `bun:",pk,autoincrement"`
 	Name        string `bun:",notnull"`
 	Description string
+	TimesUsed   int    `bun:",notnull,default:0"`
 }
