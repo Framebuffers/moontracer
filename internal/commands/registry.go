@@ -12,7 +12,7 @@ import (
 func All(db *bun.DB) []Command {
 	return []Command{
 		&pingCommand{},
-		&awooCommand{},
+		&awooCommand{db: db},
 		&helpCommand{db: *db},
 		&campaignCommand{db: db},
 		&playerCommand{db: db},

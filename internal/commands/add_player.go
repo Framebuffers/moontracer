@@ -129,5 +129,12 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
+	// Assign the campaign's Discord role if one is linked.
+	if campaign.RoleID != "" {
+		if err := s.GuildMemberRoleAdd(i.GuildID, targetUser.ID, campaign.RoleID); err != nil {
+			log.Printf("addplayer: failed to assign role %s to %s: %v", campaign.RoleID, targetUser.ID, err)
+		}
+	}
+
 	respond(s, i, fmt.Sprintf(messages.AddPlayerSuccessMessage, targetUser.ID, campaign.Name))
 }
