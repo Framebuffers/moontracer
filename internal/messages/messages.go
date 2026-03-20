@@ -192,6 +192,18 @@ const (
 	ManageRescheduleLabel = "Reschedule"
 )
 
+// Set campaign role
+const (
+	SetCampaignRoleCommandName = "setcampaignrole"
+	SetCampaignRoleCommandDesc = "Link a Discord role to a campaign (creates one if it doesn't exist)."
+	SetRoleFieldName           = "role"
+	SetRoleFieldDesc           = "Name of the Discord role to link."
+	SetRoleNotDMOrMod          = "You must be the DM of this campaign (or a mod) to set its role."
+	SetRoleSuccess             = "Linked role **%s** to campaign **%s**."
+	SetRoleCreateFailed        = "Failed to create Discord role."
+	SetRoleUpdateFailed        = "Failed to update campaign."
+)
+
 // Help command
 const (
 	HelpCommandName = "help"
