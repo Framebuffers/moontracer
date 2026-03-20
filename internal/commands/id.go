@@ -45,14 +45,14 @@ func (c *campaignCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 
 	campaign, err := db.GetByTag[models.Campaign](c.db, tag)
 	if err != nil {
-		log.Printf(messages.CampaignFetchError+"%v", tag, err)
+		log.Printf("campaign: %s %s: %v", messages.CampaignFetchError, tag, err)
 		respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	players, err := models.GetCampaignPlayers(c.db, campaign.ID)
 	if err != nil {
-		log.Printf("%s %s: %v", messages.PlayerFetchErrorMessage, tag, err)
+		log.Printf("campaign: %s %s: %v", messages.PlayerFetchErrorMessage, tag, err)
 		respond(s, i, messages.CampaignPlayersLoadError)
 		return
 	}

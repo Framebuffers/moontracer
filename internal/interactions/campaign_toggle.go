@@ -52,7 +52,7 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 
 	ok, err := auth.AuthorizeAny(h.db, userID, campaign.ID, auth.ScopeDM, auth.ScopeMod)
 	if err != nil {
-		log.Printf("auth check failed: %v", err)
+		log.Printf("campaign_toggle: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -63,7 +63,7 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 
 	campaign.IsOpen = !campaign.IsOpen
 	if err := db.Update(h.db, campaign); err != nil {
-		log.Printf("%s %v", messages.CampaignUpdateErrorMessage, err)
+		log.Printf("campaign_toggle: %s: %v", messages.CampaignUpdateErrorMessage, err)
 		respondInteraction(s, i, messages.CampaignUpdateErrorMessage)
 		return
 	}

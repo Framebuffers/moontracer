@@ -52,7 +52,7 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	// DMs cannot leave their own campaign.
 	isDM, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaign.ID)
 	if err != nil {
-		log.Printf("auth check failed: %v", err)
+		log.Printf("campaign_leave: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -62,7 +62,7 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	}
 
 	if err := models.RemoveCampaignPlayer(h.db, userID, campaign.ID); err != nil {
-		log.Printf("%s %v", messages.LeavingCampaignErrorMessage, err)
+		log.Printf("campaign_leave: %s: %v", messages.LeavingCampaignErrorMessage, err)
 		respondInteraction(s, i, messages.FailedToLeaveCampaignErrorMessage)
 		return
 	}

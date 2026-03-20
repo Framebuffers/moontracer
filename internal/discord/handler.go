@@ -46,7 +46,7 @@ func NewHandler(cmds []commands.Command, components []interactions.ComponentHand
 			name := i.ApplicationCommandData().Name
 			cmd, ok := cmdLookup[name]
 			if !ok {
-				log.Printf("unknown command: /%s", name)
+				log.Printf("handler: unknown command: /%s", name)
 				return
 			}
 			cmd.Execute(s, i)
@@ -59,7 +59,7 @@ func NewHandler(cmds []commands.Command, components []interactions.ComponentHand
 			}
 			handler, ok := compLookup[prefix]
 			if !ok {
-				log.Printf("unknown component: %s", customID)
+				log.Printf("handler: unknown component: %s", customID)
 				return
 			}
 			handler.HandleComponents(s, i)
@@ -72,7 +72,7 @@ func NewHandler(cmds []commands.Command, components []interactions.ComponentHand
 			}
 			handler, ok := modalLookup[prefix]
 			if !ok {
-				log.Printf("unknown modal: %s", customID)
+				log.Printf("handler: unknown modal: %s", customID)
 				return
 			}
 			handler.HandleModal(s, i)

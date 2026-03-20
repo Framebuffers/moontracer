@@ -169,6 +169,33 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 }
 
 /*
+
+truth table: can ban?
+							+-----------+-----------+-------+-----------+-----------+-------------------+
+							|	admin 	|	mod		|  dm	|	player	|	member	|	unregistered	|
+		--------------------+-----------+-----------+-------+-----------+-----------+-------------------+
+		|	admin			|	  F		|	  T		|	T	|	  T		|	  T		|		T			|
+		--------------------+-----------+-----------+-------+-----------+-----------+-------------------+
+		|	mod 			|	  F		|	  F		|	T	|	  T		|	  T		|		T			|
+		--------------------+-----------+-----------+-------+-----------+-----------+-------------------+
+		|	dm				|	  F		|	  F		|	F	|	  T*	|	  F		|		F			|
+		--------------------+-----------+-----------+-------+-----------+-----------+-------------------+
+		|	player			|	  F		|	  F		|	F	|	  F		| 	  F		|		F			|
+		--------------------+-----------+-----------+-------+-----------+-----------+-------------------+
+		|	member			|	  F		|	  F		|	F	|	  F		| 	  F		|		F			|
+		--------------------+-----------+-----------+-------+-----------+-----------+-------------------+
+		|	unregistered	|	  F		|	  F		|	F	|	  F		| 	  F		|		F			|
+		--------------------+-----------+-----------+-------+-----------+-----------+-------------------+
+
+		basically:
+			- if you have banning permissions, you cannot ban yourself.
+			- as said before, permissions cascade.
+			- the *only* special case are DMs, where they have a **limited scope** for banning permissions (their Campaign).
+			- apart from DMs, anyone below cannot ban anyone else.
+
+*/
+
+/*
 manageCampaignBan is a model with information to ban a member from a Campaign. Interaction: `manage_ban:<id>` [ban select]
  1. Authorize: invoker must be a DM of that Campaign or Mod.
  2. Load active members (excluding the DM or already banned users)
@@ -219,7 +246,7 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 
 	var options []discordgo.SelectMenuOption
 	for _, p := range players {
-		if p.Role == models.RoleDM || p.Status == models.StatusBanned {
+		if p.Role == models.RoleDM || p.Status == models.StatusBanned || p.PlayerID == userID {
 			continue
 		}
 		label := p.PlayerID
@@ -260,7 +287,19 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 /*
 manageCampaignBanSelect is a model that returns information to execute a ban action. Interaction: `[manage_ban_select]`
 
-	1.
+ 1. Get `campaignID:playerID` from manageCampaignBan.
+
+ 2. Split values into two separate values.
+
+ 3. Authorize
+
+ 4. Call `SetCampaignPlayerStatus` and set it to models.StatusBanned.
+
+    Notes:
+
+    - Applies only to the campaign being passed. Scope is limited to Campaign only.
+
+    - Invoker must be a DM of this Campaign or have a heavier role (Mod or Admin).
 */
 type manageCampaignBanSelect struct {
 	db            *bun.DB
@@ -273,5 +312,40 @@ func (h *manageCampaignBanSelect) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	respondInteraction(s, i, messages.GenericErrorMessage)
+	invokerID := i.Member.User.ID
+
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+
+	parts := strings.SplitN(values[0], ":", 2)
+	if len(parts) < 2 {
+		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+	campaignID := parts[0]
+	targetID := parts[1]
+
+	ok, err := auth.AuthorizeAny(h.db, invokerID, campaignID, auth.ScopeDM, auth.ScopeMod)
+	if err != nil {
+		log.Printf("manage_ban_select: auth check failed: %v", err)
+		respondInteraction(s, i, messages.GenericErrorMessage)
+		return
+	}
+	if !ok {
+		respondInteraction(s, i, messages.ManageNotAuthorized)
+		return
+	}
+
+	err = models.SetCampaignPlayerStatus(h.db, targetID, campaignID, models.StatusBanned)
+	if err != nil {
+		log.Printf("manage_ban_select: failed to set status to banned: %v", err)
+		respondInteraction(s, i, fmt.Sprintf("Could not ban %s from %s.", targetID, campaignID))
+		return
+	}
+
+	log.Printf("manage_ban_select: banned successfully. target: %s, campaign: %s", targetID, campaignID)
+	respondInteraction(s, i, fmt.Sprintf("%s has been banned from Campaign %s.", targetID, campaignID))
 }

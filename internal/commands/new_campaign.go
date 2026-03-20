@@ -29,7 +29,7 @@ func (n *newCampaign) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 
 	registered, err := auth.Authorize(n.db, userID, auth.ScopePlayer, "")
 	if err != nil {
-		log.Printf("%s %v", messages.RegistrationCheckError, err)
+		log.Printf("new_campaign: %s: %v", messages.RegistrationCheckError, err)
 		respond(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -98,6 +98,6 @@ func (n *newCampaign) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 		},
 	})
 	if err != nil {
-		log.Printf("%s %v", messages.NewCampaignModalError, err)
+		log.Printf("new_campaign: %s: %v", messages.NewCampaignModalError, err)
 	}
 }

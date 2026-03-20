@@ -48,7 +48,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	// Is the player registered and not globally banned?
 	ok, err := auth.Authorize(h.db, userID, auth.ScopePlayer, "")
 	if err != nil {
-		log.Printf("auth check failed: %v", err)
+		log.Printf("campaign_join: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -71,7 +71,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	// is the player already a member?
 	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
-		log.Printf("%s: %v", messages.PlayerFetchErrorMessage, err)
+		log.Printf("campaign_join: %s: %v", messages.PlayerFetchErrorMessage, err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -105,7 +105,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		Status:     models.StatusActive,
 	}
 	if err := db.Insert(h.db, cp); err != nil {
-		log.Printf("%s %v", messages.InsertPlayerErrorMessage, err)
+		log.Printf("campaign_join: %s: %v", messages.InsertPlayerErrorMessage, err)
 		respondInteraction(s, i, messages.PlayerFailedToJoinMessage)
 		return
 	}

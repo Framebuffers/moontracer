@@ -55,7 +55,7 @@ func (b *Bot) Run() error {
 	// Re-sync a single player's role when their Discord guild roles change.
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
 		if err := auth.SyncServerRoles(b.db, s, e.GuildID, b.role); err != nil {
-			log.Printf("warning: role sync on member update failed: %v", err)
+			log.Printf("bot: warning: role sync on member update failed: %v", err)
 		}
 	})
 
@@ -65,7 +65,7 @@ func (b *Bot) Run() error {
 	defer b.session.Close()
 
 	appID := b.session.State.User.ID
-	log.Printf("logged in as %s (app %s)", b.session.State.User.Username, appID)
+	log.Printf("bot: logged in as %s (app %s)", b.session.State.User.Username, appID)
 
 	if err := b.registerCommands(appID); err != nil {
 		return err
@@ -74,9 +74,9 @@ func (b *Bot) Run() error {
 	// Sync server roles from Discord into the database.
 	if b.guildID != "" {
 		if err := auth.SyncServerRoles(b.db, b.session, b.guildID, b.role); err != nil {
-			log.Printf("warning: failed to sync server roles: %v", err)
+			log.Printf("bot: warning: failed to sync server roles: %v", err)
 		} else {
-			log.Println("server roles synced from Discord")
+			log.Println("bot: server roles synced from Discord")
 		}
 	}
 
@@ -99,7 +99,7 @@ func (b *Bot) registerCommands(appID string) error {
 			return err
 		}
 		b.registered = append(b.registered, created)
-		log.Printf("registered /%s (global)", created.Name)
+		log.Printf("bot: registered /%s (global)", created.Name)
 	}
 	return nil
 }
@@ -107,9 +107,9 @@ func (b *Bot) registerCommands(appID string) error {
 func (b *Bot) removeCommands(appID string) {
 	for _, cmd := range b.registered {
 		if err := b.session.ApplicationCommandDelete(appID, "", cmd.ID); err != nil {
-			log.Printf("failed to remove /%s: %v", cmd.Name, err)
+			log.Printf("bot: failed to remove /%s: %v", cmd.Name, err)
 		} else {
-			log.Printf("removed /%s", cmd.Name)
+			log.Printf("bot: removed /%s", cmd.Name)
 		}
 	}
 }
