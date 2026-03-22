@@ -67,5 +67,12 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 		return
 	}
 
+	// Remove the campaign's linked Discord role if one exists.
+	if campaign.RoleID != "" {
+		if err := s.GuildMemberRoleRemove(h.guildID, userID, campaign.RoleID); err != nil {
+			log.Printf("campaign_leave: failed to remove role %s from %s: %v", campaign.RoleID, userID, err)
+		}
+	}
+
 	respondInteraction(s, i, fmt.Sprintf("%s **%s**.", messages.PlayerLeftCampaignMessage, campaign.Name))
 }

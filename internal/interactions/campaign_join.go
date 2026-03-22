@@ -63,7 +63,19 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		respondInteraction(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
-	if !campaign.IsOpen {
+	// Check if the player has the campaign's linked Discord role.
+	hasLinkedRole := false
+	if campaign.RoleID != "" {
+		for _, roleID := range i.Member.Roles {
+			if roleID == campaign.RoleID {
+				hasLinkedRole = true
+				break
+			}
+		}
+	}
+
+	// Campaign must be open OR the player must have the linked role.
+	if !campaign.IsOpen && !hasLinkedRole {
 		respondInteraction(s, i, messages.CampaignClosedMessage)
 		return
 	}
@@ -110,7 +122,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
-	// Assign the campaign's Discord role if one is linked.
+	// if the campaign has a role set already, assign it to the player.
 	if campaign.RoleID != "" {
 		if err := s.GuildMemberRoleAdd(h.guildID, userID, campaign.RoleID); err != nil {
 			log.Printf("campaign_join: failed to assign role %s to %s: %v", campaign.RoleID, userID, err)

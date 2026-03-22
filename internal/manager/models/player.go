@@ -94,8 +94,8 @@ type Player struct {
 
 	ID              string           `bun:",pk,notnull" json:"id"`                   // Discord user ID, used as primary key.
 	Role            ServerRole       `bun:",notnull,default:'player'" json:"role"`   // Guild-wide role, synced from Discord. Determines mod/admin permissions.
-	PlayerIsBanned  bool             `bun:",notnull,default:false" json:"is_banned"` // Global ban. A globally banned player cannot interact with the bot at all.
-	PlayerBanReason string           `bun:",nullzero" json:"ban_reason,omitempty"`   // Has-many relations.
+	PlayerIsBanned  bool             `bun:"column:is_banned,notnull,default:false" json:"is_banned"` // Global ban. A globally banned player cannot interact with the bot at all.
+	PlayerBanReason string           `bun:"column:ban_reason,nullzero" json:"ban_reason,omitempty"`
 	Tokens          []Token          `bun:"rel:has-many,join:id=owner_id" json:"tokens,omitempty"`
 	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=player_id" json:"campaign_players,omitempty"`
 	ModerationLog []AuditEntry `bun:"rel:has-many,join:id=player_id" json:"moderation_log,omitempty"`
