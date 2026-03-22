@@ -50,7 +50,7 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
-	ok, err := auth.AuthorizeAny(h.db, userID, campaign.ID, auth.ScopeDM, auth.ScopeMod)
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_toggle: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
