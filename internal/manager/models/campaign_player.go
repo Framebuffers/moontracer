@@ -49,23 +49,22 @@ const (
 type CampaignPlayer struct {
 	bun.BaseModel `bun:"table:campaign_players"`
 
-	PlayerID string  `bun:",pk,notnull" json:"player_id"`
-	Player   *Player `bun:"rel:belongs-to,join:player_id=id" json:"player,omitempty"`
-
-	CampaignID string    `bun:",pk,notnull" json:"campaign_id"`
-	Campaign   *Campaign `bun:"rel:belongs-to,join:campaign_id=id" json:"campaign,omitempty"`
-
-	Role Role `bun:",notnull,default:'player'" json:"role"`
-
-	TokenID string `bun:",nullzero" json:"token_id,omitempty"`
-	Token   *Token `bun:"rel:belongs-to,join:token_id=id" json:"token,omitempty"`
-
-	Status CampaignPlayerStatus `bun:",notnull,default:'active'" json:"status"`
-
-	SessionsPlayed   int    `bun:",notnull,default:0" json:"sessions_played"`
-	DiceThrowPicture string `bun:",nullzero" json:"dice_throw_picture,omitempty"`
+	PlayerID              string               `bun:",pk,notnull" json:"player_id"`
+	Player                *Player              `bun:"rel:belongs-to,join:player_id=id" json:"player,omitempty"`
+	CampaignID            string               `bun:",pk,notnull" json:"campaign_id"`
+	Campaign              *Campaign            `bun:"rel:belongs-to,join:campaign_id=id" json:"campaign,omitempty"`
+	Role                  Role                 `bun:",notnull,default:'player'" json:"role"`
+	TokenID               string               `bun:",nullzero" json:"token_id,omitempty"`
+	Token                 *Token               `bun:"rel:belongs-to,join:token_id=id" json:"token,omitempty"`
+	Status                CampaignPlayerStatus `bun:",notnull,default:'active'" json:"status"`
+	SessionsPlayed        int                  `bun:",notnull,default:0" json:"sessions_played"`
+	DiceThrowPicture      string               `bun:",nullzero" json:"dice_throw_picture,omitempty"`
+	BanReason             string               `bun:",nullzero" json:"ban_reason,omitempty"`
+	BannedFromCampaign    bool                 `bun:",notnull,default:false" json:"banned_from_campaign"`
+	BanReasonFromCampaign string               `bun:",nullzero" json:"ban_reason_from_campaign,omitempty"`
 }
 
+// GetCampaignPlayers retrieves all CampaignPlayers belonging to a given Campaign ID
 func GetCampaignPlayers(db *bun.DB, campaignID string) ([]CampaignPlayer, error) {
 	ctx := context.Background()
 	var players []CampaignPlayer
@@ -79,6 +78,7 @@ func GetCampaignPlayers(db *bun.DB, campaignID string) ([]CampaignPlayer, error)
 	return players, nil
 }
 
+// GetPlayerCampaigns retrieves all the Campaigns a Player belongs to.
 func GetPlayerCampaigns(db *bun.DB, playerID string) ([]CampaignPlayer, error) {
 	ctx := context.Background()
 	var campaigns []CampaignPlayer
@@ -92,6 +92,7 @@ func GetPlayerCampaigns(db *bun.DB, playerID string) ([]CampaignPlayer, error) {
 	return campaigns, nil
 }
 
+// RemoveCampaignPlayer removes a player from a given Campaign.
 func RemoveCampaignPlayer(db *bun.DB, playerID, campaignID string) error {
 	ctx := context.Background()
 	_, err := db.NewDelete().Model((*CampaignPlayer)(nil)).
@@ -100,6 +101,7 @@ func RemoveCampaignPlayer(db *bun.DB, playerID, campaignID string) error {
 	return err
 }
 
+// SetCampaignPlayerStatus sets the status of a Player to any CampainPlayerStatus entry.
 func SetCampaignPlayerStatus(db *bun.DB, playerID, campaignID string, status CampaignPlayerStatus) error {
 	ctx := context.Background()
 	_, err := db.NewUpdate().Model((*CampaignPlayer)(nil)).
@@ -107,4 +109,28 @@ func SetCampaignPlayerStatus(db *bun.DB, playerID, campaignID string, status Cam
 		Where("player_id = ? AND campaign_id = ?", playerID, campaignID).
 		Exec(ctx)
 	return err
+}
+
+// BulkSetCampaignPlayerStatus updates campaign memberships for a player in bulk.
+// skipLogic decides which entries to leave untouched (nil means skip nothing).
+// Returns updated/skipped counts and a map of campaignID→error for any failures.
+func BulkSetCampaignPlayerStatus(db *bun.DB, playerID string, campaigns []CampaignPlayer, to CampaignPlayerStatus, skipLogic func(CampaignPlayer) bool) (updated int, skipped int, errs map[string]error) {
+	errors := make(map[string]error)
+
+	for _, cp := range campaigns {
+		if skipLogic != nil && skipLogic(cp) {
+			skipped++
+			continue
+		}
+		if err := SetCampaignPlayerStatus(db, playerID, cp.CampaignID, to); err != nil {
+			errors[cp.CampaignID] = err
+			continue
+		}
+		updated++
+	}
+
+	if len(errors) == 0 {
+		return updated, skipped, nil
+	}
+	return updated, skipped, errors
 }

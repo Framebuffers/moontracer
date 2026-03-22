@@ -168,6 +168,16 @@ const (
 	BanSuccessReasonMessage = "Banned <@%s>: %s"
 )
 
+// Unban
+const (
+	UnbanCommandName        = "unban"
+	UnbanCommandDesc        = "Lift a global ban from a player."
+	UnbanTargetNotFound     = "That player is not registered."
+	UnbanTargetNotBanned    = "That player is not banned."
+	UnbanFailureMessage     = "Failed to unban player."
+	UnbanSuccessMessage     = "Unbanned <@%s>. They can interact with the bot again."
+)
+
 // Manage campaigns
 const (
 	ManageCampaignsCommandName = "managecampaigns"
