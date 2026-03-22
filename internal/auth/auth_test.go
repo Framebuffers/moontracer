@@ -15,9 +15,9 @@ import (
 
 func newPlayer(id string, role models.ServerRole, banned bool) *models.Player {
 	return &models.Player{
-		ID:       id,
-		Role:     role,
-		IsBanned: banned,
+		ID:             id,
+		Role:           role,
+		PlayerIsBanned: banned,
 	}
 }
 

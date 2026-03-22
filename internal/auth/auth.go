@@ -67,7 +67,7 @@ func Authorize(database *bun.DB, userID string, required Scope, campaignID strin
 	}
 
 	// Global ban blocks everything.
-	if player.IsBanned {
+	if player.PlayerIsBanned {
 		return false, nil
 	}
 

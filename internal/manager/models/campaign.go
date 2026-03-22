@@ -12,26 +12,16 @@ import (
 type Campaign struct {
 	bun.BaseModel `bun:"table:campaigns"`
 
-	// Server-generated unique identifier. This is the ID that will be used throughout to identify this particular campaign.
-	ID string `bun:",pk,notnull" json:"id"`
-
-	// Display name for the campaign.
-	Name string `bun:",notnull" json:"name"`
-
-	// Short, user-facing identifier for lookups (e.g. "strahd", "avalon", "itzaal", "nuevosur", "suvachi").
-	Tag string `bun:",unique,notnull" json:"tag"`
-
-	// Player FK of the user (DM) who created the campaign.
-	DungeonMaster string  `bun:",notnull" json:"dm"`
-	DM            *Player `bun:"rel:belongs-to,join:dungeon_master=id" json:"dm_player,omitempty"`
-
-	// Campaign's description, synopsis, details, lore, or whatever you want to add to describe your setting.
-	Description string `bun:",notnull,default:''" json:"description"`
-
-	// Embedded singular game configuration. Stored as flat columns.
-	Game GameConfig `bun:"embed:"`
+	ID            string     `bun:",pk,notnull" json:"id"`      // Server-generated unique identifier. This is the ID that will be used throughout to identify this particular campaign.
+	Name          string     `bun:",notnull" json:"name"`       // Display name for the campaign.
+	Tag           string     `bun:",unique,notnull" json:"tag"` // Short, user-facing identifier for lookups (e.g. "strahd", "avalon", "itzaal", "nuevosur", "suvachi").
+	DungeonMaster string     `bun:",notnull" json:"dm"`         // Player FK of the user (DM) who created the campaign.
+	DM            *Player    `bun:"rel:belongs-to,join:dungeon_master=id" json:"dm_player,omitempty"`
+	Description   string     `bun:",notnull,default:''" json:"description"` // Campaign's description, synopsis, details, lore, or whatever you want to add to describe your setting.
+	Game          GameConfig `bun:"embed:"`                                 // Embedded singular game configuration. Stored as flat columns.
 
 	// Details about your campaign, like open slots, the style, trigger warnings, extra info by the DM to be added to the Campaign's description.
+
 	Slots       int      `bun:",notnull,default:0" json:"slots"` // note: if the campaign has unlimited slots (like a Westmarch), default to -1 (unlimited)
 	IsOpen      bool     `bun:",notnull,default:false" json:"is_open"`
 	IsOneshot   bool     `bun:",notnull,default:false" json:"is_oneshot"`
@@ -39,16 +29,14 @@ type Campaign struct {
 	Warnings    []string `bun:",array,type:jsonb" json:"warnings,omitempty"`
 	Extra       string   `bun:",default:''" json:"extra,omitempty"`
 
-	// Campaign schedule.
-	Schedule CampaignSchedule `bun:"embed:"`
+	Schedule CampaignSchedule `bun:"embed:"` // Campaign schedule.
 
 	// Links and media
 	Links         []string `bun:",array,type:jsonb" json:"links,omitempty"`
 	VTTLink       string   `bun:",default:''" json:"vtt_link,omitempty"`
 	CampaignMedia []string `bun:",array,type:jsonb" json:"campaign_media,omitempty"`
 
-	// Has-many relation.
-	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=campaign_id" json:"campaign_players,omitempty"`
+	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=campaign_id" json:"campaign_players,omitempty"` // Has-many relation.
 
 	// Can you add a new player *even if* the Campaign is full?
 	CanOverflow bool `bun:",notnull,default:false" json:"can_overflow"`

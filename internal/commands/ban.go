@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -106,14 +105,14 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 	}
 
 	// Already banned?
-	if target.IsBanned {
+	if target.PlayerIsBanned {
 		respond(s, i, messages.BanTargetAlreadyBanned)
 		return
 	}
 
 	// Persist the global ban.
-	target.IsBanned = true
-	target.BanReason = reason
+	target.PlayerIsBanned = true
+	target.PlayerBanReason = reason
 
 	if err := db.Update(r.db, target); err != nil {
 		log.Printf("ban: failed to update player: %v", err)
@@ -121,22 +120,22 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	// Cascade: ban from all campaigns.
+	// Cascade: ban from all campaigns (skip nothing).
 	campaigns, err := models.GetPlayerCampaigns(r.db, target.ID)
 	if err != nil {
 		log.Printf("ban: failed to load campaigns for %s: %v", target.ID, err)
-		// Player is banned globally, but campaign cascade failed — still report success.
 	}
 
-	var failedCampaigns []string
-	for _, cp := range campaigns {
-		if err := models.SetCampaignPlayerStatus(r.db, target.ID, cp.CampaignID, models.StatusBanned); err != nil {
-			log.Printf("ban: failed to ban %s from campaign %s: %v", target.ID, cp.CampaignID, err)
-			failedCampaigns = append(failedCampaigns, cp.CampaignID)
+	updated, _, errs := models.BulkSetCampaignPlayerStatus(r.db, target.ID, campaigns, models.StatusBanned, nil)
+	if errs != nil {
+		for campID, e := range errs {
+			log.Printf("ban: failed to ban %s from campaign %s: %v", target.ID, campID, e)
 		}
 	}
-	if len(failedCampaigns) > 0 {
-		log.Printf("ban: failed to cascade ban to campaigns: %s", strings.Join(failedCampaigns, ", "))
+	log.Printf("ban: cascaded to %d campaign(s)", updated)
+
+	if err := models.InsertAuditEntry(r.db, target.ID, invokerID, models.AuditBan, reason); err != nil {
+		log.Printf("ban: failed to write audit entry: %v", err)
 	}
 
 	// Log and respond.

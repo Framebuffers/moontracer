@@ -1,6 +1,11 @@
 package models
 
-import "github.com/uptrace/bun"
+import (
+	"context"
+	"time"
+
+	"github.com/uptrace/bun"
+)
 
 // ServerRole represents a player's guild-wide role (not campaign-specific).
 // Roles are hierarchical: Admin > Mod > Player.
@@ -27,25 +32,73 @@ func (r ServerRole) Weight() int {
 	}
 }
 
+// AuditAction describes what moderation operation was performed.
+type AuditAction string
+
+const (
+	AuditBan        AuditAction = "ban"
+	AuditUnban      AuditAction = "unban"
+	AuditCampaignBan AuditAction = "campaign_ban"
+)
+
+// AuditEntry is an immutable moderation log record.
+type AuditEntry struct {
+	bun.BaseModel `bun:"table:audit_entries"`
+
+	ID        int64       `bun:",pk,autoincrement" json:"id"`
+	PlayerID  string      `bun:",notnull" json:"player_id"`
+	Player    *Player     `bun:"rel:belongs-to,join:player_id=id" json:"player,omitempty"`
+	AuthorID  string      `bun:",notnull" json:"author_id"`
+	Author    *Player     `bun:"rel:belongs-to,join:author_id=id" json:"author,omitempty"`
+	Action    AuditAction `bun:",notnull" json:"action"`
+	Reason    string      `bun:",nullzero" json:"reason,omitempty"`
+	CreatedAt time.Time   `bun:",notnull,default:current_timestamp" json:"created_at"`
+}
+
+// InsertAuditEntry writes an immutable moderation log record.
+func InsertAuditEntry(db *bun.DB, playerID, authorID string, action AuditAction, reason string) error {
+	ctx := context.Background()
+	entry := &AuditEntry{
+		PlayerID:  playerID,
+		AuthorID:  authorID,
+		Action:    action,
+		Reason:    reason,
+		CreatedAt: time.Now(),
+	}
+	_, err := db.NewInsert().Model(entry).Exec(ctx)
+	return err
+}
+
+// GetPlayerWithCampaigns loads a Player by ID with its CampaignPlayers relation.
+// This is required for Player methods that inspect campaign memberships
+// (IsDMOf, IsMemberOf, IsBannedFromCampaign, etc.).
+func GetPlayerWithCampaigns(db *bun.DB, playerID string) (*Player, error) {
+	ctx := context.Background()
+	var player Player
+	err := db.NewSelect().
+		Model(&player).
+		Relation("CampaignPlayers").
+		Where("player.id = ?", playerID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &player, nil
+}
+
 // Player represents a Discord user participating in campaigns.
 // Player is the single owner of all role and permission data.
 // DM status is campaign-scoped via CampaignPlayer, while Mod/Admin are server-wide via Role.
 type Player struct {
 	bun.BaseModel `bun:"table:players"`
 
-	// Discord user ID, used as primary key.
-	ID string `bun:",pk,notnull" json:"id"`
-
-	// Guild-wide role, synced from Discord. Determines mod/admin permissions.
-	Role ServerRole `bun:",notnull,default:'player'" json:"role"`
-
-	// Global ban. A globally banned player cannot interact with the bot at all.
-	IsBanned  bool   `bun:",notnull,default:false" json:"is_banned"`
-	BanReason string `bun:",nullzero" json:"ban_reason,omitempty"`
-
-	// Has-many relations.
+	ID              string           `bun:",pk,notnull" json:"id"`                   // Discord user ID, used as primary key.
+	Role            ServerRole       `bun:",notnull,default:'player'" json:"role"`   // Guild-wide role, synced from Discord. Determines mod/admin permissions.
+	PlayerIsBanned  bool             `bun:",notnull,default:false" json:"is_banned"` // Global ban. A globally banned player cannot interact with the bot at all.
+	PlayerBanReason string           `bun:",nullzero" json:"ban_reason,omitempty"`   // Has-many relations.
 	Tokens          []Token          `bun:"rel:has-many,join:id=owner_id" json:"tokens,omitempty"`
 	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=player_id" json:"campaign_players,omitempty"`
+	ModerationLog []AuditEntry `bun:"rel:has-many,join:id=player_id" json:"moderation_log,omitempty"`
 }
 
 // IsAdmin returns true if the player has the admin server role.
@@ -90,4 +143,29 @@ func (p *Player) DMCampaignIDs() []string {
 		}
 	}
 	return ids
+}
+
+// IsBannedFrom returns the CampaignPlayer relationships on which the Player is banned from.
+// Requires CampaignPlayers to be loaded (via Relation).
+func (p *Player) IsBannedFrom() []CampaignPlayer {
+	var bannedFromCampaigns []CampaignPlayer
+
+	for _, cp := range p.CampaignPlayers {
+		if cp.PlayerID == p.ID && cp.BannedFromCampaign == true {
+			bannedFromCampaigns = append(bannedFromCampaigns, cp)
+		}
+	}
+
+	return bannedFromCampaigns
+}
+
+// IsBannedFromCampaign returns true if the player has a campaign-scoped ban on the given campaign.
+// Requires CampaignPlayers to be loaded (via Relation).
+func (p *Player) IsBannedFromCampaign(campaignID string) bool {
+	for _, cp := range p.CampaignPlayers {
+		if cp.CampaignID == campaignID && cp.BannedFromCampaign {
+			return true
+		}
+	}
+	return false
 }
