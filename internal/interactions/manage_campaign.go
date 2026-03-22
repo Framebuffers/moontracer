@@ -346,6 +346,14 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 		return
 	}
 
+	// Remove the campaign's linked Discord role if one exists.
+	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	if err == nil && campaign.RoleID != "" {
+		if err := s.GuildMemberRoleRemove(h.guildID, targetID, campaign.RoleID); err != nil {
+			log.Printf("manage_ban_select: failed to remove role %s from %s: %v", campaign.RoleID, targetID, err)
+		}
+	}
+
 	log.Printf("manage_ban_select: banned successfully. target: %s, campaign: %s", targetID, campaignID)
 	respondInteraction(s, i, fmt.Sprintf("%s has been banned from Campaign %s.", targetID, campaignID))
 }

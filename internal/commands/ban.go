@@ -134,6 +134,15 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 	}
 	log.Printf("ban: cascaded to %d campaign(s)", updated)
 
+	// Remove linked Discord roles from all campaigns.
+	for _, cp := range campaigns {
+		if cp.Campaign != nil && cp.Campaign.RoleID != "" {
+			if err := s.GuildMemberRoleRemove(i.GuildID, target.ID, cp.Campaign.RoleID); err != nil {
+				log.Printf("ban: failed to remove role %s from %s: %v", cp.Campaign.RoleID, target.ID, err)
+			}
+		}
+	}
+
 	if err := models.InsertAuditEntry(r.db, target.ID, invokerID, models.AuditBan, reason); err != nil {
 		log.Printf("ban: failed to write audit entry: %v", err)
 	}
