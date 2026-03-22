@@ -43,6 +43,22 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE campaigns ADD COLUMN can_overflow INTEGER NOT NULL DEFAULT 0",
 		"ALTER TABLE campaigns ADD COLUMN role_id TEXT DEFAULT ''",
 		"ALTER TABLE commands ADD COLUMN times_used INTEGER NOT NULL DEFAULT 0",
+
+		// campaign_players columns added after initial schema.
+		// Schedule fields for campaigns.
+		"ALTER TABLE campaigns ADD COLUMN day_of_week INTEGER NOT NULL DEFAULT -1",
+		"ALTER TABLE campaigns ADD COLUMN start_time TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN duration_hours REAL NOT NULL DEFAULT 3",
+
+		// Player timezone (deferred — defaults to UTC for now).
+		"ALTER TABLE players ADD COLUMN timezone TEXT NOT NULL DEFAULT 'UTC'",
+
+		// campaign_players columns added after initial schema.
+		"ALTER TABLE campaign_players ADD COLUMN ban_reason TEXT",
+		"ALTER TABLE campaign_players ADD COLUMN banned_from_campaign INTEGER NOT NULL DEFAULT 0",
+		"ALTER TABLE campaign_players ADD COLUMN ban_reason_from_campaign TEXT",
+		"ALTER TABLE campaign_players ADD COLUMN sessions_played INTEGER NOT NULL DEFAULT 0",
+		"ALTER TABLE campaign_players ADD COLUMN dice_throw_picture TEXT",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
