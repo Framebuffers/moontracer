@@ -170,8 +170,7 @@ func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 
 	fields = append(fields,
 		&discordgo.MessageEmbedField{Name: "Books", Value: books, Inline: false},
-		&discordgo.MessageEmbedField{Name: "Schedule", Value: fmt.Sprintf("%s (last session: %s)",
-			c.Schedule.Frequency, c.Schedule.LastSession.Format("2006-01-02")), Inline: false},
+		&discordgo.MessageEmbedField{Name: "Schedule", Value: formatSchedule(c), Inline: false},
 		&discordgo.MessageEmbedField{Name: "Warnings", Value: warnings, Inline: false},
 		&discordgo.MessageEmbedField{Name: fmt.Sprintf("Players (%d)", len(players)), Value: playersValue, Inline: false},
 	)
@@ -182,4 +181,29 @@ func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 		Color:       messages.EmbedColor,
 		Fields:      fields,
 	}
+}
+
+// formatSchedule builds a human-readable schedule string for the campaign embed.
+func formatSchedule(c models.Campaign) string {
+	sched := c.Schedule
+
+	// Schedule not set yet.
+	if !sched.HasSchedule() {
+		return fmt.Sprintf("%s — Schedule not set", sched.Frequency)
+	}
+
+	// Build: "Weekly — Saturday 19:00 UTC (3h)"
+	line := fmt.Sprintf("%s — %s %s UTC (%.0fh)", sched.Frequency, sched.DayName(), sched.StartTime, sched.DurationHours)
+
+	// Next session.
+	if !sched.NextSession.IsZero() {
+		line += fmt.Sprintf("\nNext: %s", sched.NextSession.Format("2006-01-02"))
+	}
+
+	// Last session.
+	if !sched.LastSession.IsZero() {
+		line += fmt.Sprintf(" | Last: %s", sched.LastSession.Format("2006-01-02"))
+	}
+
+	return line
 }
