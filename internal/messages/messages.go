@@ -146,7 +146,7 @@ const (
 
 // Add player
 const (
-	AddPlayerNotDMOrModMessage   = "You must be the DM of this campaign (or a mod) to add players."
+	AddPlayerNotDMOrModMessage   = "You must be the DM of this campaign to add players."
 	AddPlayerTargetNotRegistered = "That user is not registered. They need to `/register` first."
 	AddPlayerAlreadyInCampaign   = "That player is already in this campaign."
 	AddPlayerCampaignFullMessage = "This campaign is full."
@@ -183,7 +183,7 @@ const (
 	ManageCampaignsCommandName = "managecampaigns"
 	ManageCampaignsCommandDesc = "Manage campaigns you run as DM."
 	ManageNoDMCampaigns        = "You are not the DM of any campaigns."
-	ManageNotAuthorized        = "You must be the DM of this campaign (or a mod) to manage it."
+	ManageNotAuthorized        = "You must be the DM of this campaign to manage it."
 	ManageCampaignNotFound     = "Campaign not found."
 	ManageDeleteSuccess        = "Campaign **%s** has been deleted."
 	ManageDeleteFailure        = "Failed to delete campaign."
@@ -208,7 +208,7 @@ const (
 	SetCampaignRoleCommandDesc = "Link a Discord role to a campaign (creates one if it doesn't exist)."
 	SetRoleFieldName           = "role"
 	SetRoleFieldDesc           = "Name of the Discord role to link."
-	SetRoleNotDMOrMod          = "You must be the DM of this campaign (or a mod) to set its role."
+	SetRoleNotDMOrMod          = "You must be the DM of this campaign to set its role."
 	SetRoleSuccess             = "Linked role **%s** to campaign **%s**."
 	SetRoleCreateFailed        = "Failed to create Discord role."
 	SetRoleUpdateFailed        = "Failed to update campaign."

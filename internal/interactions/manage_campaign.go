@@ -47,7 +47,7 @@ func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo
 	campaignID := parts[1]
 	userID := i.Member.User.ID
 
-	ok, err := auth.AuthorizeAny(h.db, userID, campaignID, auth.ScopeDM, auth.ScopeMod)
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_campaign: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
@@ -131,7 +131,7 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 	campaignID := parts[1]
 	userID := i.Member.User.ID
 
-	ok, err := auth.AuthorizeAny(h.db, userID, campaignID, auth.ScopeDM, auth.ScopeMod)
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_delete: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
@@ -220,7 +220,7 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 	campaignID := parts[1]
 	userID := i.Member.User.ID
 
-	ok, err := auth.AuthorizeAny(h.db, userID, campaignID, auth.ScopeDM, auth.ScopeMod)
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_ban: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
@@ -328,7 +328,7 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 	campaignID := parts[0]
 	targetID := parts[1]
 
-	ok, err := auth.AuthorizeAny(h.db, invokerID, campaignID, auth.ScopeDM, auth.ScopeMod)
+	ok, err := auth.Authorize(h.db, invokerID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_ban_select: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
