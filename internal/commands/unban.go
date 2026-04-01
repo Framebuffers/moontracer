@@ -19,7 +19,7 @@ import (
 		2. Auth: invoker must be at least mod.
 		3. Load target player, check they are actually banned.
 		4. Clear IsBanned + BanReason.
-		5. Handle campaign-status reversal (see TODO below).
+		5. Handle campaign-status reversal,
 		6. Respond with success or failure.
 */
 

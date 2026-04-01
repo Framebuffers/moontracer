@@ -19,9 +19,9 @@ type addPlayer struct {
 
 /*
 	Flow:
-		1. DM or mod invokes `/addplayer @player [tag]`
+		1. DM invokes `/addplayer @player [tag]`
 		2. Look up the Campaign by its tag.
-		3. Authorize: invoker must be a DM of that Campaign OR Mod (or higher)
+		3. Authorize: invoker must be the DM of that Campaign (sovereignty enforced)
 		4. Check if the target is a registered player.
 		5. Check if the target isn't already a player on that Campaign.
 		6. Checks if there are slots available (Slots == -1 means it has unlimited slots, like a Westmarch, else it counts active players).
@@ -63,8 +63,8 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
-	// Auth: invoker must be the DM of this campaign, or a mod/admin.
-	ok, err := auth.AuthorizeAny(r.db, invokerID, campaign.ID, auth.ScopeDM, auth.ScopeMod)
+	// Auth: invoker must be the DM of this campaign. DM sovereignty is absolute.
+	ok, err := auth.Authorize(r.db, invokerID, auth.ScopeDM, campaign.ID)
 	if err != nil {
 		log.Printf("addplayer: auth check failed: %v", err)
 		respond(s, i, messages.GenericErrorMessage)
