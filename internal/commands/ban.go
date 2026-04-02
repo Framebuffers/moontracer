@@ -56,6 +56,15 @@ func (r *banCommand) Data() *discordgo.ApplicationCommand {
 	}
 }
 
+/*
+	Flow:
+		1. Guard check: cannot ban yourself.
+		2. Load both players to compare roles.
+		3. Guard check: to protect roles, invoker musy outrank target.
+		4. Guard check: is the player already banned?
+		5. Persist the global ban.
+*/
+
 // Execute is the logic that runs when the user invokes the ban command.
 func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	invokerID := i.Member.User.ID
@@ -66,13 +75,11 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 		reason = i.ApplicationCommandData().Options[1].StringValue()
 	}
 
-	// Can't ban yourself.
 	if invokerID == targetUser.ID {
 		respond(s, i, messages.BanCannotBanSelf)
 		return
 	}
 
-	// Auth: invoker must be mod or admin.
 	ok, err := auth.Authorize(r.db, invokerID, auth.ScopeMod, "")
 	if err != nil {
 		log.Printf("ban: invoker auth check failed: %v", err)
@@ -84,7 +91,6 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	// Load both players to compare roles.
 	invoker, err := db.GetByID[models.Player](r.db, invokerID)
 	if err != nil {
 		log.Printf("ban: failed to load invoker: %v", err)
@@ -98,19 +104,16 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	// Role protection: invoker must outrank target.
 	if invoker.Role.Weight() <= target.Role.Weight() {
 		respond(s, i, messages.BanInsufficientRole)
 		return
 	}
 
-	// Already banned?
 	if target.PlayerIsBanned {
 		respond(s, i, messages.BanTargetAlreadyBanned)
 		return
 	}
 
-	// Persist the global ban.
 	target.PlayerIsBanned = true
 	target.PlayerBanReason = reason
 
@@ -120,34 +123,24 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 		return
 	}
 
-	// Cascade: ban from all campaigns (skip nothing).
-	campaigns, err := models.GetPlayerCampaigns(r.db, target.ID)
-	if err != nil {
-		log.Printf("ban: failed to load campaigns for %s: %v", target.ID, err)
-	}
+	/*
 
-	updated, _, errs := models.BulkSetCampaignPlayerStatus(r.db, target.ID, campaigns, models.StatusBanned, nil)
-	if errs != nil {
-		for campID, e := range errs {
-			log.Printf("ban: failed to ban %s from campaign %s: %v", target.ID, campID, e)
-		}
-	}
-	log.Printf("ban: cascaded to %d campaign(s)", updated)
+		A fundamental concept for Moontracer is: DM Sovereignty.
+		The **only** true sovereign of a Campaign is the one that created, managed and played it.
+		Therefore, permissions work a bit differently than *just* a regular hierarchical structure.
 
-	// Remove linked Discord roles from all campaigns.
-	for _, cp := range campaigns {
-		if cp.Campaign != nil && cp.Campaign.RoleID != "" {
-			if err := s.GuildMemberRoleRemove(i.GuildID, target.ID, cp.Campaign.RoleID); err != nil {
-				log.Printf("ban: failed to remove role %s from %s: %v", cp.Campaign.RoleID, target.ID, err)
-			}
-		}
-	}
+		The global ban flag blocks all auth checks (auth.go:70), so the player
+		cannot interact with the bot anymore.
+
+		Campaign memberships are left untouched, the DM retains sovereignty over their roster and can
+		campaign-ban the player separately if desired.
+
+	*/
 
 	if err := models.InsertAuditEntry(r.db, target.ID, invokerID, models.AuditBan, reason); err != nil {
 		log.Printf("ban: failed to write audit entry: %v", err)
 	}
 
-	// Log and respond.
 	log.Printf("ban: %s banned %s (reason: %s)", invokerID, target.ID, reason)
 	if reason == "" {
 		respond(s, i, fmt.Sprintf(messages.BanSuccessMessage, targetUser.ID))

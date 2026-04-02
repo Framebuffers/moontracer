@@ -19,8 +19,7 @@ import (
 		2. Auth: invoker must be at least mod.
 		3. Load target player, check they are actually banned.
 		4. Clear IsBanned + BanReason.
-		5. Handle campaign-status reversal,
-		6. Respond with success or failure.
+		5. Respond with success or failure.
 */
 
 type unbanCommand struct {
@@ -77,29 +76,13 @@ func (u *unbanCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 		return
 	}
 
-	// Cascade: restore campaign memberships banned by the global ban.
-	// Campaign-scoped bans (BannedFromCampaign == true) are left untouched.
-	campaigns, err := models.GetPlayerCampaigns(u.db, target.ID)
-	if err != nil {
-		log.Printf("unban: failed to load campaigns for %s: %v", target.ID, err)
-	}
-
-	skipCampaignBans := func(cp models.CampaignPlayer) bool {
-		return cp.Status != models.StatusBanned || cp.BannedFromCampaign
-	}
-
-	restored, skipped, errs := models.BulkSetCampaignPlayerStatus(u.db, target.ID, campaigns, models.StatusActive, skipCampaignBans)
-	if errs != nil {
-		for campID, e := range errs {
-			log.Printf("unban: failed to restore %s in campaign %s: %v", target.ID, campID, e)
-		}
-	}
-
-	auditReason := fmt.Sprintf("restored %d campaign(s), %d campaign-scoped ban(s) preserved", restored, skipped)
-	if err := models.InsertAuditEntry(u.db, target.ID, invokerID, models.AuditUnban, auditReason); err != nil {
+	/*
+		Unbanning a member only clears the global ban flag. A Player's membership to a Campaign remains untouched.
+	*/
+	if err := models.InsertAuditEntry(u.db, target.ID, invokerID, models.AuditUnban, "global ban lifted"); err != nil {
 		log.Printf("unban: failed to write audit entry: %v", err)
 	}
 
-	log.Printf("unban: %s unbanned %s (restored %d campaigns, %d campaign bans preserved)", invokerID, target.ID, restored, skipped)
+	log.Printf("unban: %s unbanned %s", invokerID, target.ID)
 	respond(s, i, fmt.Sprintf(messages.UnbanSuccessMessage, targetUser.ID))
 }
