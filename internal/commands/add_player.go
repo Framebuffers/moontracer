@@ -63,6 +63,11 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
+	if !campaign.CanMutate() {
+		respond(s, i, messages.CampaignArchivedMessage)
+		return
+	}
+
 	// Auth: invoker must be the DM of this campaign. DM sovereignty is absolute.
 	ok, err := auth.Authorize(r.db, invokerID, auth.ScopeDM, campaign.ID)
 	if err != nil {

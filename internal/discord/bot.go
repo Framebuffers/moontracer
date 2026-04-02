@@ -59,6 +59,9 @@ func (b *Bot) Run() error {
 		}
 	})
 
+	// Auto-archive campaigns when a DM leaves the server (sovereignty enforcement).
+	b.session.AddHandler(HandleGuildMemberRemove(b.db))
+
 	if err := b.session.Open(); err != nil {
 		return err
 	}
