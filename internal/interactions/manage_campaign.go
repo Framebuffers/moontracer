@@ -64,6 +64,11 @@ func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo
 		return
 	}
 
+	if !campaign.CanMutate() {
+		respondInteraction(s, i, messages.CampaignArchivedMessage)
+		return
+	}
+
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
@@ -145,6 +150,11 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err != nil {
 		respondInteraction(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	if !campaign.CanMutate() {
+		respondInteraction(s, i, messages.CampaignArchivedMessage)
 		return
 	}
 
@@ -234,6 +244,11 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err != nil {
 		respondInteraction(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	if !campaign.CanMutate() {
+		respondInteraction(s, i, messages.CampaignArchivedMessage)
 		return
 	}
 

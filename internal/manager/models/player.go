@@ -36,9 +36,10 @@ func (r ServerRole) Weight() int {
 type AuditAction string
 
 const (
-	AuditBan        AuditAction = "ban"
-	AuditUnban      AuditAction = "unban"
-	AuditCampaignBan AuditAction = "campaign_ban"
+	AuditBan             AuditAction = "ban"
+	AuditUnban           AuditAction = "unban"
+	AuditCampaignBan     AuditAction = "campaign_ban"
+	AuditCampaignArchive AuditAction = "campaign_archive"
 )
 
 // AuditEntry is an immutable moderation log record.

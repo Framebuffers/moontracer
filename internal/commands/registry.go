@@ -23,6 +23,7 @@ func All(db *bun.DB) []Command {
 		&unbanCommand{db: db},
 		&manageCampaigns{db: db},
 		&setCampaignRole{db: db},
+		&abandonCampaign{db: db},
 	}
 }
 

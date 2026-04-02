@@ -178,6 +178,18 @@ const (
 	UnbanSuccessMessage     = "Unbanned <@%s>. They can interact with the bot again."
 )
 
+// Campaign archival
+const (
+	CampaignArchivedMessage = "This campaign has been archived and can no longer be modified."
+	AbandonCommandName      = "abandon"
+	AbandonCommandDesc      = "Archive your campaign permanently. Only the DM can do this."
+	AbandonNotDMMessage     = "Only the DM of this campaign can abandon it."
+	AbandonFailureMessage   = "Failed to archive campaign."
+	AbandonSuccessMessage   = "Campaign **%s** has been archived. It is now an immutable record."
+	AbandonReasonDM         = "DM abandoned"
+	AbandonReasonLeftServer = "DM left server"
+)
+
 // Manage campaigns
 const (
 	ManageCampaignsCommandName = "managecampaigns"

@@ -47,6 +47,17 @@ type Campaign struct {
 
 	// Has this campaign been approved to be published?
 	IsApproved bool `bun:",notnull,default:false"`
+
+	// Archival: an archived campaign is an immutable record. No mutations allowed.
+	// Archival happens when a DM explicitly abandons the campaign or leaves the server.
+	IsArchived     bool      `bun:",notnull,default:false"`
+	ArchivedAt     time.Time `bun:",nullzero"`
+	ArchivedReason string    `bun:",nullzero"`
+}
+
+// CanMutate returns false if the campaign is archived (immutable).
+func (c *Campaign) CanMutate() bool {
+	return !c.IsArchived
 }
 
 // PlayerMap returns a map of player ID to CampaignPlayer for quick lookups.
@@ -83,9 +94,9 @@ type GameConfig struct {
 // CampaignSchedule holds the timing details for a campaign.
 type CampaignSchedule struct {
 	Frequency     CampaignFrequency `bun:",notnull,default:'weekly'" json:"frequency"`
-	DayOfWeek     int               `bun:",notnull,default:-1" json:"day_of_week"`     // 0=Mon..6=Sun, -1=unset
-	StartTime     string            `bun:",notnull,default:''" json:"start_time"`       // "HH:MM" in UTC, empty=unset
-	DurationHours float64           `bun:",notnull,default:3" json:"duration_hours"`    // session length in hours, default 3h
+	DayOfWeek     int               `bun:",notnull,default:-1" json:"day_of_week"`   // 0=Mon..6=Sun, -1=unset
+	StartTime     string            `bun:",notnull,default:''" json:"start_time"`    // "HH:MM" in UTC, empty=unset
+	DurationHours float64           `bun:",notnull,default:3" json:"duration_hours"` // session length in hours, default 3h
 	CreatedAt     time.Time         `bun:",notnull,default:current_timestamp" json:"created_at"`
 	LastSession   time.Time         `bun:",nullzero" json:"last_session"`
 	NextSession   time.Time         `bun:",nullzero" json:"next_session"`

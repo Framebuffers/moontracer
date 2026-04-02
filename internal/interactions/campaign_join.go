@@ -63,6 +63,12 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		respondInteraction(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
+
+	if !campaign.CanMutate() {
+		respondInteraction(s, i, messages.CampaignArchivedMessage)
+		return
+	}
+
 	// Check if the player has the campaign's linked Discord role.
 	hasLinkedRole := false
 	if campaign.RoleID != "" {
