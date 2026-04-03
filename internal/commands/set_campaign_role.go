@@ -22,6 +22,9 @@ import (
 		4. Get the role that matches the Campaign. If there isn't one, create it.
 		5. Update Campaign with new role ID.
 		6. Update DB.
+
+	Note:
+		Campaign sovereignty is enforced, as only the DM can modify a Campaign.
 */
 
 type setCampaignRole struct {
@@ -62,7 +65,6 @@ func (r *setCampaignRole) Execute(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
-	// Only the DM can manage campaign settings — campaign sovereignty.
 	ok, err := auth.Authorize(r.db, invokerID, auth.ScopeDM, campaign.ID)
 	if err != nil {
 		log.Printf("set_campaign_role: auth check failed: %v", err)
@@ -110,7 +112,6 @@ func (r *setCampaignRole) Execute(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
-	// Assign the campaign role to the DM.
 	if err := s.GuildMemberRoleAdd(i.GuildID, invokerID, roleID); err != nil {
 		log.Printf("set_campaign_role: failed to add role %s to member %s: %v", roleID, invokerID, err)
 		respond(s, i, messages.SetRoleUpdateFailed)
