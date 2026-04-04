@@ -13,6 +13,17 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		1. User runs `/campaign tag:<tag>`.
+		2. Fetch the campaign by tag from the DB.
+		3. Approval gate: if the campaign is not approved, respond with "not found".
+		4. Load campaign players.
+		5. Build a rich embed with campaign details (DM, status, slots, edition, schedule, players).
+		6. Build context-aware buttons: Join (if open and not a member), Leave (if a member). DMs see no buttons here (they use /managecampaigns).
+		7. Respond with the embed and buttons.
+*/
+
 // campaignCommand returns an embed with the details of a Campaign.
 type campaignCommand struct {
 	db *bun.DB
@@ -84,18 +95,8 @@ func (c *campaignCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 func campaignButtons(callerID string, c models.Campaign, players []models.CampaignPlayer) []discordgo.MessageComponent {
 	var buttons []discordgo.MessageComponent
 
+	// DM manages open/close through /managecampaigns, not here.
 	if c.DungeonMaster == callerID {
-		toggleLabel := messages.OpenCampaignLabel
-		if c.IsOpen {
-			toggleLabel = messages.ClosedCampaignLabel
-		}
-		buttons = append(buttons,
-			discordgo.Button{
-				Label:    toggleLabel,
-				Style:    discordgo.SecondaryButton,
-				CustomID: fmt.Sprintf("campaign_toggle:%s", c.Tag),
-			},
-		)
 		return buttons
 	}
 

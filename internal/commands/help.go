@@ -11,6 +11,14 @@ import (
 	msg "moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		1. User runs `/help`.
+		2. Load all registered commands via `All()`.
+		3. Build a formatted list of command names and descriptions.
+		4. Respond with the list.
+*/
+
 // helpCommand returns a list with all available commands.
 type helpCommand struct {
 	db bun.DB

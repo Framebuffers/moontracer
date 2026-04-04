@@ -15,8 +15,31 @@ import (
 	"moontracer/internal/messages"
 )
 
-// campaignApprove handles the "Approve" button click on a campaign approval DM.
-// Custom ID format: campaign_approve:<campaignID>
+/*
+	Flow (Approve):
+		1. Mod receives a DM with Approve/Deny buttons for a pending campaign.
+		2. Mod clicks "Approve", triggering `campaign_approve:<campaignID>`.
+		3. `parseApprovalInteraction` extracts the campaign ID and the mod's user ID from the DM interaction.
+		4. `checkModAuth` verifies the user has ScopeMod (mod or admin).
+		5. Loads the campaign by ID, sets IsApproved = true, updates the DB.
+		6. Sends a DM to the campaign's DM via the dispatcher: "Your campaign has been approved!"
+		7. Responds to the mod ephemerally: "Campaign X has been approved."
+
+	Flow (Deny):
+		1. Mod clicks "Deny", triggering `campaign_deny:<campaignID>`.
+		2. Auth check (same as approve).
+		3. Instead of denying immediately, opens a modal asking for a denial reason.
+		4. Mod submits the modal, triggering `campaign_deny_modal:<campaignID>`.
+		5. `campaignDenyModal` parses the reason, deletes the campaign from the DB.
+		6. Sends a DM to the campaign's DM via the dispatcher with the denial reason.
+		7. Responds to the mod ephemerally: "Campaign X has been denied and deleted."
+*/
+
+/*
+campaignApprove handles the "Approve" button click on a campaign approval DM.
+
+Custom ID format: campaign_approve:<campaignID>
+*/
 type campaignApprove struct {
 	db         *bun.DB
 	dispatcher *dispatch.Dispatcher
@@ -61,8 +84,11 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 	respondInteraction(s, i, fmt.Sprintf(messages.CampaignApprovedMessage, campaign.Name))
 }
 
-// campaignDeny handles the "Deny" button click on a campaign approval DM.
-// Custom ID format: campaign_deny:<campaignID>
+/*
+campaignDeny handles the "Deny" button click on a campaign approval DM.
+
+Custom ID format: campaign_deny:<campaignID>
+*/
 type campaignDeny struct {
 	db     *bun.DB
 	reason string
@@ -82,7 +108,6 @@ func (c *campaignDeny) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
-	// Open a modal to collect the denial reason.
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
@@ -103,8 +128,11 @@ func (c *campaignDeny) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	})
 }
 
-// parseApprovalInteraction extracts the campaign ID and user ID from an approval button click.
-// Note: In DMs, i.Member is nil. i.User is used instead.
+/*
+parseApprovalInteraction extracts the campaign ID and user ID from an approval button click.
+
+Note: In DMs, i.Member is nil. i.User is used instead.
+*/
 func parseApprovalInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) (campaignID, userID string, ok bool) {
 	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
 	if len(parts) < 2 {

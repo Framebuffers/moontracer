@@ -96,13 +96,11 @@ func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo
 							Label:    messages.ManageAnnounceLabel,
 							Style:    discordgo.SecondaryButton,
 							CustomID: fmt.Sprintf("manage_announce:%s", campaignID),
-							Disabled: true, // Phase 2
 						},
 						discordgo.Button{
 							Label:    messages.ManageRescheduleLabel,
 							Style:    discordgo.SecondaryButton,
 							CustomID: fmt.Sprintf("manage_reschedule:%s", campaignID),
-							Disabled: true, // Phase 2
 						},
 					},
 				},
@@ -114,6 +112,7 @@ func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo
 
 /*
 manageCampaignDelete is a model with information to ban a Player. Interaction: `manage_delete:<id>` [delete]
+
  1. Authorize: invoker must be DM of that Campaign or Mod.
  2. Delete all CampaignMembers from that Campaign, then delete the Campaign itself.
 */
