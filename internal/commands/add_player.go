@@ -56,7 +56,6 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 	targetUser := i.ApplicationCommandData().Options[0].UserValue(s)
 	tag := i.ApplicationCommandData().Options[1].StringValue()
 
-	// Look up the campaign by tag.
 	campaign, err := db.GetByTag[models.Campaign](r.db, tag)
 	if err != nil {
 		respond(s, i, messages.CampaignNotFoundMessage)
@@ -68,7 +67,6 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
-	// Auth: invoker must be the DM of this campaign. DM sovereignty is absolute.
 	ok, err := auth.Authorize(r.db, invokerID, auth.ScopeDM, campaign.ID)
 	if err != nil {
 		log.Printf("addplayer: auth check failed: %v", err)
@@ -80,7 +78,6 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
-	// Target must be a registered player.
 	registered, err := auth.Authorize(r.db, targetUser.ID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("addplayer: target auth check failed: %v", err)
@@ -92,7 +89,6 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
-	// Check if the target is already in the campaign or if it's full.
 	players, err := models.GetCampaignPlayers(r.db, campaign.ID)
 	if err != nil {
 		log.Printf("addplayer: error fetching campaign players: %v", err)
@@ -107,7 +103,6 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		}
 	}
 
-	// Slots == -1 means unlimited. Otherwise, check capacity.
 	if campaign.Slots != -1 {
 		activePlayerCount := 0
 		for _, p := range players {
@@ -121,7 +116,6 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		}
 	}
 
-	// Insert the new CampaignPlayer.
 	cp := &models.CampaignPlayer{
 		PlayerID:   targetUser.ID,
 		CampaignID: campaign.ID,
@@ -134,7 +128,6 @@ func (r *addPlayer) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 
-	// Assign the campaign's Discord role if one is linked.
 	if campaign.RoleID != "" {
 		if err := s.GuildMemberRoleAdd(i.GuildID, targetUser.ID, campaign.RoleID); err != nil {
 			log.Printf("addplayer: failed to assign role %s to %s: %v", campaign.RoleID, targetUser.ID, err)

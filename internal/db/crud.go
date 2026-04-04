@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/uptrace/bun"
+
+	"moontracer/internal/manager/models"
 )
 
 func GetByID[T any](db *bun.DB, id string) (*T, error) {
@@ -35,6 +37,19 @@ func GetAll[T any](db *bun.DB) ([]T, error) {
 		return nil, err
 	}
 	return models, nil
+}
+
+func GetStaff(db *bun.DB) ([]models.Player, error) {
+	ctx := context.Background()
+	var players []models.Player
+	err := db.NewSelect().
+		Model(&players).
+		Where("role IN (?)", bun.In([]models.ServerRole{models.ServerRoleMod, models.ServerRoleAdmin})).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return players, nil
 }
 
 func Update[T any](db *bun.DB, model *T) error {

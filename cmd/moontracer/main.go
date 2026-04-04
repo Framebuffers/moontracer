@@ -48,7 +48,7 @@ func main() {
 		log.Fatalf("failed to migrate database: %v", err)
 	}
 
-	if err := commands.RegisterCommands(bunDB); err != nil {
+	if err := commands.RegisterCommands(bunDB, nil); err != nil {
 		log.Fatalf("failed to register commands: %v", err)
 	}
 

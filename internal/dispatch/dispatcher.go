@@ -1,4 +1,4 @@
-package dm
+package dispatch
 
 import (
 	"fmt"
@@ -6,14 +6,12 @@ import (
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
-
-	"moontracer/internal/manager/models"
 )
 
 type DirectMessage struct {
 	ID      string
-	Sender  models.Player
-	Target  models.Player
+	Sender  string
+	Target  string
 	Content string
 }
 
@@ -126,9 +124,9 @@ func (d *Dispatcher) work(id int) {
 }
 
 func (d *Dispatcher) send(msg DirectMessage) error {
-	channel, err := d.session.UserChannelCreate(msg.Target.ID)
+	channel, err := d.session.UserChannelCreate(msg.Target)
 	if err != nil {
-		return fmt.Errorf("dispatcher: create DM channel for %s: %w", msg.Target.ID, err)
+		return fmt.Errorf("dispatcher: create DM channel for %s: %w", msg.ID, err)
 	}
 
 	_, err = d.session.ChannelMessageSend(channel.ID, msg.Content)
@@ -136,6 +134,6 @@ func (d *Dispatcher) send(msg DirectMessage) error {
 		return fmt.Errorf("dispatcher: send to channel %s: %w", channel.ID, err)
 	}
 
-	log.Printf("dispatcher: sent message %s to %s", msg.ID, msg.Target.ID)
+	log.Printf("dispatcher: sent message %s to %s", msg.ID, msg.ID)
 	return nil
 }

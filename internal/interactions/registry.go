@@ -2,10 +2,12 @@ package interactions
 
 import (
 	"github.com/uptrace/bun"
+
+	"moontracer/internal/dispatch"
 )
 
 // AllComponents returns an array with all the `ComponentHandler`s available to the bot.
-func AllComponents(db *bun.DB, guildID string, adminRoleName string) []ComponentHandler {
+func AllComponents(db *bun.DB, guildID string, adminRoleName string, d *dispatch.Dispatcher) []ComponentHandler {
 	return []ComponentHandler{
 		&campaignJoin{db: db, guildID: guildID, adminRoleName: adminRoleName},
 		&campaignLeave{db: db, guildID: guildID, adminRoleName: adminRoleName},
@@ -19,8 +21,8 @@ func AllComponents(db *bun.DB, guildID string, adminRoleName string) []Component
 }
 
 // AllModals returns an array with all the ModalHandlers available to the bot.
-func AllModals(db *bun.DB, guildID, adminRole string) []ModalHandler {
+func AllModals(db *bun.DB, guildID, adminRole string, d *dispatch.Dispatcher) []ModalHandler {
 	return []ModalHandler{
-		&modalCampaignCreate{db: db},
+		&modalCampaignCreate{db: db, dispatch: d},
 	}
 }

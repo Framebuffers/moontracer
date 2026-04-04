@@ -148,6 +148,7 @@ func (c *Campaign) CreateCampaign(
 	vtt string,
 	books []string,
 	otherGameInfo []string,
+	isApproved bool,
 ) (*Campaign, error) {
 	ctx := context.Background()
 
@@ -184,6 +185,7 @@ func (c *Campaign) CreateCampaign(
 		Schedule:      *schedule,
 		Links:         links,
 		VTTLink:       vtt,
+		IsApproved:    false,
 	}
 
 	_, err = db.NewInsert().Model(campaign).Exec(ctx)
