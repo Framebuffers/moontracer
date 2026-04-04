@@ -74,6 +74,15 @@ func (b *Bot) Run() error {
 	appID := b.session.State.User.ID
 	log.Printf("bot: logged in as %s (app %s)", b.session.State.User.Username, appID)
 
+	if b.guildID != "" {
+		me, err := b.session.GuildMember(b.guildID, appID)
+		if err != nil {
+			log.Printf("bot: warning: could not fetch own guild member: %v", err)
+		} else {
+			log.Printf("bot: my roles in guild: %v", me.Roles)
+		}
+	}
+
 	if err := b.registerCommands(appID); err != nil {
 		return err
 	}
