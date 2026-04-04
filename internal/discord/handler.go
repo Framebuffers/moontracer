@@ -49,6 +49,13 @@ func NewHandler(cmds []commands.Command, components []interactions.ComponentHand
 				log.Printf("handler: unknown command: /%s", name)
 				return
 			}
+			userID := "unknown"
+			if i.Member != nil {
+				userID = i.Member.User.ID
+			} else if i.User != nil {
+				userID = i.User.ID
+			}
+			log.Printf("handler: /%s invoked by %s", name, userID)
 			cmd.Execute(s, i)
 
 		case discordgo.InteractionMessageComponent:
@@ -62,6 +69,7 @@ func NewHandler(cmds []commands.Command, components []interactions.ComponentHand
 				log.Printf("handler: unknown component: %s", customID)
 				return
 			}
+			log.Printf("handler: component %s triggered", customID)
 			handler.HandleComponents(s, i)
 
 		case discordgo.InteractionModalSubmit:
@@ -75,6 +83,7 @@ func NewHandler(cmds []commands.Command, components []interactions.ComponentHand
 				log.Printf("handler: unknown modal: %s", customID)
 				return
 			}
+			log.Printf("handler: modal %s submitted", customID)
 			handler.HandleModal(s, i)
 		}
 	}
