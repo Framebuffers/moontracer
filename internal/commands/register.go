@@ -13,6 +13,15 @@ import (
 	"github.com/uptrace/bun"
 )
 
+/*
+	Flow:
+		1. User runs `/register`.
+		2. Check if the user is already registered (ScopePlayer auth check).
+		3. If already registered, respond: "You are already registered!"
+		4. If not, insert a new Player record into the DB with the user's Discord ID.
+		5. Respond: "Welcome, @user! You are now registered."
+*/
+
 type registerCommand struct {
 	db *bun.DB
 }

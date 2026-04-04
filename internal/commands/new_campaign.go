@@ -10,6 +10,15 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		1. User runs `/newcampaign`.
+		2. Authorize: check if the user is registered. Reject if not.
+		3. Open a modal form with fields: name, tag, description, edition, slots.
+		4. User submits the modal → routed to `modal_campaign_create` (separate handler).
+		5. Campaign is created with IsApproved=false, staff are notified via DM for approval.
+*/
+
 // newCampaign creates a modal to input information needed to create a new Campaign.
 type newCampaign struct {
 	db *bun.DB

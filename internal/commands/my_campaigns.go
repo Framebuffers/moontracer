@@ -13,6 +13,17 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		1. User runs `/mycampaigns`.
+		2. Authorize: check if the user is a registered player. Reject if not.
+		3. Load all CampaignPlayer entries for this user (with Campaign relation).
+		4. Filter out unapproved campaigns (approval gate).
+		5. Build a list with campaign names, roles, and statuses.
+		6. Attach a "View" button per campaign (max 5 per row, Discord limit).
+		7. Respond ephemerally with the list and buttons.
+*/
+
 // playerCommand returns available information for a given player, like campaigns.
 type playerCommand struct {
 	db *bun.DB

@@ -248,6 +248,52 @@ const (
 	CampaignApprovedDMMessage  = "Your campaign **%s** has been approved!"
 )
 
+// Announce
+const (
+	AnnounceModalPrefix      = "manage_announce_modal"
+	AnnounceComponentPrefix  = "manage_announce"
+	AnnounceModalTitle       = "Send Announcement"
+	AnnounceFieldID          = "announce_message"
+	AnnounceFieldLabel       = "Message"
+	AnnounceFieldPlaceholder = "Type your announcement to all campaign members..."
+	AnnounceSentMessage      = "Announcement sent to %d members of **%s**."
+	AnnounceNoMembers        = "This campaign has no members to announce to."
+	AnnounceError            = "Failed to send announcement."
+)
+
+// Reschedule
+const (
+	RescheduleModalPrefix      = "manage_reschedule_modal"
+	RescheduleComponentPrefix  = "manage_reschedule"
+	RescheduleModalTitle       = "Reschedule Campaign"
+	RescheduleDayFieldID       = "reschedule_day"
+	RescheduleDayLabel         = "Day of Week (0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun)"
+	RescheduleDayPlaceholder   = "e.g. 5 for Saturday"
+	RescheduleTimeFieldID      = "reschedule_time"
+	RescheduleTimeLabel        = "Start Time (HH:MM UTC)"
+	RescheduleTimePlaceholder  = "e.g. 19:00"
+	RescheduleDurFieldID       = "reschedule_duration"
+	RescheduleDurLabel         = "Duration (hours)"
+	RescheduleDurPlaceholder   = "e.g. 3"
+	RescheduleFreqFieldID      = "reschedule_freq"
+	RescheduleFreqLabel        = "Frequency (weekly, biweekly, monthly, quarterly, yearly)"
+	RescheduleFreqPlaceholder  = "e.g. weekly"
+	RescheduleSuccess          = "Schedule updated for **%s**: %s %s UTC (%sh), %s."
+	RescheduleInvalidDay       = "Invalid day of week. Use 0 (Mon) through 6 (Sun)."
+	RescheduleInvalidTime      = "Invalid time format. Use HH:MM (e.g. 19:00)."
+	RescheduleInvalidDuration  = "Invalid duration. Enter a number (e.g. 3)."
+	RescheduleInvalidFrequency = "Invalid frequency. Use: weekly, biweekly, monthly, quarterly, yearly."
+	RescheduleError            = "Failed to update schedule."
+)
+
+// Campaign database (debug)
+const (
+	CampaignDBCommandName = "campaigndatabase"
+	CampaignDBCommandDesc = "Show all campaigns in the database (staff only)."
+	CampaignDBEmpty       = "No campaigns in the database."
+	CampaignDBNotStaff    = "Only mods or admins can use this command."
+)
+
 // Help command
 const (
 	HelpCommandName = "help"

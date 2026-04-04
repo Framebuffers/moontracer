@@ -12,9 +12,22 @@ import (
 	"moontracer/internal/messages"
 )
 
-// HandleGuildMemberRemove returns a handler that archives any campaigns
-// owned by a departing DM. This enforces DM sovereignty: if the DM leaves,
-// the campaign becomes an immutable record rather than being handed off.
+/*
+	Flow:
+		1. A guild member leaves the server, triggering `GuildMemberRemove`.
+		2. Check if the departing user is a registered player. If not, do nothing.
+		3. Load all CampaignPlayer entries for this player.
+		4. For each entry where the player is the DM and the campaign is still mutable:
+			a. Archive the campaign (set IsArchived, ArchivedReason).
+			b. Insert an audit entry recording the auto-archive.
+		5. Log each archived campaign.
+*/
+
+/*
+	HandleGuildMemberRemove returns a handler that archives any campaigns owned by a departing DM.
+
+This enforces DM sovereignty: if the DM leaves, the campaign becomes an immutable record rather than being handed off.
+*/
 func HandleGuildMemberRemove(database *bun.DB) func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
 	return func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
 		userID := e.User.ID
