@@ -58,6 +58,8 @@ const (
 	CampaignCreationFailureErrorMessage        = "campaign.CreateCampaign(): error creating campaign: "
 	CampaignAndRegistrationFailureErrorMessage = "Failed to create campaign. Make sure you are registered."
 	CampaignCreationMessage                    = "You just created a new campaign: "
+	CampaignStaffNotifyFailureMessage          = "Could not notify staff members to ask for approval of this Campaign."
+	CampaignApprovalRequestMessage             = "New campaign **%s** by <@%s> needs approval."
 )
 
 // Campaign join
@@ -224,6 +226,19 @@ const (
 	SetRoleSuccess             = "Linked role **%s** to campaign **%s**."
 	SetRoleCreateFailed        = "Failed to create Discord role."
 	SetRoleUpdateFailed        = "Failed to update campaign."
+)
+
+// Campaign approval
+const (
+	CampaignApprovePrefix      = "campaign_approve"
+	CampaignDenyPrefix         = "campaign_deny"
+	ApproveButtonLabel         = "Approve"
+	DenyButtonLabel            = "Deny"
+	CampaignApprovedMessage    = "Campaign **%s** has been approved."
+	CampaignDeniedMessage      = "Campaign **%s** has been denied and deleted."
+	CampaignApproveNotModError = "Only mods or admins can approve campaigns."
+	CampaignApproveNotFound    = "Campaign not found or already processed."
+	CampaignApproveError       = "Failed to process campaign approval."
 )
 
 // Help command

@@ -9,10 +9,11 @@ import (
 )
 
 type DirectMessage struct {
-	ID      string
-	Sender  string
-	Target  string
-	Content string
+	ID         string
+	Sender     string
+	Target     string
+	Content    string
+	Components []discordgo.MessageComponent // optional; when set, message is sent with buttons/menus
 }
 
 /*
@@ -129,7 +130,10 @@ func (d *Dispatcher) send(msg DirectMessage) error {
 		return fmt.Errorf("dispatcher: create DM channel for %s: %w", msg.ID, err)
 	}
 
-	_, err = d.session.ChannelMessageSend(channel.ID, msg.Content)
+	_, err = d.session.ChannelMessageSendComplex(channel.ID, &discordgo.MessageSend{
+		Content:    msg.Content,
+		Components: msg.Components,
+	})
 	if err != nil {
 		return fmt.Errorf("dispatcher: send to channel %s: %w", channel.ID, err)
 	}

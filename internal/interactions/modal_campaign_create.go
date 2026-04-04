@@ -109,17 +109,34 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	staffMembers, err := db.GetStaff(m.db)
 	if err != nil {
 		log.Printf("modal_campaign_create: failed to get staff members to notify: %v", err)
-		respondInteraction(s, i, "Could not notify staff members to ask for approval of this Campaign.")
+		respondInteraction(s, i, messages.CampaignStaffNotifyFailureMessage)
 		return
 	}
 
-	// TODO: wire a button to approve this
+	approvalButtons := []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    messages.ApproveButtonLabel,
+					Style:    discordgo.SuccessButton,
+					CustomID: messages.CampaignApprovePrefix + ":" + created.ID,
+				},
+				discordgo.Button{
+					Label:    messages.DenyButtonLabel,
+					Style:    discordgo.DangerButton,
+					CustomID: messages.CampaignDenyPrefix + ":" + created.ID,
+				},
+			},
+		},
+	}
+
 	for _, staff := range staffMembers {
 		m.dispatch.Push(dispatch.DirectMessage{
-			ID:      msgID,
-			Sender:  userID,
-			Target:  staff.ID,
-			Content: fmt.Sprintf("New campaign **%s** by <@%s> needs approval.", created.Name, userID),
+			ID:         msgID,
+			Sender:     userID,
+			Target:     staff.ID,
+			Content:    fmt.Sprintf(messages.CampaignApprovalRequestMessage, created.Name, userID),
+			Components: approvalButtons,
 		})
 	}
 
