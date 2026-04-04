@@ -50,6 +50,11 @@ func New(token, guildID, adminRole string, db *bun.DB) (*Bot, error) {
 func (b *Bot) Run() error {
 	b.dispatcher = dispatch.NewDispatcher(b.session, 5)
 
+	b.session.Identify.Intents = discordgo.IntentsGuilds |
+		discordgo.IntentsGuildMembers |
+		discordgo.IntentsGuildMessages |
+		discordgo.IntentsDirectMessages
+
 	b.session.AddHandler(NewHandler(
 		commands.All(b.db, b.dispatcher),
 		interactions.AllComponents(b.db, b.guildID, b.role, b.dispatcher),
