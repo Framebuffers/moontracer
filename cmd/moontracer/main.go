@@ -21,6 +21,11 @@ import (
 */
 
 func main() {
+	if os.Getenv("VERBOSE") == "true" {
+		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
+		log.Println("verbose mode enabled")
+	}
+
 	token := os.Getenv("DISCORD_TOKEN")
 	if token == "" {
 		log.Fatal("DISCORD_TOKEN is required")
