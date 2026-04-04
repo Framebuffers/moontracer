@@ -5,15 +5,16 @@ import (
 
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/dispatch"
 	"moontracer/internal/manager/models"
 )
 
 // All returns every registered command. Add new commands here.
-func All(db *bun.DB) []Command {
+func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
 	return []Command{
 		&pingCommand{},
 		&awooCommand{db: db},
-		&helpCommand{db: *db},
+		&helpCommand{db: *db, d: d},
 		&campaignCommand{db: db},
 		&playerCommand{db: db},
 		&registerCommand{db: db},
@@ -28,9 +29,9 @@ func All(db *bun.DB) []Command {
 }
 
 // RegisterCommands populates the commands table with metadata from all registered commands.
-func RegisterCommands(db *bun.DB) error {
+func RegisterCommands(db *bun.DB, d *dispatch.Dispatcher) error {
 	ctx := context.Background()
-	commands := All(db)
+	commands := All(db, d)
 
 	for _, cmd := range commands {
 		data := cmd.Data()

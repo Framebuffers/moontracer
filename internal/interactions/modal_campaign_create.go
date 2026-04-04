@@ -7,8 +7,11 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/db"
+	"moontracer/internal/dispatch"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -26,7 +29,8 @@ import (
 
 // modalCampaignCreate handles the modal submission from `/newcampaign` to create a new campaign.
 type modalCampaignCreate struct {
-	db *bun.DB
+	db       *bun.DB
+	dispatch *dispatch.Dispatcher
 }
 
 func (m *modalCampaignCreate) CustomIDPrefix() string {
@@ -92,11 +96,31 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		"",
 		nil,
 		nil,
+		false,
 	)
 	if err != nil {
 		log.Printf("modal_campaign_create: %s: %v", messages.CampaignCreationFailureErrorMessage, err)
 		respondInteraction(s, i, messages.CampaignAndRegistrationFailureErrorMessage)
 		return
+	}
+
+	// notify mods for approval:
+	msgID := uuid.NewString()
+	staffMembers, err := db.GetStaff(m.db)
+	if err != nil {
+		log.Printf("modal_campaign_create: failed to get staff members to notify: %v", err)
+		respondInteraction(s, i, "Could not notify staff members to ask for approval of this Campaign.")
+		return
+	}
+
+	// TODO: wire a button to approve this
+	for _, staff := range staffMembers {
+		m.dispatch.Push(dispatch.DirectMessage{
+			ID:      msgID,
+			Sender:  userID,
+			Target:  staff.ID,
+			Content: fmt.Sprintf("New campaign **%s** by <@%s> needs approval.", created.Name, userID),
+		})
 	}
 
 	respondInteraction(s, i, fmt.Sprintf("%s **%s** Use `/campaign tag:%s` to view it.", messages.CampaignCreationMessage, created.Name, created.Tag))

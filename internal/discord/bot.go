@@ -11,6 +11,7 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/commands"
+	"moontracer/internal/dispatch"
 	"moontracer/internal/interactions"
 )
 
@@ -21,6 +22,7 @@ type Bot struct {
 	db         *bun.DB
 	role       string
 	registered []*discordgo.ApplicationCommand
+	dispatcher *dispatch.Dispatcher
 }
 
 // New creates a Bot with the given token, guild ID, admin role name, and database connection.
@@ -46,26 +48,28 @@ func New(token, guildID, adminRole string, db *bun.DB) (*Bot, error) {
 // Run opens the gateway, registers global commands, blocks until
 // SIGINT/SIGTERM, then removes commands and closes the session.
 func (b *Bot) Run() error {
+	b.dispatcher = dispatch.NewDispatcher(b.session, 5)
+
 	b.session.AddHandler(NewHandler(
-		commands.All(b.db),
-		interactions.AllComponents(b.db, b.guildID, b.role),
-		interactions.AllModals(b.db, b.guildID, b.role),
+		commands.All(b.db, b.dispatcher),
+		interactions.AllComponents(b.db, b.guildID, b.role, b.dispatcher),
+		interactions.AllModals(b.db, b.guildID, b.role, b.dispatcher),
 	))
 
-	// Re-sync a single player's role when their Discord guild roles change.
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
 		if err := auth.SyncServerRoles(b.db, s, e.GuildID, b.role); err != nil {
 			log.Printf("bot: warning: role sync on member update failed: %v", err)
 		}
 	})
 
-	// Auto-archive campaigns when a DM leaves the server (sovereignty enforcement).
 	b.session.AddHandler(HandleGuildMemberRemove(b.db))
 
 	if err := b.session.Open(); err != nil {
 		return err
 	}
 	defer b.session.Close()
+
+	b.dispatcher.Start()
 
 	appID := b.session.State.User.ID
 	log.Printf("bot: logged in as %s (app %s)", b.session.State.User.Username, appID)
@@ -74,7 +78,6 @@ func (b *Bot) Run() error {
 		return err
 	}
 
-	// Sync server roles from Discord into the database.
 	if b.guildID != "" {
 		if err := auth.SyncServerRoles(b.db, b.session, b.guildID, b.role); err != nil {
 			log.Printf("bot: warning: failed to sync server roles: %v", err)
@@ -90,13 +93,14 @@ func (b *Bot) Run() error {
 	<-stop
 
 	log.Println("shutting down...")
+	b.dispatcher.Stop()
 	b.removeCommands(appID)
 
 	return nil
 }
 
 func (b *Bot) registerCommands(appID string) error {
-	for _, cmd := range commands.All(b.db) {
+	for _, cmd := range commands.All(b.db, b.dispatcher) {
 		created, err := b.session.ApplicationCommandCreate(appID, "", cmd.Data())
 		if err != nil {
 			return err
