@@ -232,6 +232,7 @@ const (
 const (
 	CampaignApprovePrefix      = "campaign_approve"
 	CampaignDenyPrefix         = "campaign_deny"
+	CampaignDenyModalPrefix    = "campaign_deny_modal"
 	ApproveButtonLabel         = "Approve"
 	DenyButtonLabel            = "Deny"
 	CampaignApprovedMessage    = "Campaign **%s** has been approved."
@@ -239,6 +240,12 @@ const (
 	CampaignApproveNotModError = "Only mods or admins can approve campaigns."
 	CampaignApproveNotFound    = "Campaign not found or already processed."
 	CampaignApproveError       = "Failed to process campaign approval."
+	CampaignDenyModalTitle     = "Deny Campaign"
+	CampaignDenyReasonLabel    = "Reason"
+	CampaignDenyReasonPlaceholder = "Why is this campaign being denied?"
+	CampaignDenyReasonFieldID  = "deny_reason"
+	CampaignDeniedDMMessage    = "Your campaign **%s** has been denied. Reason: %s"
+	CampaignApprovedDMMessage  = "Your campaign **%s** has been approved!"
 )
 
 // Help command

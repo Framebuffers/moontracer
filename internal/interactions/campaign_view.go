@@ -52,6 +52,11 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
+	if !campaign.IsApproved {
+		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		return
+	}
+
 	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_view: %s: %v", messages.PlayerFetchErrorMessage, err)

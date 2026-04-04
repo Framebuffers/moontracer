@@ -50,6 +50,11 @@ func (c *campaignCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
+	if !campaign.IsApproved {
+		respond(s, i, messages.CampaignNotFoundMessage)
+		return
+	}
+
 	players, err := models.GetCampaignPlayers(c.db, campaign.ID)
 	if err != nil {
 		log.Printf("campaign: %s %s: %v", messages.PlayerFetchErrorMessage, tag, err)

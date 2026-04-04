@@ -56,6 +56,9 @@ func (p *playerCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 	var buttons []discordgo.MessageComponent
 	var lines []string
 	for _, e := range entries {
+		if e.Campaign != nil && !e.Campaign.IsApproved {
+			continue
+		}
 		campaignName := e.CampaignID
 		campaignTag := e.CampaignID
 		if e.Campaign != nil {
