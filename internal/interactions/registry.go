@@ -17,7 +17,7 @@ func AllComponents(db *bun.DB, guildID string, adminRoleName string, d *dispatch
 		&manageCampaignDelete{db: db, guildID: guildID, adminRoleName: adminRoleName},
 		&manageCampaignBan{db: db, guildID: guildID, adminRoleName: adminRoleName},
 		&manageCampaignBanSelect{db: db, guildID: guildID, adminRoleName: adminRoleName},
-		&campaignApprove{db: db},
+		&campaignApprove{db: db, dispatcher: d},
 		&campaignDeny{db: db},
 	}
 }
@@ -26,5 +26,6 @@ func AllComponents(db *bun.DB, guildID string, adminRoleName string, d *dispatch
 func AllModals(db *bun.DB, guildID, adminRole string, d *dispatch.Dispatcher) []ModalHandler {
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
+		&campaignDenyModal{db: db, dispatcher: d},
 	}
 }

@@ -49,6 +49,11 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 		return
 	}
 
+	if !campaign.IsApproved {
+		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		return
+	}
+
 	// DMs cannot leave their own campaign.
 	isDM, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaign.ID)
 	if err != nil {

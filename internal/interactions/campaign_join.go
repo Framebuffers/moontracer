@@ -64,6 +64,11 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
+	if !campaign.IsApproved {
+		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		return
+	}
+
 	if !campaign.CanMutate() {
 		respondInteraction(s, i, messages.CampaignArchivedMessage)
 		return
