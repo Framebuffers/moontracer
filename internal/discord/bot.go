@@ -4,49 +4,56 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/uptrace/bun"
 
 	"moontracer/internal/auth"
 	"moontracer/internal/commands"
+	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
-	"moontracer/internal/interactions"
 )
 
-// Bot wraps a discordgo session and manages its lifecycle.
+/*
+Bot wraps a discordgo session and manages its lifecycle.
+
+Note: guildID is optional: if it is set, commands register to that guild only (dev mode)
+*/
 type Bot struct {
 	session    *discordgo.Session
 	guildID    string
-	db         *bun.DB
+	guildDBM   *db.GuildDBManager
 	role       string
 	registered []*discordgo.ApplicationCommand
 	dispatcher *dispatch.Dispatcher
 }
 
-// New creates a Bot with the given token, guild ID, admin role name, and database connection.
-func New(token, guildID, adminRole string, db *bun.DB) (*Bot, error) {
+// New creates a Bot with the given token, guild ID, admin role name, and guild DB manager.
+func New(token, guildID, adminRole string, guildDBM *db.GuildDBManager) (*Bot, error) {
 	s, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{session: s, guildID: guildID, db: db, role: adminRole}, nil
+	return &Bot{session: s, guildID: guildID, guildDBM: guildDBM, role: adminRole}, nil
 }
 
 /*
 	Flow (Run):
-		1. Add the main event handler to the session (command dispatcher + component/modal router).
+		1. Add the main event handler to the session (per-guild DB resolution + command dispatch).
 		2. Open the Discord gateway connection.
-		3. Log in and get the app ID.
-		4. Register all commands globally with Discord (creates /, /campaign, /newcampaign, etc.).
-		5. Block waiting for SIGINT/SIGTERM (Ctrl+C).
-		6. On shutdown signal, remove all registered commands from Discord.
-		7. Close the gateway connection and return.
+		3. Discover all guilds the bot is in, initialize per-guild databases in parallel.
+		4. Sync server roles for each guild in parallel.
+		5. Register all commands globally with Discord.
+		6. Block waiting for SIGINT/SIGTERM (Ctrl+C).
+		7. On shutdown signal, remove all registered commands from Discord.
+		8. Close the gateway connection, close all guild databases, and return.
 */
 
-// Run opens the gateway, registers global commands, blocks until
-// SIGINT/SIGTERM, then removes commands and closes the session.
+/*
+Run opens the gateway, registers global commands, blocks until
+SIGINT/SIGTERM, then removes commands and closes the session.
+*/
 func (b *Bot) Run() error {
 	b.dispatcher = dispatch.NewDispatcher(b.session, 5)
 
@@ -55,19 +62,36 @@ func (b *Bot) Run() error {
 		discordgo.IntentsGuildMessages |
 		discordgo.IntentsDirectMessages
 
-	b.session.AddHandler(NewHandler(
-		commands.All(b.db, b.dispatcher),
-		interactions.AllComponents(b.db, b.guildID, b.role, b.dispatcher),
-		interactions.AllModals(b.db, b.guildID, b.role, b.dispatcher),
-	))
+	b.session.AddHandler(NewHandler(b.guildDBM, b.dispatcher, b.role))
 
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
-		if err := auth.SyncServerRoles(b.db, s, e.GuildID, b.role); err != nil {
-			log.Printf("bot: warning: role sync on member update failed: %v", err)
+		guildDB, err := b.guildDBM.GetOrCreate(e.GuildID)
+		if err != nil {
+			log.Printf("bot: warning: could not get DB for guild %s on member update: %v", e.GuildID, err)
+			return
+		}
+		if err := auth.SyncServerRoles(guildDB, s, e.GuildID, b.role); err != nil {
+			log.Printf("bot: warning: role sync on member update failed for guild %s: %v", e.GuildID, err)
 		}
 	})
 
-	b.session.AddHandler(HandleGuildMemberRemove(b.db))
+	b.session.AddHandler(HandleGuildMemberRemove(b.guildDBM))
+
+	// Initialize new guilds joined mid-runtime.
+	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildCreate) {
+		guildDB, err := b.guildDBM.GetOrCreate(e.Guild.ID)
+		if err != nil {
+			log.Printf("bot: failed to create DB for guild %s (%s): %v", e.Guild.Name, e.Guild.ID, err)
+			return
+		}
+		if err := commands.RegisterCommands(guildDB, nil); err != nil {
+			log.Printf("bot: failed to register commands in DB for guild %s: %v", e.Guild.ID, err)
+		}
+		if err := auth.SyncServerRoles(guildDB, s, e.Guild.ID, b.role); err != nil {
+			log.Printf("bot: failed to sync roles for guild %s: %v", e.Guild.ID, err)
+		}
+		log.Printf("bot: initialized guild %s (%s)", e.Guild.Name, e.Guild.ID)
+	})
 
 	if err := b.session.Open(); err != nil {
 		return err
@@ -79,25 +103,38 @@ func (b *Bot) Run() error {
 	appID := b.session.State.User.ID
 	log.Printf("bot: logged in as %s (app %s)", b.session.State.User.Username, appID)
 
-	if b.guildID != "" {
-		me, err := b.session.GuildMember(b.guildID, appID)
-		if err != nil {
-			log.Printf("bot: warning: could not fetch own guild member: %v", err)
-		} else {
-			log.Printf("bot: my roles in guild: %v", me.Roles)
-		}
+	// Discover all guilds and initialize their databases in parallel.
+	var guildIDs []string
+	for _, g := range b.session.State.Guilds {
+		guildIDs = append(guildIDs, g.ID)
 	}
+	log.Printf("bot: discovered %d guild(s), initializing databases...", len(guildIDs))
+	b.guildDBM.InitForGuilds(guildIDs)
+
+	// Register command metadata in each guild's DB and sync roles in parallel.
+	var wg sync.WaitGroup
+	for _, g := range b.session.State.Guilds {
+		wg.Add(1)
+		go func(guild *discordgo.Guild) {
+			defer wg.Done()
+			guildDB, err := b.guildDBM.GetOrCreate(guild.ID)
+			if err != nil {
+				log.Printf("bot: skipping guild %s: %v", guild.ID, err)
+				return
+			}
+			if err := commands.RegisterCommands(guildDB, nil); err != nil {
+				log.Printf("bot: failed to register commands in DB for guild %s: %v", guild.ID, err)
+			}
+			if err := auth.SyncServerRoles(guildDB, b.session, guild.ID, b.role); err != nil {
+				log.Printf("bot: role sync failed for guild %s: %v", guild.ID, err)
+			}
+		}(g)
+	}
+	wg.Wait()
+	log.Println("bot: all guild databases initialized and roles synced")
 
 	if err := b.registerCommands(appID); err != nil {
 		return err
-	}
-
-	if b.guildID != "" {
-		if err := auth.SyncServerRoles(b.db, b.session, b.guildID, b.role); err != nil {
-			log.Printf("bot: warning: failed to sync server roles: %v", err)
-		} else {
-			log.Println("bot: server roles synced from Discord")
-		}
 	}
 
 	log.Println("bot is running — press Ctrl+C to exit")
@@ -109,25 +146,48 @@ func (b *Bot) Run() error {
 	log.Println("shutting down...")
 	b.dispatcher.Stop()
 	b.removeCommands(appID)
+	b.guildDBM.Close()
 
 	return nil
 }
 
 func (b *Bot) registerCommands(appID string) error {
-	for _, cmd := range commands.All(b.db, b.dispatcher) {
-		created, err := b.session.ApplicationCommandCreate(appID, "", cmd.Data())
+	/*
+		Flow:
+			Use the first available guild's DB to build command metadata.
+			commands.All needs a *bun.DB for struct init, but registerCommands only calls cmd.Data() for the Discord API registration.
+	*/
+	var guildIDs []string
+	for _, g := range b.session.State.Guilds {
+		guildIDs = append(guildIDs, g.ID)
+	}
+	if len(guildIDs) == 0 {
+		log.Println("bot: no guilds found, skipping command registration")
+		return nil
+	}
+
+	bunDB, err := b.guildDBM.GetOrCreate(guildIDs[0])
+	if err != nil {
+		return err
+	}
+	for _, cmd := range commands.All(bunDB, b.dispatcher) {
+		created, err := b.session.ApplicationCommandCreate(appID, b.guildID, cmd.Data())
 		if err != nil {
 			return err
 		}
 		b.registered = append(b.registered, created)
-		log.Printf("bot: registered /%s (global)", created.Name)
+		if b.guildID != "" {
+			log.Printf("bot: registered /%s (guild %s)", created.Name, b.guildID)
+		} else {
+			log.Printf("bot: registered /%s (global)", created.Name)
+		}
 	}
 	return nil
 }
 
 func (b *Bot) removeCommands(appID string) {
 	for _, cmd := range b.registered {
-		if err := b.session.ApplicationCommandDelete(appID, "", cmd.ID); err != nil {
+		if err := b.session.ApplicationCommandDelete(appID, b.guildID, cmd.ID); err != nil {
 			log.Printf("bot: failed to remove /%s: %v", cmd.Name, err)
 		} else {
 			log.Printf("bot: removed /%s", cmd.Name)

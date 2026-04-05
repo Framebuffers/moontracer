@@ -113,18 +113,19 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
+	guildID := i.GuildID
 	approvalButtons := []discordgo.MessageComponent{
 		discordgo.ActionsRow{
 			Components: []discordgo.MessageComponent{
 				discordgo.Button{
 					Label:    messages.ApproveButtonLabel,
 					Style:    discordgo.SuccessButton,
-					CustomID: messages.CampaignApprovePrefix + ":" + created.ID,
+					CustomID: messages.CampaignApprovePrefix + ":" + guildID + ":" + created.ID,
 				},
 				discordgo.Button{
 					Label:    messages.DenyButtonLabel,
 					Style:    discordgo.DangerButton,
-					CustomID: messages.CampaignDenyPrefix + ":" + created.ID,
+					CustomID: messages.CampaignDenyPrefix + ":" + guildID + ":" + created.ID,
 				},
 			},
 		},

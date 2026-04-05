@@ -7,56 +7,78 @@ import (
 	"github.com/bwmarrin/discordgo"
 
 	"moontracer/internal/commands"
+	"moontracer/internal/db"
+	"moontracer/internal/dispatch"
 	"moontracer/internal/interactions"
 )
 
 /*
 	Flow:
-		1. NewHandler receives all registered commands, component handlers, and modal handlers.
-		2. Builds three lookup maps: cmdLookup (by command name), compLookup (by CustomIDPrefix), modalLookup (by CustomIDPrefix).
-		3. Returns a closure that acts as the main Discord event handler — this closure receives ALL interactions.
-		4. For each interaction:
-			a. If ApplicationCommand: look up by command name, call Execute().
-			b. If MessageComponent (button): extract prefix from CustomID (split on ":"), look up handler, call HandleComponents().
-			c. If ModalSubmit: extract prefix from CustomID, look up handler, call HandleModal().
-		5. Unknown interactions are logged and ignored.
+		1. NewHandler receives the GuildDBManager, dispatcher, and admin role name.
+		2. Returns a closure that acts as the main Discord event handler.
+		3. For each interaction:
+			a. Resolve the guild ID — from the interaction itself, or from the
+			   CustomID for DM interactions (approval buttons encode guild ID).
+			b. Look up or create the guild's database via GuildDBManager.
+			c. Build handler sets for that guild's DB.
+			d. Dispatch to the appropriate handler.
 */
 
-// NewHandler returns a discordgo event handler that dispatches slash commands,
-// component interactions (buttons), and modal submissions.
-func NewHandler(cmds []commands.Command, components []interactions.ComponentHandler, modals []interactions.ModalHandler) func(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	cmdLookup := make(map[string]commands.Command, len(cmds))
-	for _, cmd := range cmds {
-		cmdLookup[cmd.Data().Name] = cmd
-	}
-
-	compLookup := make(map[string]interactions.ComponentHandler, len(components))
-	for _, c := range components {
-		compLookup[c.CustomIDPrefix()] = c
-	}
-
-	modalLookup := make(map[string]interactions.ModalHandler, len(modals))
-	for _, m := range modals {
-		modalLookup[m.CustomIDPrefix()] = m
-	}
+// NewHandler returns a discordgo event handler that resolves the guild's
+// database per interaction, then dispatches slash commands, component
+// interactions (buttons), and modal submissions.
+func NewHandler(
+	guildDBM *db.GuildDBManager,
+	dispatcher *dispatch.Dispatcher,
+	adminRole string,
+) func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		guildID := i.GuildID
+
+		/*
+			Note:
+				DM interactions have no guild ID.
+
+				For approval buttons/modals sent via DM, the guild ID is encoded in
+				the CustomID as the second segment (prefix:guildID:campaignID).
+		*/
+		if guildID == "" {
+			guildID = extractGuildFromCustomID(i)
+		}
+		if guildID == "" {
+			respondEphemeral(s, i, "This command must be used in a server.")
+			return
+		}
+
+		guildDB, err := guildDBM.GetOrCreate(guildID)
+		if err != nil {
+			log.Printf("handler: failed to get DB for guild %s: %v", guildID, err)
+			respondEphemeral(s, i, "Internal error — please try again later.")
+			return
+		}
+
+		cmds := commands.All(guildDB, dispatcher)
+		components := interactions.AllComponents(guildDB, dispatcher)
+		modals := interactions.AllModals(guildDB, dispatcher)
+
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
 			name := i.ApplicationCommandData().Name
-			cmd, ok := cmdLookup[name]
-			if !ok {
-				log.Printf("handler: unknown command: /%s", name)
-				return
+			for _, cmd := range cmds {
+				if cmd.Data().Name == name {
+					userID := "unknown"
+					if i.Member != nil {
+						userID = i.Member.User.ID
+					} else if i.User != nil {
+						userID = i.User.ID
+					}
+					log.Printf("handler: /%s invoked by %s in guild %s", name, userID, guildID)
+					cmd.Execute(s, i)
+					return
+				}
 			}
-			userID := "unknown"
-			if i.Member != nil {
-				userID = i.Member.User.ID
-			} else if i.User != nil {
-				userID = i.User.ID
-			}
-			log.Printf("handler: /%s invoked by %s", name, userID)
-			cmd.Execute(s, i)
+			log.Printf("handler: unknown command: /%s", name)
 
 		case discordgo.InteractionMessageComponent:
 			customID := i.MessageComponentData().CustomID
@@ -64,13 +86,14 @@ func NewHandler(cmds []commands.Command, components []interactions.ComponentHand
 			if idx := strings.Index(customID, ":"); idx != -1 {
 				prefix = customID[:idx]
 			}
-			handler, ok := compLookup[prefix]
-			if !ok {
-				log.Printf("handler: unknown component: %s", customID)
-				return
+			for _, c := range components {
+				if c.CustomIDPrefix() == prefix {
+					log.Printf("handler: component %s triggered in guild %s", customID, guildID)
+					c.HandleComponents(s, i)
+					return
+				}
 			}
-			log.Printf("handler: component %s triggered", customID)
-			handler.HandleComponents(s, i)
+			log.Printf("handler: unknown component: %s", customID)
 
 		case discordgo.InteractionModalSubmit:
 			customID := i.ModalSubmitData().CustomID
@@ -78,13 +101,48 @@ func NewHandler(cmds []commands.Command, components []interactions.ComponentHand
 			if idx := strings.Index(customID, ":"); idx != -1 {
 				prefix = customID[:idx]
 			}
-			handler, ok := modalLookup[prefix]
-			if !ok {
-				log.Printf("handler: unknown modal: %s", customID)
-				return
+			for _, m := range modals {
+				if m.CustomIDPrefix() == prefix {
+					log.Printf("handler: modal %s submitted in guild %s", customID, guildID)
+					m.HandleModal(s, i)
+					return
+				}
 			}
-			log.Printf("handler: modal %s submitted", customID)
-			handler.HandleModal(s, i)
+			log.Printf("handler: unknown modal: %s", customID)
 		}
 	}
+}
+
+/*
+extractGuildFromCustomID attempts to extract a guild ID from a DM
+interaction's CustomID.
+
+Approval buttons use the format prefix:<guildID>:<campaignID>.
+*/
+func extractGuildFromCustomID(i *discordgo.InteractionCreate) string {
+	var customID string
+	switch i.Type {
+	case discordgo.InteractionMessageComponent:
+		customID = i.MessageComponentData().CustomID
+	case discordgo.InteractionModalSubmit:
+		customID = i.ModalSubmitData().CustomID
+	default:
+		return ""
+	}
+
+	parts := strings.SplitN(customID, ":", 3)
+	if len(parts) >= 3 {
+		return parts[1]
+	}
+	return ""
+}
+
+func respondEphemeral(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: content,
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
 }
