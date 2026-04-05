@@ -95,6 +95,18 @@ func NewHandler(
 			}
 			log.Printf("handler: unknown component: %s", customID)
 
+		case discordgo.InteractionApplicationCommandAutocomplete:
+			name := i.ApplicationCommandData().Name
+			for _, cmd := range cmds {
+				if cmd.Data().Name == name {
+					if ac, ok := cmd.(commands.AutocompleteCommand); ok {
+						ac.Autocomplete(s, i)
+						return
+					}
+					break
+				}
+			}
+
 		case discordgo.InteractionModalSubmit:
 			customID := i.ModalSubmitData().CustomID
 			prefix := customID

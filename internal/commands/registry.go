@@ -19,6 +19,8 @@ func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
 		&playerCommand{db: db},
 		&registerCommand{db: db},
 		&meCommand{db: db},
+		&campaignsCommand{db: db},
+		&searchCommand{db: db},
 		&newCampaign{db: db},
 		&addPlayer{db: db},
 		&banCommand{db: db},
