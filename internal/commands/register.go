@@ -44,19 +44,39 @@ func (r *registerCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 		respond(s, i, messages.GenericErrorMessage)
 		return
 	}
-	if registered {
-		respond(s, i, messages.AlreadyRegisteredMessage)
-		return
+
+	content := messages.AlreadyRegisteredMessage
+	if !registered {
+		player := &models.Player{ID: userID}
+		if err := db.Insert(r.db, player); err != nil {
+			log.Printf("register: %s: %v", messages.RegistrationInsertError, err)
+			respond(s, i, messages.RegistrationFailureMessage)
+			return
+		}
+		content = fmt.Sprintf(messages.RegistrationSuccessMessage, userID)
 	}
 
-	player := &models.Player{ID: userID}
-	if err := db.Insert(r.db, player); err != nil {
-		log.Printf("register: %s: %v", messages.RegistrationInsertError, err)
-		respond(s, i, messages.RegistrationFailureMessage)
-		return
-	}
-
-	respond(s, i, fmt.Sprintf(messages.RegistrationSuccessMessage, userID))
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: content + "\n\nWhat would you like to do?",
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    messages.BrowseCampaignsLabel,
+						Style:    discordgo.PrimaryButton,
+						CustomID: messages.BackCampaignsID,
+					},
+					discordgo.Button{
+						Label:    messages.MyProfileLabel,
+						Style:    discordgo.SecondaryButton,
+						CustomID: messages.BackMeID,
+					},
+				}},
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 }
 
 // respond is a helper to send an ephemeral text response.

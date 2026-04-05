@@ -368,7 +368,7 @@ const (
 	NewCampaignLabel     = "New Campaign"
 )
 
-// Manage campaign: additional buttons (absorbing standalone commands)
+// Manage campaign: additional buttons
 const (
 	ManageSetRoleLabel  = "Set Role"
 	ManageArchiveLabel  = "Archive"

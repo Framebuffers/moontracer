@@ -42,10 +42,18 @@ func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo
 		respondInteraction(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
-	campaignID := parts[1]
-	userID := i.Member.User.ID
+	RenderManageCampaignMenu(s, i, h.db, parts[1])
+}
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
+/*
+RenderManageCampaignMenu renders the management menu for a campaign.
+
+Used by the manage_campaign handler and back_manage_campaign handler.
+*/
+func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCreate, database *bun.DB, campaignID string) {
+	userID := getUserID(i)
+
+	ok, err := auth.Authorize(database, userID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_campaign: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
@@ -56,7 +64,7 @@ func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo
 		return
 	}
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	campaign, err := db.GetByID[models.Campaign](database, campaignID)
 	if err != nil {
 		respondInteraction(s, i, messages.ManageCampaignNotFound)
 		return
@@ -68,17 +76,18 @@ func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo
 	}
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
 			Content: fmt.Sprintf("Managing **%s**:", campaign.Name),
+			Embeds:  []*discordgo.MessageEmbed{},
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.Button{
 							Label:    messages.ManageEditLabel,
 							Style:    discordgo.SecondaryButton,
-							CustomID: fmt.Sprintf("manage_edit:%s", campaignID),
-							Disabled: true, // Phase 2
+							CustomID: fmt.Sprintf("stub_edit:%s", campaignID),
+							Disabled: true,
 						},
 						discordgo.Button{
 							Label:    messages.ManageDeleteLabel,
@@ -100,6 +109,23 @@ func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo
 							Style:    discordgo.SecondaryButton,
 							CustomID: fmt.Sprintf("manage_reschedule:%s", campaignID),
 						},
+					},
+				},
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
+						discordgo.Button{
+							Label:    messages.ManageSetRoleLabel,
+							Style:    discordgo.SecondaryButton,
+							CustomID: fmt.Sprintf("%s:%s", messages.ManageSetRolePrefix, campaignID),
+							Disabled: true,
+						},
+						discordgo.Button{
+							Label:    messages.ManageArchiveLabel,
+							Style:    discordgo.DangerButton,
+							CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),
+							Disabled: true,
+						},
+						backButton(messages.BackLabel, messages.BackManageID),
 					},
 				},
 			},
