@@ -25,9 +25,7 @@ import (
 
 // campaignLeave handles when a player clicks "Leave Campaign" to remove themselves.
 type campaignLeave struct {
-	db            *bun.DB
-	guildID       string
-	adminRoleName string
+	db *bun.DB
 }
 
 func (h *campaignLeave) CustomIDPrefix() string {
@@ -74,7 +72,7 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 
 	// Remove the campaign's linked Discord role if one exists.
 	if campaign.RoleID != "" {
-		if err := s.GuildMemberRoleRemove(h.guildID, userID, campaign.RoleID); err != nil {
+		if err := s.GuildMemberRoleRemove(i.GuildID, userID, campaign.RoleID); err != nil {
 			log.Printf("campaign_leave: failed to remove role %s from %s: %v", campaign.RoleID, userID, err)
 		}
 	}

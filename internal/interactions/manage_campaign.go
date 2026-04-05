@@ -29,9 +29,7 @@ manageCampaignMenu provides a model to select options in a menu providing option
  2. Show action buttons: [Edit, Delete, Ban, Announce, Reschedule]
 */
 type manageCampaignMenu struct {
-	db            *bun.DB
-	guildID       string
-	adminRoleName string
+	db *bun.DB
 }
 
 func (h *manageCampaignMenu) CustomIDPrefix() string {
@@ -117,9 +115,7 @@ manageCampaignDelete is a model with information to ban a Player. Interaction: `
  2. Delete all CampaignMembers from that Campaign, then delete the Campaign itself.
 */
 type manageCampaignDelete struct {
-	db            *bun.DB
-	guildID       string
-	adminRoleName string
+	db *bun.DB
 }
 
 func (h *manageCampaignDelete) CustomIDPrefix() string {
@@ -211,9 +207,7 @@ manageCampaignBan is a model with information to ban a member from a Campaign. I
  3. Show a select menu dropdown.
 */
 type manageCampaignBan struct {
-	db            *bun.DB
-	guildID       string
-	adminRoleName string
+	db *bun.DB
 }
 
 func (h *manageCampaignBan) CustomIDPrefix() string {
@@ -316,9 +310,7 @@ manageCampaignBanSelect is a model that returns information to execute a ban act
     - Invoker must be a DM of this Campaign or have a heavier role (Mod or Admin).
 */
 type manageCampaignBanSelect struct {
-	db            *bun.DB
-	guildID       string
-	adminRoleName string
+	db *bun.DB
 }
 
 func (h *manageCampaignBanSelect) CustomIDPrefix() string {
@@ -363,7 +355,7 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 	// Remove the campaign's linked Discord role if one exists.
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err == nil && campaign.RoleID != "" {
-		if err := s.GuildMemberRoleRemove(h.guildID, targetID, campaign.RoleID); err != nil {
+		if err := s.GuildMemberRoleRemove(i.GuildID, targetID, campaign.RoleID); err != nil {
 			log.Printf("manage_ban_select: failed to remove role %s from %s: %v", campaign.RoleID, targetID, err)
 		}
 	}
