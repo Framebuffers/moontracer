@@ -172,12 +172,12 @@ const (
 
 // Unban
 const (
-	UnbanCommandName        = "unban"
-	UnbanCommandDesc        = "Lift a global ban from a player."
-	UnbanTargetNotFound     = "That player is not registered."
-	UnbanTargetNotBanned    = "That player is not banned."
-	UnbanFailureMessage     = "Failed to unban player."
-	UnbanSuccessMessage     = "Unbanned <@%s>. They can interact with the bot again."
+	UnbanCommandName     = "unban"
+	UnbanCommandDesc     = "Lift a global ban from a player."
+	UnbanTargetNotFound  = "That player is not registered."
+	UnbanTargetNotBanned = "That player is not banned."
+	UnbanFailureMessage  = "Failed to unban player."
+	UnbanSuccessMessage  = "Unbanned <@%s>. They can interact with the bot again."
 )
 
 // Campaign archival
@@ -230,22 +230,22 @@ const (
 
 // Campaign approval
 const (
-	CampaignApprovePrefix      = "campaign_approve"
-	CampaignDenyPrefix         = "campaign_deny"
-	CampaignDenyModalPrefix    = "campaign_deny_modal"
-	ApproveButtonLabel         = "Approve"
-	DenyButtonLabel            = "Deny"
-	CampaignApprovedMessage    = "Campaign **%s** has been approved."
-	CampaignDeniedMessage      = "Campaign **%s** has been denied and deleted."
-	CampaignApproveNotModError = "Only mods or admins can approve campaigns."
-	CampaignApproveNotFound    = "Campaign not found or already processed."
-	CampaignApproveError       = "Failed to process campaign approval."
-	CampaignDenyModalTitle     = "Deny Campaign"
-	CampaignDenyReasonLabel    = "Reason"
+	CampaignApprovePrefix         = "campaign_approve"
+	CampaignDenyPrefix            = "campaign_deny"
+	CampaignDenyModalPrefix       = "campaign_deny_modal"
+	ApproveButtonLabel            = "Approve"
+	DenyButtonLabel               = "Deny"
+	CampaignApprovedMessage       = "Campaign **%s** has been approved."
+	CampaignDeniedMessage         = "Campaign **%s** has been denied and deleted."
+	CampaignApproveNotModError    = "Only mods or admins can approve campaigns."
+	CampaignApproveNotFound       = "Campaign not found or already processed."
+	CampaignApproveError          = "Failed to process campaign approval."
+	CampaignDenyModalTitle        = "Deny Campaign"
+	CampaignDenyReasonLabel       = "Reason"
 	CampaignDenyReasonPlaceholder = "Why is this campaign being denied?"
-	CampaignDenyReasonFieldID  = "deny_reason"
-	CampaignDeniedDMMessage    = "Your campaign **%s** has been denied. Reason: %s"
-	CampaignApprovedDMMessage  = "Your campaign **%s** has been approved!"
+	CampaignDenyReasonFieldID     = "deny_reason"
+	CampaignDeniedDMMessage       = "Your campaign **%s** has been denied. Reason: %s"
+	CampaignApprovedDMMessage     = "Your campaign **%s** has been approved!"
 )
 
 // Announce
@@ -298,4 +298,109 @@ const (
 const (
 	HelpCommandName = "help"
 	HelpCommandDesc = "Get a list of all available commands."
+)
+
+// Player hub (/me)
+const (
+	MeCommandName = "me"
+	MeCommandDesc = "Your player profile and quick actions."
+	MeHubMessage  = "Hey, <@%s>! What would you like to do?"
+)
+
+// Browse campaigns (/campaigns)
+const (
+	CampaignsCommandName       = "campaigns"
+	CampaignsCommandDesc       = "Browse all available campaigns."
+	CampaignsFilterPlaceholder = "Filter by format..."
+	CampaignsSelectPlaceholder = "Select a campaign..."
+	CampaignsNoneAvailable     = "No campaigns match this filter."
+	CampaignsFilterAll         = "All"
+	CampaignsFilterCampaign    = "Campaigns"
+	CampaignsFilterOneshot     = "One-shots"
+	CampaignsFilterWestmarch   = "Westmarches"
+)
+
+// Search (/search)
+const (
+	SearchCommandName = "search"
+	SearchCommandDesc = "Search for a campaign by name."
+	SearchOptionName  = "name"
+	SearchOptionDesc  = "Campaign name to search for."
+	SearchNoResults   = "No campaigns found matching that name."
+)
+
+// Admin hub (/admin)
+const (
+	AdminCommandName    = "admin"
+	AdminCommandDesc    = "Mod/Admin panel."
+	AdminNotStaff       = "Only mods or admins can use this command."
+	AdminHubMessage     = "Admin Panel:"
+	AdminCampaignsLabel = "Active Campaigns"
+	AdminDMsLabel       = "DMs"
+	AdminBroadcastLabel = "Broadcast"
+	AdminDatabaseLabel  = "Database"
+	AdminSettingsLabel  = "Settings"
+)
+
+// About (/moontracer)
+const (
+	AboutCommandName = "moontracer"
+	AboutCommandDesc = "About this bot."
+)
+
+// Navigation buttons
+const (
+	BackLabel         = "Back"
+	BackMeID          = "back_me"
+	BackCampaignsID   = "back_campaigns"
+	BackMyCampaignsID = "back_mycampaigns"
+	BackManageID      = "back_manage"
+	BackAdminID       = "back_admin"
+)
+
+// Hub button labels
+const (
+	MyCampaignsLabel     = "My Campaigns"
+	NextSessionsLabel    = "Next Sessions"
+	NotificationsLabel   = "Notifications"
+	BrowseCampaignsLabel = "Browse Campaigns"
+	MyProfileLabel       = "My Profile"
+	NewCampaignLabel     = "New Campaign"
+)
+
+// Manage campaign: additional buttons (absorbing standalone commands)
+const (
+	ManageSetRoleLabel  = "Set Role"
+	ManageArchiveLabel  = "Archive"
+	ManageSetRolePrefix = "manage_role"
+	ManageArchivePrefix = "manage_archive"
+)
+
+// New campaign config (post-modal dropdowns)
+const (
+	NewCampaignBookPrefix        = "newcampaign_book"
+	NewCampaignFormatPrefix      = "newcampaign_format"
+	NewCampaignSubmitPrefix      = "newcampaign_submit"
+	NewCampaignCancelPrefix      = "newcampaign_cancel"
+	NewCampaignBookPlaceholder   = "Select a game system..."
+	NewCampaignFormatPlaceholder = "Select a format..."
+	NewCampaignConfigMessage     = "Campaign **%s** created (pending setup).\n\nSelect a game system and format, then submit for approval."
+	NewCampaignSubmitLabel       = "Submit for Approval"
+	NewCampaignCancelLabel       = "Cancel"
+	NewCampaignSubmittedMessage  = "Campaign **%s** has been submitted for approval!"
+	NewCampaignCancelledMessage  = "Campaign creation cancelled."
+)
+
+// Campaign Modal
+const (
+	FieldSlotsPlaceholderNew = "e.g. 4 (leave empty for unlimited)"
+)
+
+// Select menu CustomIDs
+const (
+	CampaignSelectPrefix      = "campaign_select"
+	MyCampaignSelectPrefix    = "mycampaign_select"
+	ManageSelectPrefix        = "manage_select"
+	CampaignsFilterPrefix     = "campaigns_filter"
+	AdminCampaignSelectPrefix = "admin_campaign_select"
 )

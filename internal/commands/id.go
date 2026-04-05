@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"fmt"
 	"log"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -73,8 +71,8 @@ func (c *campaignCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
-	embed := campaignEmbed(*campaign, players)
-	buttons := campaignButtons(i.Member.User.ID, *campaign, players)
+	embed := CampaignEmbed(*campaign, players)
+	buttons := CampaignButtons(i.Member.User.ID, *campaign, players)
 
 	resp := &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -92,124 +90,3 @@ func (c *campaignCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 	s.InteractionRespond(i.Interaction, resp)
 }
 
-func campaignButtons(callerID string, c models.Campaign, players []models.CampaignPlayer) []discordgo.MessageComponent {
-	var buttons []discordgo.MessageComponent
-
-	// DM manages open/close through /managecampaigns, not here.
-	if c.DungeonMaster == callerID {
-		return buttons
-	}
-
-	isCallerMember := false
-	for _, p := range players {
-		if p.PlayerID == callerID && p.Status == models.StatusActive {
-			isCallerMember = true
-			break
-		}
-	}
-
-	if isCallerMember {
-		buttons = append(buttons, discordgo.Button{
-			Label:    messages.LeaveCampaignLabel,
-			Style:    discordgo.DangerButton,
-			CustomID: fmt.Sprintf("campaign_leave:%s", c.Tag),
-		})
-	} else if c.IsOpen {
-		buttons = append(buttons, discordgo.Button{
-			Label:    messages.JoinCampaignLabel,
-			Style:    discordgo.SuccessButton,
-			CustomID: fmt.Sprintf("campaign_join:%s", c.Tag),
-		})
-	}
-
-	return buttons
-}
-
-func campaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordgo.MessageEmbed {
-	status := messages.ClosedStatusLabel
-	if c.IsOpen {
-		status = messages.OpenStatusLabel
-	}
-
-	campaignType := messages.CampaignLabel
-	if c.IsOneshot {
-		campaignType = messages.CampaignTypeOneShotLabel
-	}
-
-	if c.IsWestmarch {
-		campaignType = messages.CampaignTypeWestmarchLabel
-	}
-
-	var playerLines []string
-	for _, p := range players {
-		playerLines = append(playerLines, fmt.Sprintf("<@%s> — %s (%s, %d sessions)",
-			p.PlayerID, p.Role, p.Status, p.SessionsPlayed))
-	}
-	playersValue := messages.NoneLabel
-	if len(playerLines) > 0 {
-		playersValue = strings.Join(playerLines, "\n")
-	}
-
-	warnings := messages.NoneLabel
-	if len(c.Warnings) > 0 {
-		warnings = strings.Join(c.Warnings, ", ")
-	}
-
-	books := messages.NoBooksSpecifiedLabel
-	if len(c.Game.BooksAllowed) > 0 {
-		books = strings.Join(c.Game.BooksAllowed, ", ")
-	}
-
-	fields := []*discordgo.MessageEmbedField{
-		{Name: "DM", Value: fmt.Sprintf("<@%s>", c.DungeonMaster), Inline: true},
-		{Name: "Status", Value: status, Inline: true},
-		{Name: "Slots", Value: fmt.Sprintf("%d", c.Slots), Inline: true},
-		{Name: "Edition", Value: c.Game.Edition, Inline: true},
-	}
-
-	if c.Game.Rules != "" {
-		fields = append(fields, &discordgo.MessageEmbedField{Name: "Rules", Value: c.Game.Rules, Inline: true})
-	}
-	if c.Game.VTT != "" {
-		fields = append(fields, &discordgo.MessageEmbedField{Name: "VTT", Value: c.Game.VTT, Inline: true})
-	}
-
-	fields = append(fields,
-		&discordgo.MessageEmbedField{Name: "Books", Value: books, Inline: false},
-		&discordgo.MessageEmbedField{Name: "Schedule", Value: formatSchedule(c), Inline: false},
-		&discordgo.MessageEmbedField{Name: "Warnings", Value: warnings, Inline: false},
-		&discordgo.MessageEmbedField{Name: fmt.Sprintf("Players (%d)", len(players)), Value: playersValue, Inline: false},
-	)
-
-	return &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("%s — %s", campaignType, c.Name),
-		Description: c.Description,
-		Color:       messages.EmbedColor,
-		Fields:      fields,
-	}
-}
-
-// formatSchedule builds a human-readable schedule string for the campaign embed.
-func formatSchedule(c models.Campaign) string {
-	sched := c.Schedule
-
-	// Schedule not set yet.
-	if !sched.HasSchedule() {
-		return fmt.Sprintf("%s — Schedule not set", sched.Frequency)
-	}
-
-	// Build: "Weekly — Saturday 19:00 UTC (3h)"
-	line := fmt.Sprintf("%s — %s %s UTC (%.0fh)", sched.Frequency, sched.DayName(), sched.StartTime, sched.DurationHours)
-
-	// Next session.
-	if !sched.NextSession.IsZero() {
-		line += fmt.Sprintf("\nNext: %s", sched.NextSession.Format("2006-01-02"))
-	}
-
-	// Last session.
-	if !sched.LastSession.IsZero() {
-		line += fmt.Sprintf(" | Last: %s", sched.LastSession.Format("2006-01-02"))
-	}
-
-	return line
-}

@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -115,6 +116,37 @@ func (s CampaignSchedule) DayName() string {
 // HasSchedule returns true if the campaign has a day and time set.
 func (s CampaignSchedule) HasSchedule() bool {
 	return s.DayOfWeek >= 0 && s.StartTime != ""
+}
+
+/*
+	NormalizeTag converts a campaign name into a URL-safe tag.
+
+"Curse of Strahd" -> "curse-of-strahd"
+*/
+func NormalizeTag(name string) string {
+	tag := strings.ToLower(strings.TrimSpace(name))
+
+	// Replace non-alphanumeric characters with hyphens.
+	var b strings.Builder
+	prevHyphen := false
+	for _, r := range tag {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			prevHyphen = false
+		} else if !prevHyphen {
+			b.WriteByte('-')
+			prevHyphen = true
+		}
+	}
+
+	tag = strings.Trim(b.String(), "-")
+
+	if len(tag) > 30 {
+		tag = tag[:30]
+		tag = strings.TrimRight(tag, "-")
+	}
+
+	return tag
 }
 
 // CampaignFrequency defines how often will sessions in this Campaign will occur.
