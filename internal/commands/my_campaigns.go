@@ -18,10 +18,8 @@ import (
 		1. User runs `/mycampaigns`.
 		2. Authorize: check if the user is a registered player. Reject if not.
 		3. Load all CampaignPlayer entries for this user (with Campaign relation).
-		4. Filter out unapproved campaigns (approval gate).
-		5. Build a list with campaign names, roles, and statuses.
-		6. Attach a "View" button per campaign (max 5 per row, Discord limit).
-		7. Respond ephemerally with the list and buttons.
+		4. Render an ephemeral select menu (mycampaign_select) listing approved campaigns.
+		5. Selecting an entry routes through myCampaignSelectHandler → RenderCampaignDetail.
 */
 
 // playerCommand returns available information for a given player, like campaigns.
@@ -59,50 +57,56 @@ func (p *playerCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 		return
 	}
 
-	if len(entries) == 0 {
+	var approved []models.CampaignPlayer
+	for _, e := range entries {
+		if e.Campaign != nil && e.Campaign.IsApproved {
+			approved = append(approved, e)
+		}
+	}
+
+	if len(approved) == 0 {
 		respond(s, i, messages.NoCampaignsMessage)
 		return
 	}
 
-	var buttons []discordgo.MessageComponent
+	var options []discordgo.SelectMenuOption
 	var lines []string
-	for _, e := range entries {
-		if e.Campaign != nil && !e.Campaign.IsApproved {
-			continue
+	for _, e := range approved {
+		if len(options) >= 25 {
+			break
 		}
-		campaignName := e.CampaignID
-		campaignTag := e.CampaignID
-		if e.Campaign != nil {
-			campaignName = e.Campaign.Name
-			campaignTag = e.Campaign.Tag
-		}
-		lines = append(lines, fmt.Sprintf("**%s** — %s (%s)", campaignName, e.Role, e.Status))
-		buttons = append(buttons, discordgo.Button{
-			Label:    campaignName,
-			Style:    discordgo.PrimaryButton,
-			CustomID: fmt.Sprintf("campaign_view:%s", campaignTag),
+		options = append(options, discordgo.SelectMenuOption{
+			Label:       e.Campaign.Name,
+			Value:       e.CampaignID,
+			Description: fmt.Sprintf("%s — %s", e.Role, e.Status),
 		})
+		lines = append(lines, fmt.Sprintf("**%s** — %s (%s)", e.Campaign.Name, e.Role, e.Status))
 	}
 
-	// Discord limits ActionsRow to 5 buttons
-	var rows []discordgo.MessageComponent
-	for idx := 0; idx < len(buttons); idx += 5 {
-		end := min(idx+5, len(buttons))
-		rows = append(rows, discordgo.ActionsRow{Components: buttons[idx:end]})
+	selectMenu := discordgo.SelectMenu{
+		CustomID:    messages.MyCampaignSelectPrefix,
+		Placeholder: messages.MyCampaignsPlaceholder,
+		Options:     options,
 	}
 
-	var content strings.Builder
-	content.WriteString("Your campaigns:\n")
-	for _, l := range lines {
-		content.WriteString(l + "\n")
-	}
+	content := messages.MyCampaignsListHeader + strings.Join(lines, "\n")
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content:    content.String(),
-			Components: rows,
-			Flags:      discordgo.MessageFlagsEphemeral,
+			Content: content,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{selectMenu}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    messages.BackLabel,
+						Style:    discordgo.SecondaryButton,
+						CustomID: messages.BackMeID,
+						Emoji:    &discordgo.ComponentEmoji{Name: "◀"},
+					},
+				}},
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
