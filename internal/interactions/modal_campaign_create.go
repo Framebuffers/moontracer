@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/db"
@@ -18,16 +17,15 @@ import (
 
 /*
 	Flow:
-		1. User runs `/newcampaign` command.
-		2. Bot responds with a modal (form) to fill in campaign details (name, tag, description, edition, slots).
-		3. User submits the modal, triggering `modal_campaign_create`.
-		4. `modalCampaignCreate` parses form fields, validates inputs (slot count > 0, tag uniqueness).
-		5. Creates Campaign in DB with IsApproved=false (pending admin approval).
-		6. Finds all users with the ADMIN_ROLE_NAME role and sends them DMs with Approve/Deny buttons.
-		7. Responds to creator ephemerally: "Your campaign request has been submitted for admin approval."
+		1. User submits the /newcampaign modal (3 fields: Name, Max Players, Synopsis & Rules).
+		2. modalCampaignCreate parses the form, normalizes the tag from the name
+		   (deduping if necessary), and creates the Campaign with IsApproved=false.
+		3. Responds with the configuration message: book + format dropdowns and
+		   Submit/Cancel buttons. The book/format handlers update the campaign
+		   in-place; submit sends the approval DMs to staff (see newcampaign_config.go).
 */
 
-// modalCampaignCreate handles the modal submission from `/newcampaign` to create a new campaign.
+// modalCampaignCreate handles the modal submission from `/newcampaign`.
 type modalCampaignCreate struct {
 	db       *bun.DB
 	dispatch *dispatch.Dispatcher
@@ -41,41 +39,53 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	data := i.ModalSubmitData()
 	userID := i.Member.User.ID
 
-	var name, tag, description, edition, slotsStr string
+	var name, slotsStr, description string
 	for _, row := range data.Components {
 		for _, comp := range row.(*discordgo.ActionsRow).Components {
 			input := comp.(*discordgo.TextInput)
 			switch input.CustomID {
 			case messages.FieldNameID:
 				name = input.Value
-			case messages.FieldTagID:
-				tag = input.Value
-			case messages.FieldDescriptionID:
-				description = input.Value
-			case messages.FieldEditionID:
-				edition = input.Value
 			case messages.FieldSlotsID:
 				slotsStr = input.Value
+			case messages.FieldDescriptionID:
+				description = input.Value
 			}
 		}
 	}
 
-	slots, err := strconv.Atoi(strings.TrimSpace(slotsStr))
-	if err != nil || slots < 0 {
-		respondInteraction(s, i, messages.SlotCountMismatchErrorMessage)
+	name = strings.TrimSpace(name)
+	if name == "" {
+		respondInteraction(s, i, messages.CampaignCreationFailureErrorMessage)
 		return
 	}
-	if slots == 0 {
-		slots = -1
+
+	// Slots: empty field -> unlimited (-1).
+	// Otherwise, must parse to a non-negative int.
+	slots := -1
+	slotsStr = strings.TrimSpace(slotsStr)
+	if slotsStr != "" {
+		parsed, err := strconv.Atoi(slotsStr)
+		if err != nil || parsed < 0 {
+			respondInteraction(s, i, messages.SlotCountMismatchErrorMessage)
+			return
+		}
+		if parsed == 0 {
+			slots = -1
+		} else {
+			slots = parsed
+		}
 	}
 
-	conf := &models.GameConfig{
-		Edition: edition,
-		Rules:   "",
+	tag, err := uniqueTag(m.db, models.NormalizeTag(name))
+	if err != nil {
+		log.Printf("modal_campaign_create: tag dedup failed: %v", err)
+		respondInteraction(s, i, messages.CampaignCreationFailureErrorMessage)
+		return
 	}
-	schedule := &models.CampaignSchedule{
-		Frequency: models.Weekly,
-	}
+
+	conf := &models.GameConfig{}
+	schedule := &models.CampaignSchedule{Frequency: models.Weekly}
 
 	campaign := &models.Campaign{}
 	created, err := campaign.CreateCampaign(
@@ -87,8 +97,8 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		description,
 		conf,
 		slots,
-		true, // open by default
-		false,
+		true,  // open by default
+		false, // isOneshot — chosen later via dropdown
 		nil,
 		"",
 		schedule,
@@ -104,44 +114,31 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
-	// notify mods for approval:
-	msgID := uuid.NewString()
-	staffMembers, err := db.GetStaff(m.db)
+	respondInteraction(s, i, fmt.Sprintf(messages.NewCampaignConfigMessage, created.Name))
+	_, err = s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
+		Content:    fmt.Sprintf(messages.NewCampaignConfigHeader, created.Name),
+		Components: newCampaignConfigComponents(created.ID),
+		Flags:      discordgo.MessageFlagsEphemeral,
+	})
 	if err != nil {
-		log.Printf("modal_campaign_create: failed to get staff members to notify: %v", err)
-		respondInteraction(s, i, messages.CampaignStaffNotifyFailureMessage)
-		return
+		log.Printf("modal_campaign_create: failed to send config followup: %v", err)
 	}
+}
 
-	guildID := i.GuildID
-	approvalButtons := []discordgo.MessageComponent{
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    messages.ApproveButtonLabel,
-					Style:    discordgo.SuccessButton,
-					CustomID: messages.CampaignApprovePrefix + ":" + guildID + ":" + created.ID,
-				},
-				discordgo.Button{
-					Label:    messages.DenyButtonLabel,
-					Style:    discordgo.DangerButton,
-					CustomID: messages.CampaignDenyPrefix + ":" + guildID + ":" + created.ID,
-				},
-			},
-		},
+// uniqueTag returns base unchanged if no campaign owns it; otherwise appends -2, -3, ...
+func uniqueTag(database *bun.DB, base string) (string, error) {
+	if base == "" {
+		base = "campaign"
 	}
-
-	for _, staff := range staffMembers {
-		m.dispatch.Push(dispatch.DirectMessage{
-			ID:         msgID,
-			Sender:     userID,
-			Target:     staff.ID,
-			Content:    fmt.Sprintf(messages.CampaignApprovalRequestMessage, created.Name, userID),
-			Components: approvalButtons,
-		})
+	candidate := base
+	for n := 2; n < 1000; n++ {
+		_, err := db.GetByTag[models.Campaign](database, candidate)
+		if err != nil {
+			return candidate, nil
+		}
+		candidate = fmt.Sprintf("%s-%d", base, n)
 	}
-
-	respondInteraction(s, i, fmt.Sprintf("%s **%s** Use `/campaign tag:%s` to view it.", messages.CampaignCreationMessage, created.Name, created.Tag))
+	return "", fmt.Errorf("could not find a unique tag for %q", base)
 }
 
 func respondInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {

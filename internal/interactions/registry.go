@@ -40,6 +40,12 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		&backCampaigns{db: db},
 		&backManageCampaign{db: db},
 
+		// New campaign config (post-modal)
+		&newCampaignBookHandler{db: db},
+		&newCampaignFormatHandler{db: db},
+		&newCampaignSubmitHandler{db: db, dispatcher: d},
+		&newCampaignCancelHandler{db: db},
+
 		// Stubs
 		&stubHandler{},
 	}

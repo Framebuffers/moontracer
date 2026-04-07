@@ -389,11 +389,31 @@ const (
 	NewCampaignCancelLabel       = "Cancel"
 	NewCampaignSubmittedMessage  = "Campaign **%s** has been submitted for approval!"
 	NewCampaignCancelledMessage  = "Campaign creation cancelled."
+
+	// Headers shown above the configuration dropdowns
+	NewCampaignConfigHeader       = "Configure **%s**:"
+	NewCampaignConfigSystemHeader = "Configure **%s** — system: **%s**"
+	NewCampaignConfigFormatHeader = "Configure **%s** — format: **%s**"
+
+	// Book dropdown option labels
+	NewCampaignBookLabel5e    = "D&D 5e"
+	NewCampaignBookLabel55e   = "D&D 5.5e (2024)"
+	NewCampaignBookLabelPF2e  = "Pathfinder 2e"
+	NewCampaignBookLabelOther = "Other / Homebrew"
 )
 
 // Campaign Modal
 const (
 	FieldSlotsPlaceholderNew = "e.g. 4 (leave empty for unlimited)"
+	FieldSynopsisLabel       = "Synopsis & Rules"
+)
+
+// Select menu placeholders + content prefixes for /mycampaigns and /managecampaigns
+const (
+	MyCampaignsPlaceholder     = "Select a campaign..."
+	ManageCampaignsPlaceholder = "Select a campaign to manage..."
+	MyCampaignsListHeader      = "Your campaigns:\n"
+	ManageCampaignsListHeader  = "Your campaigns (DM):\n"
 )
 
 // Select menu CustomIDs
