@@ -133,6 +133,19 @@ func (h *backCampaigns) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	RenderCampaignsBrowse(s, i, h.db, "all")
 }
 
+// backAdmin handles back_admin: re-renders the /admin hub.
+type backAdmin struct {
+	db *bun.DB
+}
+
+func (h *backAdmin) CustomIDPrefix() string {
+	return "back_admin"
+}
+
+func (h *backAdmin) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	commands.RenderAdminHubUpdate(s, i)
+}
+
 // backManageCampaign handles back_manage_campaign:<campaignID>: re-renders the manage menu for a specific campaign.
 type backManageCampaign struct {
 	db *bun.DB
