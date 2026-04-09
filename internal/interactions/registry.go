@@ -38,6 +38,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		&backMyCampaigns{db: db},
 		&backManage{db: db},
 		&backCampaigns{db: db},
+		&backAdmin{db: db},
 		&backManageCampaign{db: db},
 
 		// New campaign config (post-modal)

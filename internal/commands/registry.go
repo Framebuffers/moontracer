@@ -29,6 +29,8 @@ func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
 		&setCampaignRole{db: db},
 		&abandonCampaign{db: db},
 		&campaignDatabaseCommand{db: db},
+		&adminCommand{db: db},
+		&aboutCommand{db: db},
 	}
 }
 

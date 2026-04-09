@@ -13,6 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
+	BotVersion               = "v1.0-beta"
 )
 
 // Command names and descriptions
@@ -344,8 +345,16 @@ const (
 
 // About (/moontracer)
 const (
-	AboutCommandName = "moontracer"
-	AboutCommandDesc = "About this bot."
+	AboutCommandName           = "moontracer"
+	AboutCommandDesc           = "About this bot."
+	AboutCommandGitHubRepoLink = "https://github.com/framebuffers/moontracer"
+	AboutCommandWebsite        = "https://framebuffer.cl/moontracer"
+	AboutCommandBotDesc        = "Moontracer: a D&D campaign manager for players, DM and spectators!"
+	AboutCommandCopyright      = "(C) 2026 Framebuffer"
+	AboutCommandLicense        = "AGPL-v3.0"
+	AboutCommandHelp           = "Type `/help` for a list of commands."
+	AboutCommandAwoo           = "awoo!"
+	AboutCommandAttributions   = "Thanks to the D&D r/Chile Discord server for giving me the idea, letting me test the bot on their server and give me feedback to improve this bot."
 )
 
 // Navigation buttons
