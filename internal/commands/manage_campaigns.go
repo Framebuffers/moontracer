@@ -25,7 +25,7 @@ func (m *manageCampaigns) Data() *discordgo.ApplicationCommand {
 	}
 }
 
-// Execute lists all campaigns the invoker DMs and shows selection buttons.
+// Execute lists all campaigns the invoker DMs as a select menu, plus a New Campaign button.
 func (m *manageCampaigns) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	userID := i.Member.User.ID
 
@@ -59,40 +59,53 @@ func (m *manageCampaigns) Execute(s *discordgo.Session, i *discordgo.Interaction
 		return
 	}
 
-	var buttons []discordgo.MessageComponent
+	var options []discordgo.SelectMenuOption
 	var lines []string
 	for _, e := range dmEntries {
-		campaignName := e.CampaignID
-		if e.Campaign != nil {
-			campaignName = e.Campaign.Name
+		if len(options) >= 25 {
+			break
 		}
-		lines = append(lines, fmt.Sprintf("**%s** — %s", campaignName, e.Status))
-		buttons = append(buttons, discordgo.Button{
-			Label:    campaignName,
-			Style:    discordgo.PrimaryButton,
-			CustomID: fmt.Sprintf("manage_campaign:%s", e.CampaignID),
+		name := e.CampaignID
+		if e.Campaign != nil {
+			name = e.Campaign.Name
+		}
+		options = append(options, discordgo.SelectMenuOption{
+			Label:       name,
+			Value:       e.CampaignID,
+			Description: fmt.Sprintf("%s — %s", e.Role, e.Status),
 		})
+		lines = append(lines, fmt.Sprintf("**%s** — %s", name, e.Status))
 	}
 
-	// info: discord limits ActionsRow to 5 buttons.
-	var rows []discordgo.MessageComponent
-	for idx := 0; idx < len(buttons); idx += 5 {
-		end := min(idx+5, len(buttons))
-		rows = append(rows, discordgo.ActionsRow{Components: buttons[idx:end]})
+	selectMenu := discordgo.SelectMenu{
+		CustomID:    messages.ManageSelectPrefix,
+		Placeholder: messages.ManageCampaignsPlaceholder,
+		Options:     options,
 	}
 
-	var content strings.Builder
-	content.WriteString("Your campaigns (DM):\n")
-	for _, l := range lines {
-		content.WriteString(l + "\n")
-	}
+	content := messages.ManageCampaignsListHeader + strings.Join(lines, "\n")
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content:    content.String(),
-			Components: rows,
-			Flags:      discordgo.MessageFlagsEphemeral,
+			Content: content,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{selectMenu}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    messages.BackLabel,
+						Style:    discordgo.SecondaryButton,
+						CustomID: messages.BackMeID,
+						Emoji:    &discordgo.ComponentEmoji{Name: "◀"},
+					},
+					discordgo.Button{
+						Label:    messages.NewCampaignLabel,
+						Style:    discordgo.SuccessButton,
+						CustomID: "stub_newcampaign",
+					},
+				}},
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
 }

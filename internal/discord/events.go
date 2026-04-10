@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/uptrace/bun"
 
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
@@ -15,12 +14,13 @@ import (
 /*
 	Flow:
 		1. A guild member leaves the server, triggering `GuildMemberRemove`.
-		2. Check if the departing user is a registered player. If not, do nothing.
-		3. Load all CampaignPlayer entries for this player.
-		4. For each entry where the player is the DM and the campaign is still mutable:
+		2. Resolve the guild's database from the event's guild ID.
+		3. Check if the departing user is a registered player. If not, do nothing.
+		4. Load all CampaignPlayer entries for this player.
+		5. For each entry where the player is the DM and the campaign is still mutable:
 			a. Archive the campaign (set IsArchived, ArchivedReason).
 			b. Insert an audit entry recording the auto-archive.
-		5. Log each archived campaign.
+		6. Log each archived campaign.
 */
 
 /*
@@ -28,12 +28,18 @@ import (
 
 This enforces DM sovereignty: if the DM leaves, the campaign becomes an immutable record rather than being handed off.
 */
-func HandleGuildMemberRemove(database *bun.DB) func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
+func HandleGuildMemberRemove(guildDBM *db.GuildDBManager) func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
 	return func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
+		database, err := guildDBM.GetOrCreate(e.GuildID)
+		if err != nil {
+			log.Printf("events: failed to get DB for guild %s: %v", e.GuildID, err)
+			return
+		}
+
 		userID := e.User.ID
 
 		// Check if this player is registered.
-		_, err := db.GetByID[models.Player](database, userID)
+		_, err = db.GetByID[models.Player](database, userID)
 		if err != nil {
 			return // not registered, nothing to do
 		}

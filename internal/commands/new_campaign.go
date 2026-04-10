@@ -13,18 +13,18 @@ import (
 /*
 	Flow:
 		1. User runs `/newcampaign`.
-		2. Authorize: check if the user is registered. Reject if not.
-		3. Open a modal form with fields: name, tag, description, edition, slots.
-		4. User submits the modal → routed to `modal_campaign_create` (separate handler).
-		5. Campaign is created with IsApproved=false, staff are notified via DM for approval.
+		2. Authorize: check if registered.
+		3. Open a 3-field modal: Name, Max Players (optional), Synopsis & Rules.
+		4. Submission is routed to `modal_campaign_create`, which creates the
+		   campaign (pending) and shows the book/format config dropdowns.
+		5. User picks game system + format, then clicks Submit for Approval,
+		   which sends approval DMs to staff (handled in newcampaign_config.go).
 */
 
-// newCampaign creates a modal to input information needed to create a new Campaign.
 type newCampaign struct {
 	db *bun.DB
 }
 
-// Data is the command metadata that Discord shows to users.
 func (n *newCampaign) Data() *discordgo.ApplicationCommand {
 	return &discordgo.ApplicationCommand{
 		Name:        messages.NewCampaignCommandName,
@@ -32,7 +32,6 @@ func (n *newCampaign) Data() *discordgo.ApplicationCommand {
 	}
 }
 
-// Execute is the logic that runs when the user invokes that command.
 func (n *newCampaign) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	userID := i.Member.User.ID
 
@@ -65,42 +64,22 @@ func (n *newCampaign) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:    messages.FieldTagID,
-						Label:       messages.FieldTagLabel,
+						CustomID:    messages.FieldSlotsID,
+						Label:       messages.FieldSlotsLabel,
 						Style:       discordgo.TextInputShort,
-						Placeholder: messages.FieldTagPlaceholder,
-						Required:    true,
-						MaxLength:   30,
+						Placeholder: messages.FieldSlotsPlaceholderNew,
+						Required:    false,
+						MaxLength:   3,
 					},
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
 						CustomID:    messages.FieldDescriptionID,
-						Label:       messages.FieldDescriptionLabel,
+						Label:       messages.FieldSynopsisLabel,
 						Style:       discordgo.TextInputParagraph,
 						Placeholder: messages.FieldDescriptionPlaceholder,
 						Required:    true,
 						MaxLength:   1000,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.FieldEditionID,
-						Label:       messages.FieldEditionLabel,
-						Style:       discordgo.TextInputShort,
-						Placeholder: messages.FieldEditionPlaceholder,
-						Required:    true,
-						MaxLength:   20,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.FieldSlotsID,
-						Label:       messages.FieldSlotsLabel,
-						Style:       discordgo.TextInputShort,
-						Placeholder: messages.FieldSlotsPlaceholder,
-						Required:    true,
-						MaxLength:   3,
 					},
 				}},
 			},
