@@ -11,6 +11,7 @@ services:
       DB_PATH: /app/data/moontracer.db
       ADMIN_ROLE_NAME: ${ADMIN_ROLE_NAME}
       VERBOSE: "true"
+      SAFE_MODE: "true"
     volumes:
       - /mnt/shared/suncaster/moontracer:/app/data
     networks:
