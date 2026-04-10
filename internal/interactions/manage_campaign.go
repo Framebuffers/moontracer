@@ -117,13 +117,11 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 							Label:    messages.ManageSetRoleLabel,
 							Style:    discordgo.SecondaryButton,
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageSetRolePrefix, campaignID),
-							Disabled: true,
 						},
 						discordgo.Button{
 							Label:    messages.ManageArchiveLabel,
 							Style:    discordgo.DangerButton,
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),
-							Disabled: true,
 						},
 						backButton(messages.BackLabel, messages.BackManageID),
 					},
