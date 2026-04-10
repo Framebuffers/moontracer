@@ -4,19 +4,18 @@ import (
 	"log"
 	"os"
 
-	"moontracer/internal/commands"
 	"moontracer/internal/db"
 	"moontracer/internal/discord"
 )
 
 /*
 	Flow:
-		1. Read required env vars: DISCORD_TOKEN, DISCORD_GUILD_ID, ADMIN_ROLE_NAME.
-		2. Read optional DB_PATH (defaults to "moontracer.db").
-		3. Initialize database connection and run migrations (create tables, add missing columns).
-		4. Register all slash commands into the database (populate commands table).
-		5. Create Discord bot with token, guild ID, admin role name, and DB connection.
-		6. Start the bot — open gateway, register global commands with Discord, listen for interactions.
+		1. Read required env vars: DISCORD_TOKEN, ADMIN_ROLE_NAME.
+		2. Read optional DISCORD_GUILD_ID (dev mode: register commands to single guild).
+		3. Read optional DB_DIR (defaults to "data"). Each guild gets its own SQLite DB in this directory.
+		4. Create GuildDBManager (per-guild databases are created on demand).
+		5. Create Discord bot with token, guild ID, admin role name, and GuildDBManager.
+		6. Start the bot — open gateway, discover guilds, init DBs, register commands, listen for interactions.
 		7. Block until SIGINT/SIGTERM (Ctrl+C), then clean up and exit.
 */
 
@@ -38,26 +37,18 @@ func main() {
 		log.Fatal("ADMIN_ROLE_NAME is required")
 	}
 
-	dbPath := os.Getenv("DB_PATH")
-	if dbPath == "" {
-		dbPath = "moontracer.db"
+	dbDir := os.Getenv("DB_DIR")
+	if dbDir == "" {
+		dbDir = "data"
 	}
 
-	var dbm db.DatabaseManager
-	bunDB, err := dbm.Get(dbPath)
-	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		log.Fatalf("failed to create DB directory %s: %v", dbDir, err)
 	}
 
-	if err := db.Migrate(bunDB); err != nil {
-		log.Fatalf("failed to migrate database: %v", err)
-	}
+	guildDBM := db.NewGuildDBManager(dbDir)
 
-	if err := commands.RegisterCommands(bunDB, nil); err != nil {
-		log.Fatalf("failed to register commands: %v", err)
-	}
-
-	bot, err := discord.New(token, guildID, adminRole, bunDB)
+	bot, err := discord.New(token, guildID, adminRole, guildDBM)
 	if err != nil {
 		log.Fatalf("failed to create bot: %v", err)
 	}

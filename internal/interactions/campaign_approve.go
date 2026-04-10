@@ -50,7 +50,7 @@ func (c *campaignApprove) CustomIDPrefix() string {
 }
 
 func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	campaignID, userID, ok := parseApprovalInteraction(s, i)
+	_, campaignID, userID, ok := parseApprovalInteraction(s, i)
 	if !ok {
 		return
 	}
@@ -99,7 +99,7 @@ func (c *campaignDeny) CustomIDPrefix() string {
 }
 
 func (c *campaignDeny) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	campaignID, userID, ok := parseApprovalInteraction(s, i)
+	guildID, campaignID, userID, ok := parseApprovalInteraction(s, i)
 	if !ok {
 		return
 	}
@@ -111,7 +111,7 @@ func (c *campaignDeny) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
-			CustomID: messages.CampaignDenyModalPrefix + ":" + campaignID,
+			CustomID: messages.CampaignDenyModalPrefix + ":" + guildID + ":" + campaignID,
 			Title:    messages.CampaignDenyModalTitle,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
@@ -129,15 +129,16 @@ func (c *campaignDeny) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 }
 
 /*
-parseApprovalInteraction extracts the campaign ID and user ID from an approval button click.
+parseApprovalInteraction extracts the guild ID, campaign ID, and user ID from an approval button click.
 
+Custom ID format: prefix:<guildID>:<campaignID>
 Note: In DMs, i.Member is nil. i.User is used instead.
 */
-func parseApprovalInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) (campaignID, userID string, ok bool) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
+func parseApprovalInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) (guildID, campaignID, userID string, ok bool) {
+	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 3)
+	if len(parts) < 3 {
 		respondInteraction(s, i, messages.InvalidButtonDataMessage)
-		return "", "", false
+		return "", "", "", false
 	}
 
 	if i.User != nil {
@@ -146,7 +147,7 @@ func parseApprovalInteraction(s *discordgo.Session, i *discordgo.InteractionCrea
 		userID = i.Member.User.ID
 	}
 
-	return parts[1], userID, true
+	return parts[1], parts[2], userID, true
 }
 
 // checkModAuth verifies the user is a mod or admin.
@@ -171,12 +172,12 @@ func (m *campaignDenyModal) CustomIDPrefix() string {
 }
 
 func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 2)
-	if len(parts) < 2 {
+	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 3)
+	if len(parts) < 3 {
 		respondInteraction(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
-	campaignID := parts[1]
+	campaignID := parts[2]
 
 	var userID string
 	if i.User != nil {

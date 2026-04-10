@@ -7,29 +7,61 @@ import (
 )
 
 // AllComponents returns an array with all the `ComponentHandler`s available to the bot.
-func AllComponents(db *bun.DB, guildID string, adminRoleName string, d *dispatch.Dispatcher) []ComponentHandler {
+func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 	return []ComponentHandler{
-		&campaignJoin{db: db, guildID: guildID, adminRoleName: adminRoleName},
-		&campaignLeave{db: db, guildID: guildID, adminRoleName: adminRoleName},
-		&campaignToggle{db: db, guildID: guildID, adminRoleName: adminRoleName},
-		&campaignView{db: db, guildID: guildID, adminRoleName: adminRoleName},
-		&manageCampaignMenu{db: db, guildID: guildID, adminRoleName: adminRoleName},
-		&manageCampaignDelete{db: db, guildID: guildID, adminRoleName: adminRoleName},
-		&manageCampaignBan{db: db, guildID: guildID, adminRoleName: adminRoleName},
-		&manageCampaignBanSelect{db: db, guildID: guildID, adminRoleName: adminRoleName},
-		&campaignApprove{db: db, dispatcher: d},
-		&campaignDeny{db: db},
+		// Campaign actions
+		&campaignJoin{db: db},
+		&campaignLeave{db: db},
+		&campaignToggle{db: db},
+		&campaignView{db: db},
+
+		// Campaign management
+		&manageCampaignMenu{db: db},
+		&manageCampaignDelete{db: db},
+		&manageCampaignBan{db: db},
+		&manageCampaignBanSelect{db: db},
 		&manageCampaignAnnounce{db: db},
 		&manageCampaignReschedule{db: db},
+		&manageSetRole{db: db},
+		&manageArchive{db: db},
+		&manageArchiveConfirm{db: db},
+
+		// Approval (DM flow)
+		&campaignApprove{db: db, dispatcher: d},
+		&campaignDeny{db: db},
+
+		// Browse & select
+		&campaignsFilterHandler{db: db},
+		&campaignSelectHandler{db: db},
+		&myCampaignSelectHandler{db: db},
+		&manageSelectHandler{db: db},
+
+		// Back navigation
+		&backMe{db: db},
+		&backMyCampaigns{db: db},
+		&backManage{db: db},
+		&backCampaigns{db: db},
+		&backAdmin{db: db},
+		&backManageCampaign{db: db},
+
+		// New campaign config (post-modal)
+		&newCampaignBookHandler{db: db},
+		&newCampaignFormatHandler{db: db},
+		&newCampaignSubmitHandler{db: db, dispatcher: d},
+		&newCampaignCancelHandler{db: db},
+
+		// Stubs
+		&stubHandler{},
 	}
 }
 
 // AllModals returns an array with all the ModalHandlers available to the bot.
-func AllModals(db *bun.DB, guildID, adminRole string, d *dispatch.Dispatcher) []ModalHandler {
+func AllModals(db *bun.DB, d *dispatch.Dispatcher) []ModalHandler {
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
 		&campaignDenyModal{db: db, dispatcher: d},
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},
+		&manageSetRoleModal{db: db},
 	}
 }

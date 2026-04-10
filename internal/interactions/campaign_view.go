@@ -27,9 +27,7 @@ import (
 // It's a quick preview of the campaigns a user is present on.
 // The difference with `/campaign` is that it is a quick, private, simplified view of a Campaign data.
 type campaignView struct {
-	db            *bun.DB
-	guildID       string
-	adminRoleName string
+	db *bun.DB
 }
 
 // CustomIDPrefix is the unique identifier used to route it through `handler.go`, identifying it as a ComponentHandler.

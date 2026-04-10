@@ -13,6 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
+	BotVersion               = "v1.0-beta"
 )
 
 // Command names and descriptions
@@ -172,12 +173,12 @@ const (
 
 // Unban
 const (
-	UnbanCommandName        = "unban"
-	UnbanCommandDesc        = "Lift a global ban from a player."
-	UnbanTargetNotFound     = "That player is not registered."
-	UnbanTargetNotBanned    = "That player is not banned."
-	UnbanFailureMessage     = "Failed to unban player."
-	UnbanSuccessMessage     = "Unbanned <@%s>. They can interact with the bot again."
+	UnbanCommandName     = "unban"
+	UnbanCommandDesc     = "Lift a global ban from a player."
+	UnbanTargetNotFound  = "That player is not registered."
+	UnbanTargetNotBanned = "That player is not banned."
+	UnbanFailureMessage  = "Failed to unban player."
+	UnbanSuccessMessage  = "Unbanned <@%s>. They can interact with the bot again."
 )
 
 // Campaign archival
@@ -230,22 +231,22 @@ const (
 
 // Campaign approval
 const (
-	CampaignApprovePrefix      = "campaign_approve"
-	CampaignDenyPrefix         = "campaign_deny"
-	CampaignDenyModalPrefix    = "campaign_deny_modal"
-	ApproveButtonLabel         = "Approve"
-	DenyButtonLabel            = "Deny"
-	CampaignApprovedMessage    = "Campaign **%s** has been approved."
-	CampaignDeniedMessage      = "Campaign **%s** has been denied and deleted."
-	CampaignApproveNotModError = "Only mods or admins can approve campaigns."
-	CampaignApproveNotFound    = "Campaign not found or already processed."
-	CampaignApproveError       = "Failed to process campaign approval."
-	CampaignDenyModalTitle     = "Deny Campaign"
-	CampaignDenyReasonLabel    = "Reason"
+	CampaignApprovePrefix         = "campaign_approve"
+	CampaignDenyPrefix            = "campaign_deny"
+	CampaignDenyModalPrefix       = "campaign_deny_modal"
+	ApproveButtonLabel            = "Approve"
+	DenyButtonLabel               = "Deny"
+	CampaignApprovedMessage       = "Campaign **%s** has been approved."
+	CampaignDeniedMessage         = "Campaign **%s** has been denied and deleted."
+	CampaignApproveNotModError    = "Only mods or admins can approve campaigns."
+	CampaignApproveNotFound       = "Campaign not found or already processed."
+	CampaignApproveError          = "Failed to process campaign approval."
+	CampaignDenyModalTitle        = "Deny Campaign"
+	CampaignDenyReasonLabel       = "Reason"
 	CampaignDenyReasonPlaceholder = "Why is this campaign being denied?"
-	CampaignDenyReasonFieldID  = "deny_reason"
-	CampaignDeniedDMMessage    = "Your campaign **%s** has been denied. Reason: %s"
-	CampaignApprovedDMMessage  = "Your campaign **%s** has been approved!"
+	CampaignDenyReasonFieldID     = "deny_reason"
+	CampaignDeniedDMMessage       = "Your campaign **%s** has been denied. Reason: %s"
+	CampaignApprovedDMMessage     = "Your campaign **%s** has been approved!"
 )
 
 // Announce
@@ -298,4 +299,153 @@ const (
 const (
 	HelpCommandName = "help"
 	HelpCommandDesc = "Get a list of all available commands."
+)
+
+// Player hub (/me)
+const (
+	MeCommandName = "me"
+	MeCommandDesc = "Your player profile and quick actions."
+	MeHubMessage  = "Hey, <@%s>! What would you like to do?"
+)
+
+// Browse campaigns (/campaigns)
+const (
+	CampaignsCommandName       = "campaigns"
+	CampaignsCommandDesc       = "Browse all available campaigns."
+	CampaignsFilterPlaceholder = "Filter by format..."
+	CampaignsSelectPlaceholder = "Select a campaign..."
+	CampaignsNoneAvailable     = "No campaigns match this filter."
+	CampaignsFilterAll         = "All"
+	CampaignsFilterCampaign    = "Campaigns"
+	CampaignsFilterOneshot     = "One-shots"
+	CampaignsFilterWestmarch   = "Westmarches"
+)
+
+// Search (/search)
+const (
+	SearchCommandName = "search"
+	SearchCommandDesc = "Search for a campaign by name."
+	SearchOptionName  = "name"
+	SearchOptionDesc  = "Campaign name to search for."
+	SearchNoResults   = "No campaigns found matching that name."
+)
+
+// Admin hub (/admin)
+const (
+	AdminCommandName    = "admin"
+	AdminCommandDesc    = "Mod/Admin panel."
+	AdminNotStaff       = "Only mods or admins can use this command."
+	AdminHubMessage     = "Admin Panel:"
+	AdminCampaignsLabel = "Active Campaigns"
+	AdminDMsLabel       = "DMs"
+	AdminBroadcastLabel = "Broadcast"
+	AdminDatabaseLabel  = "Database"
+	AdminSettingsLabel  = "Settings"
+)
+
+// About (/moontracer)
+const (
+	AboutCommandName           = "moontracer"
+	AboutCommandDesc           = "About this bot."
+	AboutCommandGitHubRepoLink = "https://github.com/framebuffers/moontracer"
+	AboutCommandWebsite        = "https://framebuffer.cl/moontracer"
+	AboutCommandBotDesc        = "Moontracer: a D&D campaign manager for players, DM and spectators!"
+	AboutCommandCopyright      = "(C) 2026 Framebuffer"
+	AboutCommandLicense        = "AGPL-v3.0"
+	AboutCommandHelp           = "Type `/help` for a list of commands."
+	AboutCommandAwoo           = "awoo!"
+	AboutCommandAttributions   = "Thanks to the D&D r/Chile Discord server for giving me the idea, letting me test the bot on their server and give me feedback to improve this bot."
+)
+
+// Navigation buttons
+const (
+	BackLabel         = "Back"
+	BackMeID          = "back_me"
+	BackCampaignsID   = "back_campaigns"
+	BackMyCampaignsID = "back_mycampaigns"
+	BackManageID      = "back_manage"
+	BackAdminID       = "back_admin"
+)
+
+// Hub button labels
+const (
+	MyCampaignsLabel     = "My Campaigns"
+	NextSessionsLabel    = "Next Sessions"
+	NotificationsLabel   = "Notifications"
+	BrowseCampaignsLabel = "Browse Campaigns"
+	MyProfileLabel       = "My Profile"
+	NewCampaignLabel     = "New Campaign"
+)
+
+// Manage campaign: additional buttons
+const (
+	ManageSetRoleLabel  = "Set Role"
+	ManageArchiveLabel  = "Archive"
+	ManageSetRolePrefix = "manage_role"
+	ManageArchivePrefix = "manage_archive"
+
+	// Set Role modal
+	ManageSetRoleModalTitle = "Link Discord Role"
+	ManageSetRoleFieldLabel = "Role name (creates if it doesn't exist)"
+	ManageSetRoleModalID    = "modal_manage_role"
+	ManageSetRoleSuccess    = "Linked role **%s** to campaign **%s**."
+	ManageSetRoleFailed     = "Failed to set role."
+
+	// Archive confirmation + handler
+	ManageArchiveConfirm      = "Are you sure you want to archive **%s**? This is permanent and cannot be undone."
+	ManageArchiveConfirmID    = "manage_archive_confirm"
+	ManageArchiveCancelID     = "manage_archive_cancel"
+	ManageArchiveConfirmLabel = "Yes, Archive"
+	ManageArchiveCancelLabel  = "Cancel"
+	ManageArchiveSuccess      = "Campaign **%s** has been archived. It is now an immutable record."
+	ManageArchiveFailed       = "Failed to archive campaign."
+)
+
+// New campaign config (post-modal dropdowns)
+const (
+	NewCampaignBookPrefix        = "newcampaign_book"
+	NewCampaignFormatPrefix      = "newcampaign_format"
+	NewCampaignSubmitPrefix      = "newcampaign_submit"
+	NewCampaignCancelPrefix      = "newcampaign_cancel"
+	NewCampaignBookPlaceholder   = "Select a game system..."
+	NewCampaignFormatPlaceholder = "Select a format..."
+	NewCampaignConfigMessage     = "Campaign **%s** created (pending setup).\n\nSelect a game system and format, then submit for approval."
+	NewCampaignSubmitLabel       = "Submit for Approval"
+	NewCampaignCancelLabel       = "Cancel"
+	NewCampaignSubmittedMessage  = "Campaign **%s** has been submitted for approval!"
+	NewCampaignCancelledMessage  = "Campaign creation cancelled."
+
+	// Headers shown above the configuration dropdowns
+	NewCampaignConfigHeader       = "Configure **%s**:"
+	NewCampaignConfigSystemHeader = "Configure **%s** — system: **%s**"
+	NewCampaignConfigFormatHeader = "Configure **%s** — format: **%s**"
+
+	// Book dropdown option labels
+	NewCampaignBookLabel5e    = "D&D 5e"
+	NewCampaignBookLabel55e   = "D&D 5.5e (2024)"
+	NewCampaignBookLabelPF2e  = "Pathfinder 2e"
+	NewCampaignBookLabelOther = "Other / Homebrew"
+)
+
+// Campaign Modal
+const (
+	FieldSlotsPlaceholderNew = "e.g. 4 (leave empty for unlimited)"
+	FieldSynopsisLabel       = "Synopsis & Rules"
+)
+
+// Select menu placeholders + content prefixes for /mycampaigns and /managecampaigns
+const (
+	MyCampaignsPlaceholder     = "Select a campaign..."
+	ManageCampaignsPlaceholder = "Select a campaign to manage..."
+	MyCampaignsListHeader      = "Your campaigns:\n"
+	ManageCampaignsListHeader  = "Your campaigns (DM):\n"
+)
+
+// Select menu CustomIDs
+const (
+	CampaignSelectPrefix      = "campaign_select"
+	MyCampaignSelectPrefix    = "mycampaign_select"
+	ManageSelectPrefix        = "manage_select"
+	CampaignsFilterPrefix     = "campaigns_filter"
+	AdminCampaignSelectPrefix = "admin_campaign_select"
 )

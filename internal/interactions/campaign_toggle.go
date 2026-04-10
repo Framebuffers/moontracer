@@ -26,9 +26,7 @@ import (
 
 // campaignToggle handles when a DM clicks to toggle a campaign between open/closed.
 type campaignToggle struct {
-	db            *bun.DB
-	guildID       string
-	adminRoleName string
+	db *bun.DB
 }
 
 func (h *campaignToggle) CustomIDPrefix() string {

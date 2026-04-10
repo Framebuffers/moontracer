@@ -25,9 +25,7 @@ import (
 
 // campaignJoin handles when a player clicks "Join Campaign" on an open campaign.
 type campaignJoin struct {
-	db            *bun.DB
-	guildID       string
-	adminRoleName string
+	db *bun.DB
 }
 
 func (h *campaignJoin) CustomIDPrefix() string {
@@ -135,7 +133,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 
 	// if the campaign has a role set already, assign it to the player.
 	if campaign.RoleID != "" {
-		if err := s.GuildMemberRoleAdd(h.guildID, userID, campaign.RoleID); err != nil {
+		if err := s.GuildMemberRoleAdd(i.GuildID, userID, campaign.RoleID); err != nil {
 			log.Printf("campaign_join: failed to assign role %s to %s: %v", campaign.RoleID, userID, err)
 		}
 	}
