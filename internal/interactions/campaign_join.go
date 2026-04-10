@@ -10,6 +10,7 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
+	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -133,7 +134,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 
 	// if the campaign has a role set already, assign it to the player.
 	if campaign.RoleID != "" {
-		if err := s.GuildMemberRoleAdd(i.GuildID, userID, campaign.RoleID); err != nil {
+		if err := guard.GuildMemberRoleAdd(s, i.GuildID, userID, campaign.RoleID); err != nil {
 			log.Printf("campaign_join: failed to assign role %s to %s: %v", campaign.RoleID, userID, err)
 		}
 	}

@@ -3,6 +3,7 @@ package dispatch
 import (
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
@@ -44,6 +45,7 @@ type DirectMessage struct {
 // Dispatcher manages a stack of outbound DMs processed by a pool of workers.
 type Dispatcher struct {
 	session *discordgo.Session
+	DryRun  bool // when true, log DMs instead of sending them
 
 	mu    sync.Mutex
 	stack []DirectMessage
@@ -59,6 +61,7 @@ func NewDispatcher(session *discordgo.Session, workers int) *Dispatcher {
 	}
 	d := &Dispatcher{
 		session: session,
+		DryRun:  os.Getenv("SAFE_MODE") == "true",
 		workers: workers,
 		quit:    make(chan struct{}),
 	}
@@ -125,6 +128,11 @@ func (d *Dispatcher) work(id int) {
 }
 
 func (d *Dispatcher) send(msg DirectMessage) error {
+	if d.DryRun {
+		log.Printf("dispatcher: [SAFE_MODE] would DM user %s (msg %s): %s", msg.Target, msg.ID, truncate(msg.Content, 80))
+		return nil
+	}
+
 	channel, err := d.session.UserChannelCreate(msg.Target)
 	if err != nil {
 		return fmt.Errorf("dispatcher: create DM channel for %s: %w", msg.ID, err)
@@ -140,4 +148,11 @@ func (d *Dispatcher) send(msg DirectMessage) error {
 
 	log.Printf("dispatcher: sent message %s to %s", msg.ID, msg.ID)
 	return nil
+}
+
+func truncate(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+	return s[:max] + "..."
 }

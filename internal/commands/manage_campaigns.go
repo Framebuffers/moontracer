@@ -101,7 +101,7 @@ func (m *manageCampaigns) Execute(s *discordgo.Session, i *discordgo.Interaction
 					discordgo.Button{
 						Label:    messages.NewCampaignLabel,
 						Style:    discordgo.SuccessButton,
-						CustomID: "stub_newcampaign",
+						CustomID: messages.ManageNewCampaignPrefix,
 					},
 				}},
 			},
