@@ -383,6 +383,22 @@ const (
 	ManageArchiveLabel  = "Archive"
 	ManageSetRolePrefix = "manage_role"
 	ManageArchivePrefix = "manage_archive"
+
+	// Set Role modal
+	ManageSetRoleModalTitle = "Link Discord Role"
+	ManageSetRoleFieldLabel = "Role name (creates if it doesn't exist)"
+	ManageSetRoleModalID    = "modal_manage_role"
+	ManageSetRoleSuccess    = "Linked role **%s** to campaign **%s**."
+	ManageSetRoleFailed     = "Failed to set role."
+
+	// Archive confirmation + handler
+	ManageArchiveConfirm      = "Are you sure you want to archive **%s**? This is permanent and cannot be undone."
+	ManageArchiveConfirmID    = "manage_archive_confirm"
+	ManageArchiveCancelID     = "manage_archive_cancel"
+	ManageArchiveConfirmLabel = "Yes, Archive"
+	ManageArchiveCancelLabel  = "Cancel"
+	ManageArchiveSuccess      = "Campaign **%s** has been archived. It is now an immutable record."
+	ManageArchiveFailed       = "Failed to archive campaign."
 )
 
 // New campaign config (post-modal dropdowns)

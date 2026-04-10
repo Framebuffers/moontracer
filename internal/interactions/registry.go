@@ -22,6 +22,9 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		&manageCampaignBanSelect{db: db},
 		&manageCampaignAnnounce{db: db},
 		&manageCampaignReschedule{db: db},
+		&manageSetRole{db: db},
+		&manageArchive{db: db},
+		&manageArchiveConfirm{db: db},
 
 		// Approval (DM flow)
 		&campaignApprove{db: db, dispatcher: d},
@@ -59,5 +62,6 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher) []ModalHandler {
 		&campaignDenyModal{db: db, dispatcher: d},
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},
+		&manageSetRoleModal{db: db},
 	}
 }
