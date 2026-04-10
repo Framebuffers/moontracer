@@ -114,7 +114,7 @@ func (h *backManage) HandleComponents(s *discordgo.Session, i *discordgo.Interac
 			discordgo.Button{
 				Label:    messages.NewCampaignLabel,
 				Style:    discordgo.SuccessButton,
-				CustomID: "stub_newcampaign",
+				CustomID: messages.ManageNewCampaignPrefix,
 			},
 		}},
 	})

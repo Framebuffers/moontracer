@@ -10,6 +10,7 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
+	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -72,7 +73,7 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 
 	// Remove the campaign's linked Discord role if one exists.
 	if campaign.RoleID != "" {
-		if err := s.GuildMemberRoleRemove(i.GuildID, userID, campaign.RoleID); err != nil {
+		if err := guard.GuildMemberRoleRemove(s, i.GuildID, userID, campaign.RoleID); err != nil {
 			log.Printf("campaign_leave: failed to remove role %s from %s: %v", campaign.RoleID, userID, err)
 		}
 	}

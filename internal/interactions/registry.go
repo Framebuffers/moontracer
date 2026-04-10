@@ -50,8 +50,19 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		&newCampaignSubmitHandler{db: db, dispatcher: d},
 		&newCampaignCancelHandler{db: db},
 
-		// Stubs
-		&stubHandler{},
+		// Player hub
+		&nextSessionsHandler{db: db},
+		&notificationsHandler{db: db},
+
+		// Admin hub
+		&adminCampaignsHandler{db: db},
+		&adminBroadcastHandler{db: db, dispatcher: d},
+		&adminDatabaseHandler{db: db},
+		&adminSettingsHandler{db: db},
+
+		// Manage: edit + new campaign from button
+		&manageEditHandler{db: db},
+		&manageNewCampaignButton{db: db},
 	}
 }
 
@@ -63,5 +74,7 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher) []ModalHandler {
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},
 		&manageSetRoleModal{db: db},
+		&manageEditModal{db: db},
+		&adminBroadcastModal{db: db, dispatcher: d},
 	}
 }

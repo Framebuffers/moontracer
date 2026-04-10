@@ -24,6 +24,7 @@ import (
 	"moontracer/internal/auth"
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
+	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -132,7 +133,7 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 	}
 
 	if roleID == "" {
-		role, err := s.GuildRoleCreate(i.GuildID, &discordgo.RoleParams{
+		role, err := guard.GuildRoleCreate(s, i.GuildID, &discordgo.RoleParams{
 			Name: roleName,
 		})
 		if err != nil {

@@ -56,7 +56,8 @@ func newCampaignConfigComponents(campaignID string) []discordgo.MessageComponent
 		Options: []discordgo.SelectMenuOption{
 			{Label: messages.CampaignLabel, Value: "campaign"},
 			{Label: messages.CampaignTypeOneShotLabel, Value: "oneshot"},
-			{Label: messages.CampaignTypeWestmarchLabel, Value: "westmarch"},
+			// {Label: messages.CampaignTypeWestmarchLabel, Value: "westmarch"},
+			// TODO: add support for westmarches, they need a refactor to implement rotating parties.
 		},
 	}
 
@@ -168,11 +169,11 @@ func (h *newCampaignFormatHandler) HandleComponents(s *discordgo.Session, i *dis
 		c.IsOneshot = true
 		c.IsWestmarch = false
 		c.Schedule.Frequency = models.OneShot
-	case "westmarch":
-		c.IsOneshot = false
-		c.IsWestmarch = true
-		c.Schedule.Frequency = models.Westmarch
-		c.Slots = -1 // Note: westmarches are unlimited by default. any amount of users can join that kinda campaign, but not all of them can play at once, or else the DM would go crazy.
+	// case "westmarch":
+	// c.IsOneshot = false
+	// c.IsWestmarch = true
+	// c.Schedule.Frequency = models.Westmarch
+	// c.Slots = -1 // Note: westmarches are unlimited by default. any amount of users can join that kinda campaign, but not all of them can play at once, or else the DM would go crazy.
 	default: // a regularly-scheduled campaign
 		c.IsOneshot = false
 		c.IsWestmarch = false

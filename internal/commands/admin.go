@@ -75,24 +75,24 @@ func adminHubData() *discordgo.InteractionResponseData {
 				discordgo.Button{
 					Label:    messages.AdminCampaignsLabel,
 					Style:    discordgo.SecondaryButton,
-					CustomID: "stub_admin_campaigns",
+					CustomID: messages.AdminCampaignsPrefix,
 				},
 				discordgo.Button{
 					Label:    messages.AdminBroadcastLabel,
 					Style:    discordgo.SecondaryButton,
-					CustomID: "stub_broadcast",
+					CustomID: messages.AdminBroadcastPrefix,
 				},
 			}},
 			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 				discordgo.Button{
 					Label:    messages.AdminDatabaseLabel,
 					Style:    discordgo.SecondaryButton,
-					CustomID: "stub_admin_database",
+					CustomID: messages.AdminDatabasePrefix,
 				},
 				discordgo.Button{
 					Label:    messages.AdminSettingsLabel,
 					Style:    discordgo.SecondaryButton,
-					CustomID: "stub_admin_settings",
+					CustomID: messages.AdminSettingsPrefix,
 				},
 			}},
 		},

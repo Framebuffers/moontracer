@@ -449,3 +449,57 @@ const (
 	CampaignsFilterPrefix     = "campaigns_filter"
 	AdminCampaignSelectPrefix = "admin_campaign_select"
 )
+
+// Player hub: Next Sessions
+const (
+	NextSessionsPrefix  = "next_sessions"
+	NextSessionsHeader  = "Upcoming sessions:"
+	NextSessionsNone    = "You have no upcoming sessions."
+)
+
+// Player hub: Notifications
+const (
+	NotificationsPrefix  = "notifications"
+	NotificationsHeader  = "Notification settings:"
+	NotificationsNone    = "No notification preferences configured yet."
+)
+
+// Admin hub: Campaign browser (all campaigns)
+const (
+	AdminCampaignsPrefix     = "admin_campaigns"
+	AdminCampaignsHeader     = "All campaigns:"
+	AdminCampaignsNone       = "No campaigns in the database."
+)
+
+// Admin hub: Broadcast
+const (
+	AdminBroadcastPrefix       = "admin_broadcast"
+	AdminBroadcastModalID      = "modal_admin_broadcast"
+	AdminBroadcastModalTitle   = "Broadcast Message"
+	AdminBroadcastFieldLabel   = "Message"
+	AdminBroadcastSuccess      = "Broadcast sent."
+	AdminBroadcastFailed       = "Failed to send broadcast."
+)
+
+// Admin hub: Database viewer
+const (
+	AdminDatabasePrefix = "admin_database"
+)
+
+// Admin hub: Settings
+const (
+	AdminSettingsPrefix = "admin_settings"
+	AdminSettingsHeader = "Bot settings:"
+)
+
+// Manage campaign: Edit
+const (
+	ManageEditPrefix     = "manage_edit"
+	ManageEditModalID    = "modal_manage_edit"
+	ManageEditModalTitle = "Edit Campaign"
+)
+
+// Manage campaign: New Campaign from button (modal-from-component)
+const (
+	ManageNewCampaignPrefix = "manage_newcampaign"
+)

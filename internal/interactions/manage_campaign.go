@@ -19,6 +19,7 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
+	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -86,8 +87,7 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 						discordgo.Button{
 							Label:    messages.ManageEditLabel,
 							Style:    discordgo.SecondaryButton,
-							CustomID: fmt.Sprintf("stub_edit:%s", campaignID),
-							Disabled: true,
+							CustomID: fmt.Sprintf("%s:%s", messages.ManageEditPrefix, campaignID),
 						},
 						discordgo.Button{
 							Label:    messages.ManageDeleteLabel,
@@ -379,7 +379,7 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 	// Remove the campaign's linked Discord role if one exists.
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err == nil && campaign.RoleID != "" {
-		if err := s.GuildMemberRoleRemove(i.GuildID, targetID, campaign.RoleID); err != nil {
+		if err := guard.GuildMemberRoleRemove(s, i.GuildID, targetID, campaign.RoleID); err != nil {
 			log.Printf("manage_ban_select: failed to remove role %s from %s: %v", campaign.RoleID, targetID, err)
 		}
 	}

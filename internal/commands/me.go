@@ -57,12 +57,12 @@ func (m *meCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 					discordgo.Button{
 						Label:    messages.NextSessionsLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: "stub_nextsessions",
+						CustomID: messages.NextSessionsPrefix,
 					},
 					discordgo.Button{
 						Label:    messages.NotificationsLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: "stub_notifications",
+						CustomID: messages.NotificationsPrefix,
 					},
 				}},
 			},
@@ -88,12 +88,12 @@ func RenderMeHub(s *discordgo.Session, i *discordgo.InteractionCreate, userID st
 					discordgo.Button{
 						Label:    messages.NextSessionsLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: "stub_nextsessions",
+						CustomID: messages.NextSessionsPrefix,
 					},
 					discordgo.Button{
 						Label:    messages.NotificationsLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: "stub_notifications",
+						CustomID: messages.NotificationsPrefix,
 					},
 				}},
 			},
