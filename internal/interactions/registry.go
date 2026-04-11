@@ -59,6 +59,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		&adminBroadcastHandler{db: db, dispatcher: d},
 		&adminDatabaseHandler{db: db},
 		&adminSettingsHandler{db: db},
+		&adminDiagHandler{db: db},
 
 		// Manage: edit + new campaign from button
 		&manageEditHandler{db: db},

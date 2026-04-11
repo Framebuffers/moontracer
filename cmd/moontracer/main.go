@@ -9,16 +9,15 @@ import (
 )
 
 /*
-	Flow:
-		1. Read required env vars: DISCORD_TOKEN, ADMIN_ROLE_NAME.
-		2. Read optional DISCORD_GUILD_ID (dev mode: register commands to single guild).
-		3. Read optional DB_DIR (defaults to "data"). Each guild gets its own SQLite DB in this directory.
-		4. Create GuildDBManager (per-guild databases are created on demand).
-		5. Create Discord bot with token, guild ID, admin role name, and GuildDBManager.
-		6. Start the bot — open gateway, discover guilds, init DBs, register commands, listen for interactions.
-		7. Block until SIGINT/SIGTERM (Ctrl+C), then clean up and exit.
+Flow:
+ 1. Read required env vars: DISCORD_TOKEN, ADMIN_ROLE_NAME.
+ 2. Read optional DISCORD_GUILD_ID (dev mode: register commands to single guild).
+ 3. Read optional DB_DIR (defaults to "data"). Each guild gets its own SQLite DB in this directory.
+ 4. Create GuildDBManager (per-guild databases are created on demand).
+ 5. Create Discord bot with token, guild ID, admin role name, and GuildDBManager.
+ 6. Start the bot — open gateway, discover guilds, init DBs, register commands, listen for interactions.
+ 7. Block until SIGINT/SIGTERM (Ctrl+C), then clean up and exit.
 */
-
 func main() {
 	if os.Getenv("VERBOSE") == "true" {
 		log.SetFlags(log.Ldate | log.Ltime | log.Lmicroseconds | log.Lshortfile)
