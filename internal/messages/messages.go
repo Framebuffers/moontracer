@@ -341,6 +341,7 @@ const (
 	AdminBroadcastLabel = "Broadcast"
 	AdminDatabaseLabel  = "Database"
 	AdminSettingsLabel  = "Settings"
+	AdminDiagLabel      = "Diagnostics"
 )
 
 // About (/moontracer)
@@ -490,6 +491,11 @@ const (
 const (
 	AdminSettingsPrefix = "admin_settings"
 	AdminSettingsHeader = "Bot settings:"
+)
+
+// Admin hub: Diagnostics
+const (
+	AdminDiagPrefix = "admin_diag"
 )
 
 // Manage campaign: Edit
