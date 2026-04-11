@@ -13,7 +13,9 @@ import (
 	"moontracer/internal/testutil"
 )
 
-// --- helpers ---
+/*
+Helper functions
+*/
 
 func seedPlayer(t *testing.T, database *bun.DB, id string, role models.ServerRole) {
 	t.Helper()
@@ -50,9 +52,21 @@ func seedCampaignPlayer(t *testing.T, database *bun.DB, playerID, campaignID str
 	require.NoError(t, err)
 }
 
-// --- TESTS ---
-// --- GetStaff ---
+/*
+Unit Testing: staff queries and approval gate.
+*/
 
+/*
+GetStaff returns mods and admins.
+
+When:
+
+	Database has one player, one mod, one admin.
+
+Expected:
+
+	Only the mod and admin are returned. Regular players are excluded.
+*/
 func TestGetStaff_ReturnsModsAndAdmins(t *testing.T) {
 	database := testutil.NewTestDB(t)
 
@@ -73,6 +87,17 @@ func TestGetStaff_ReturnsModsAndAdmins(t *testing.T) {
 	assert.False(t, ids["player1"], "regular player should not be in staff")
 }
 
+/*
+GetStaff returns empty when no staff exist.
+
+When:
+
+	Database has only regular players, no mods or admins.
+
+Expected:
+
+	Empty result.
+*/
 func TestGetStaff_EmptyWhenNoStaff(t *testing.T) {
 	database := testutil.NewTestDB(t)
 
@@ -85,10 +110,22 @@ func TestGetStaff_EmptyWhenNoStaff(t *testing.T) {
 }
 
 /*
-	 --- Approval gate: campaign lookup still returns unapproved campaigns ---
+Approval gate: campaign lookup returns unapproved campaigns.
 
-		The gate is enforced in the handler (if !campaign.IsApproved), not at the DB level.
-		These tests verify the data layer returns the campaign regardless, so the handler can decide.
+	The gate is enforced in the handler (if !campaign.IsApproved), not at the DB level.
+	These tests verify the data layer returns the campaign regardless, so the handler can decide.
+*/
+
+/*
+GetByTag returns an unapproved campaign.
+
+When:
+
+	Campaign exists with IsApproved = false.
+
+Expected:
+
+	Campaign is returned. The data layer does not filter by approval status.
 */
 func TestGetByTag_ReturnsUnapprovedCampaign(t *testing.T) {
 	database := testutil.NewTestDB(t)
@@ -102,6 +139,17 @@ func TestGetByTag_ReturnsUnapprovedCampaign(t *testing.T) {
 	assert.False(t, campaign.IsApproved, "campaign should still be unapproved")
 }
 
+/*
+GetByTag returns an approved campaign.
+
+When:
+
+	Campaign exists with IsApproved = true.
+
+Expected:
+
+	Campaign is returned with approval flag intact.
+*/
 func TestGetByTag_ReturnsApprovedCampaign(t *testing.T) {
 	database := testutil.NewTestDB(t)
 
@@ -114,8 +162,17 @@ func TestGetByTag_ReturnsApprovedCampaign(t *testing.T) {
 	assert.True(t, campaign.IsApproved, "campaign should be approved")
 }
 
-// --- Approve/Deny state transitions ---
+/*
+Approve campaign sets IsApproved to true.
 
+When:
+
+	Campaign starts unapproved, then IsApproved is set to true and updated.
+
+Expected:
+
+	Reloaded campaign has IsApproved = true.
+*/
 func TestApproveCampaign_SetsIsApprovedTrue(t *testing.T) {
 	database := testutil.NewTestDB(t)
 
@@ -135,6 +192,17 @@ func TestApproveCampaign_SetsIsApprovedTrue(t *testing.T) {
 	assert.True(t, reloaded.IsApproved, "campaign should be approved after update")
 }
 
+/*
+Deny campaign deletes from database.
+
+When:
+
+	Campaign exists, then is deleted (denial = deletion).
+
+Expected:
+
+	Lookup after deletion returns an error.
+*/
 func TestDenyCampaign_DeletesFromDB(t *testing.T) {
 	database := testutil.NewTestDB(t)
 
@@ -151,6 +219,17 @@ func TestDenyCampaign_DeletesFromDB(t *testing.T) {
 	assert.Error(t, err, "campaign should not exist after deletion")
 }
 
+/*
+Double approve is idempotent.
+
+When:
+
+	Campaign is approved twice in succession.
+
+Expected:
+
+	No error on second approve. Campaign remains approved.
+*/
 func TestDoubleApprove_IsIdempotent(t *testing.T) {
 	database := testutil.NewTestDB(t)
 
@@ -175,6 +254,17 @@ func TestDoubleApprove_IsIdempotent(t *testing.T) {
 	assert.True(t, reloaded.IsApproved)
 }
 
+/*
+Deny already-deleted campaign returns not found.
+
+When:
+
+	Campaign is deleted, then looked up again.
+
+Expected:
+
+	Lookup returns an error. No phantom records.
+*/
 func TestDenyAlreadyDeleted_ReturnsNotFound(t *testing.T) {
 	database := testutil.NewTestDB(t)
 
@@ -188,8 +278,17 @@ func TestDenyAlreadyDeleted_ReturnsNotFound(t *testing.T) {
 	assert.Error(t, err, "looking up a deleted campaign should return an error")
 }
 
-// --- Visibility: mycampaigns should be filterable by IsApproved ---
+/*
+GetPlayerCampaigns includes both approved and unapproved.
 
+When:
+
+	DM owns one approved and one unapproved campaign.
+
+Expected:
+
+	GetPlayerCampaigns returns both. Handler-level filtering narrows to approved only.
+*/
 func TestGetPlayerCampaigns_IncludesBothApprovedAndUnapproved(t *testing.T) {
 	database := testutil.NewTestDB(t)
 
