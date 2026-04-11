@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
 )
 
@@ -23,25 +24,46 @@ import (
 		- This is useful when there are moderators that only have Campaign moderation access, enabling more granular permissions control.
 */
 
-// SyncServerRoles reads guild members from Discord and updates Player.Role
-// in the database to match.
-//
-// Players with the admin Discord role get ServerRoleAdmin;
-// all other registered players keep ServerRolePlayer.
-// Mod is reserved for future DB-only assignment by admins.
-//
-// Call on bot startup and on GuildMemberUpdate events.
-func SyncServerRoles(database *bun.DB, s *discordgo.Session, guildID, adminRoleName string) error {
-	ctx := context.Background()
+/*
+SyncServerRoles reads guild members from Discord and updates Player.Role
+in the database to match.
 
+Players with the admin Discord role get ServerRoleAdmin.
+All other registered players keep ServerRolePlayer.
+
+Mod is reserved for future DB-only assignment by admins.
+Call this on bot startup and on GuildMemberUpdate events.
+*/
+func SyncServerRoles(database *bun.DB, s *discordgo.Session, guildID, adminRoleName string) error {
 	adminIDs, err := adminsWithRole(s, guildID, adminRoleName)
 	if err != nil {
 		return err
 	}
+	return syncRoles(database, adminIDs)
+}
+
+/*
+syncRoles is the core sync logic, separated from the Discord API call
+so it can be tested without a live session.
+
+Note:
+
+	When in Safe Mode, elevate the debug admin through the normal role path.
+	Preserve DB-only mod assignments. Don't demote Mods to Player
+*/
+func syncRoles(database *bun.DB, adminIDs []string) error {
+	ctx := context.Background()
 
 	adminSet := make(map[string]bool, len(adminIDs))
 	for _, id := range adminIDs {
 		adminSet[id] = true
+	}
+
+	if guard.SafeMode && guard.DebugAdminID != "" {
+		if !adminSet[guard.DebugAdminID] {
+			adminSet[guard.DebugAdminID] = true
+			log.Printf("sync: debug admin %s injected into admin set (safe mode)", guard.DebugAdminID)
+		}
 	}
 
 	var players []models.Player
@@ -54,7 +76,6 @@ func SyncServerRoles(database *bun.DB, s *discordgo.Session, guildID, adminRoleN
 		if adminSet[p.ID] {
 			desired = models.ServerRoleAdmin
 		} else if p.Role == models.ServerRoleMod {
-			// Preserve DB-only mod assignments; don't demote mods to player.
 			desired = models.ServerRoleMod
 		} else {
 			desired = models.ServerRolePlayer

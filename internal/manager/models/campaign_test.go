@@ -6,6 +6,21 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+/*
+Unit Testing: Campaign model methods.
+*/
+
+/*
+PlayerMap returns all campaign players keyed by ID.
+
+When:
+
+	Campaign has three players (two regular, one DM).
+
+Expected:
+
+	Map contains all three, keyed by PlayerID.
+*/
 func TestPlayerMap(t *testing.T) {
 	c := &Campaign{
 		CampaignPlayers: []CampaignPlayer{
@@ -22,12 +37,34 @@ func TestPlayerMap(t *testing.T) {
 	assert.Equal(t, "p3", m["p3"].PlayerID)
 }
 
+/*
+PlayerMap with no players.
+
+When:
+
+	Campaign has no CampaignPlayers loaded.
+
+Expected:
+
+	Returns an empty map.
+*/
 func TestPlayerMap_Empty(t *testing.T) {
 	c := &Campaign{}
 	m := c.PlayerMap()
 	assert.Empty(t, m)
 }
 
+/*
+DMMap returns only DM-role players keyed by ID.
+
+When:
+
+	Campaign has two DMs and two regular players.
+
+Expected:
+
+	Map contains only the two DMs. Regular players are excluded.
+*/
 func TestDMMap(t *testing.T) {
 	c := &Campaign{
 		CampaignPlayers: []CampaignPlayer{
@@ -46,6 +83,17 @@ func TestDMMap(t *testing.T) {
 	assert.NotContains(t, m, "p4")
 }
 
+/*
+DMMap with no DMs.
+
+When:
+
+	Campaign has only regular players, no DM-role entries.
+
+Expected:
+
+	Returns an empty map.
+*/
 func TestDMMap_NoDMs(t *testing.T) {
 	c := &Campaign{
 		CampaignPlayers: []CampaignPlayer{

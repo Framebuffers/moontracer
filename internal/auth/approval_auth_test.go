@@ -11,9 +11,21 @@ import (
 	"moontracer/internal/testutil"
 )
 
-// --- TESTS ---
-// --- Approval auth: who can approve/deny campaigns ---
+/*
+Unit Testing: approval authorization — who can approve/deny campaigns.
+*/
 
+/*
+Mod can approve.
+
+When:
+
+	Player has ServerRoleMod, not banned.
+
+Expected:
+
+	ScopeMod passes. Mods may approve/deny campaigns.
+*/
 func TestApprovalAuth_ModCanApprove(t *testing.T) {
 	database := testutil.NewTestDB(t)
 	ctx := context.Background()
@@ -26,6 +38,17 @@ func TestApprovalAuth_ModCanApprove(t *testing.T) {
 	assert.True(t, ok, "mod should be able to approve/deny campaigns")
 }
 
+/*
+Admin can approve.
+
+When:
+
+	Player has ServerRoleAdmin, not banned.
+
+Expected:
+
+	ScopeMod passes. Admin implies mod.
+*/
 func TestApprovalAuth_AdminCanApprove(t *testing.T) {
 	database := testutil.NewTestDB(t)
 	ctx := context.Background()
@@ -38,6 +61,17 @@ func TestApprovalAuth_AdminCanApprove(t *testing.T) {
 	assert.True(t, ok, "admin should be able to approve/deny campaigns (admin implies mod)")
 }
 
+/*
+Player cannot approve.
+
+When:
+
+	Player has ServerRolePlayer (regular player), not banned.
+
+Expected:
+
+	ScopeMod denied. Regular players have no approval authority.
+*/
 func TestApprovalAuth_PlayerCannotApprove(t *testing.T) {
 	database := testutil.NewTestDB(t)
 	ctx := context.Background()
@@ -50,6 +84,17 @@ func TestApprovalAuth_PlayerCannotApprove(t *testing.T) {
 	assert.False(t, ok, "regular player should not be able to approve/deny campaigns")
 }
 
+/*
+Banned mod cannot approve.
+
+When:
+
+	Player has ServerRoleMod but is globally banned.
+
+Expected:
+
+	ScopeMod denied. Global ban overrides role.
+*/
 func TestApprovalAuth_BannedModCannotApprove(t *testing.T) {
 	database := testutil.NewTestDB(t)
 	ctx := context.Background()
@@ -62,6 +107,17 @@ func TestApprovalAuth_BannedModCannotApprove(t *testing.T) {
 	assert.False(t, ok, "globally banned mod should not be able to approve/deny campaigns")
 }
 
+/*
+Banned admin cannot approve.
+
+When:
+
+	Player has ServerRoleAdmin but is globally banned.
+
+Expected:
+
+	ScopeMod denied. Global ban overrides role, even admin.
+*/
 func TestApprovalAuth_BannedAdminCannotApprove(t *testing.T) {
 	database := testutil.NewTestDB(t)
 	ctx := context.Background()
@@ -74,6 +130,17 @@ func TestApprovalAuth_BannedAdminCannotApprove(t *testing.T) {
 	assert.False(t, ok, "globally banned admin should not be able to approve/deny campaigns")
 }
 
+/*
+Unregistered user cannot approve.
+
+When:
+
+	User ID does not exist in the players table.
+
+Expected:
+
+	ScopeMod denied. No player row means no authorization.
+*/
 func TestApprovalAuth_UnregisteredUserCannotApprove(t *testing.T) {
 	database := testutil.NewTestDB(t)
 

@@ -17,9 +17,27 @@ DB operations still run normally so the bot can be tested end-to-end without imp
 */
 var SafeMode = os.Getenv("SAFE_MODE") == "true"
 
+/*
+DebugAdminID is the Discord user ID granted admin privileges for testing.
+
+Only honoured when SafeMode is active.
+
+The user must still be registered and not banned:
+this only elevates their server role.
+It does not bypass any other security checks.
+*/
+var DebugAdminID = os.Getenv("DEBUG_ADMIN_ID")
+
 func init() {
 	if SafeMode {
 		log.Println("guard: SAFE_MODE is ON — Discord-mutating operations will be logged but not executed")
+		if DebugAdminID != "" {
+			log.Printf("guard: DEBUG_ADMIN_ID is set — user %s will be treated as admin", DebugAdminID)
+		}
+	}
+	if !SafeMode && DebugAdminID != "" {
+		log.Println("guard: WARNING — DEBUG_ADMIN_ID is set but SAFE_MODE is OFF; debug admin will be ignored")
+		DebugAdminID = ""
 	}
 }
 
