@@ -27,6 +27,7 @@ func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
 		&campaignDatabaseCommand{db: db},
 		&adminCommand{db: db},
 		&aboutCommand{db: db},
+		&waosCommand{db: db},
 	}
 }
 
