@@ -120,17 +120,24 @@ func adminHubData() *discordgo.InteractionResponseData {
 
 // RenderAdminDiag renders the diagnostics sub-view as a message update (from a button click on /admin).
 func RenderAdminDiag(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+	if err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: adminDiagData(s),
-	})
+	}); err != nil {
+		log.Printf("admin_diag: failed to respond: %v", err)
+	}
 }
 
+/*
+adminDiagData uses Components V2 (MessageFlagsIsComponentsV2) because TextDisplay
+is a V2-only component.
+
+Under V2, Content and Embeds must NOT be set. Headers go inside TextDisplay blocks.
+*/
 func adminDiagData(s *discordgo.Session) *discordgo.InteractionResponseData {
 	return &discordgo.InteractionResponseData{
-		Content: messages.AdminHubMessage,
-		Embeds:  []*discordgo.MessageEmbed{},
 		Components: []discordgo.MessageComponent{
+			discordgo.TextDisplay{Content: "# " + messages.AdminHubMessage + " — Diagnostics"},
 			discordgo.TextDisplay{Content: getGoDiag()},
 			discordgo.TextDisplay{Content: getDiscordgoSessionDiag(s)},
 			discordgo.TextDisplay{Content: getConfigDiag()},
@@ -142,7 +149,7 @@ func adminDiagData(s *discordgo.Session) *discordgo.InteractionResponseData {
 				},
 			}},
 		},
-		Flags: discordgo.MessageFlagsEphemeral,
+		Flags: discordgo.MessageFlagsEphemeral | discordgo.MessageFlagsIsComponentsV2,
 	}
 }
 
