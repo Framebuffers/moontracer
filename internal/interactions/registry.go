@@ -18,6 +18,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		// Campaign management
 		&manageCampaignMenu{db: db},
 		&manageCampaignDelete{db: db},
+		&manageDeleteConfirm{db: db},
 		&manageCampaignBan{db: db},
 		&manageCampaignBanSelect{db: db},
 		&manageCampaignAnnounce{db: db},

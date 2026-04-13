@@ -84,6 +84,11 @@ func CampaignButtons(callerID string, c models.Campaign, players []models.Campai
 	var buttons []discordgo.MessageComponent
 
 	if c.DungeonMaster == callerID {
+		buttons = append(buttons, discordgo.Button{
+			Label:    messages.ManageCampaignButtonLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: fmt.Sprintf("manage_campaign:%s", c.ID),
+		})
 		return buttons
 	}
 

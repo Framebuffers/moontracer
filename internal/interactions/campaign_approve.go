@@ -82,7 +82,13 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 
 	c.dispatcher.Push(*msgApproved)
 
-	respondInteraction(s, i, fmt.Sprintf(messages.CampaignApprovedMessage, campaign.Name))
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content:    fmt.Sprintf(messages.CampaignApprovedStatusMessage, campaign.Name),
+			Components: []discordgo.MessageComponent{},
+		},
+	})
 }
 
 /*
@@ -109,10 +115,27 @@ func (c *campaignDeny) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
+	// Remove buttons from the DM message before opening the modal.
+	campaign, err := db.GetByID[models.Campaign](c.db, campaignID)
+	if err == nil {
+		pendingContent := fmt.Sprintf(messages.CampaignDenyPendingMessage, campaign.Name)
+		emptyComponents := []discordgo.MessageComponent{}
+		s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+			Channel:    i.ChannelID,
+			ID:         i.Message.ID,
+			Content:    &pendingContent,
+			Components: &emptyComponents,
+		})
+	}
+
+	// Thread channel + message ID so the modal handler can update the DM message with the final status.
+	channelID := i.ChannelID
+	messageID := i.Message.ID
+
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
-			CustomID: messages.CampaignDenyModalPrefix + ":" + guildID + ":" + campaignID,
+			CustomID: messages.CampaignDenyModalPrefix + ":" + guildID + ":" + campaignID + ":" + channelID + ":" + messageID,
 			Title:    messages.CampaignDenyModalTitle,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
@@ -161,8 +184,11 @@ func checkModAuth(database *bun.DB, s *discordgo.Session, i *discordgo.Interacti
 	return true
 }
 
-// campaignDenyModal handles the modal submission after a mod clicks "Deny" and provides a reason.
-// Custom ID format: campaign_deny_modal:<campaignID>
+/*
+campaignDenyModal handles the modal submission after a mod clicks "Deny" and provides a reason.
+
+Custom ID format: campaign_deny_modal:<campaignID>
+*/
 type campaignDenyModal struct {
 	db         *bun.DB
 	dispatcher *dispatch.Dispatcher
@@ -173,12 +199,20 @@ func (m *campaignDenyModal) CustomIDPrefix() string {
 }
 
 func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 3)
+	// CustomID format: campaign_deny_modal:<guildID>:<campaignID>:<channelID>:<messageID>
+	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 5)
 	if len(parts) < 3 {
 		respondInteraction(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 	campaignID := parts[2]
+
+	// Optional: channel + message ID for updating the original DM message.
+	var origChannelID, origMessageID string
+	if len(parts) >= 5 {
+		origChannelID = parts[3]
+		origMessageID = parts[4]
+	}
 
 	var userID string
 	if i.User != nil {
@@ -227,6 +261,18 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 		Target:  campaign.DungeonMaster,
 		Content: fmt.Sprintf(messages.CampaignDeniedDMMessage, campaign.Name, reason),
 	})
+
+	// Update the original DM message with the final denial status.
+	if origChannelID != "" && origMessageID != "" {
+		statusContent := fmt.Sprintf(messages.CampaignDeniedStatusMessage, campaign.Name, reason)
+		emptyComponents := []discordgo.MessageComponent{}
+		s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+			Channel:    origChannelID,
+			ID:         origMessageID,
+			Content:    &statusContent,
+			Components: &emptyComponents,
+		})
+	}
 
 	respondInteraction(s, i, fmt.Sprintf(messages.CampaignDeniedMessage, campaign.Name))
 }

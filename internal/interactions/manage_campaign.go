@@ -54,6 +54,16 @@ Used by the manage_campaign handler and back_manage_campaign handler.
 func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCreate, database *bun.DB, campaignID string) {
 	userID := getUserID(i)
 
+	/*
+		Check campaign exists before auth. Prevents misleading "not authorized"
+		when selecting a deleted campaign from a stale menu.
+	*/
+	campaign, err := db.GetByID[models.Campaign](database, campaignID)
+	if err != nil {
+		respondInteraction(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
 	ok, err := auth.Authorize(database, userID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_campaign: auth check failed: %v", err)
@@ -62,12 +72,6 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 	if !ok {
 		respondInteraction(s, i, messages.ManageNotAuthorized)
-		return
-	}
-
-	campaign, err := db.GetByID[models.Campaign](database, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 
@@ -156,12 +160,7 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 	userID := i.Member.User.ID
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil {
-		log.Printf("manage_delete: auth check failed: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
-		return
-	}
-	if !ok {
+	if err != nil || !ok {
 		respondInteraction(s, i, messages.ManageNotAuthorized)
 		return
 	}
@@ -177,23 +176,85 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 		return
 	}
 
-	// Cascade delete: all CampaignPlayer entries first, then the campaign.
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf(messages.ManageDeleteConfirm, campaign.Name),
+			Embeds:  []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    messages.ManageDeleteConfirmLabel,
+						Style:    discordgo.DangerButton,
+						CustomID: fmt.Sprintf("%s:%s", messages.ManageDeleteConfirmID, campaignID),
+					},
+					discordgo.Button{
+						Label:    messages.ManageDeleteCancelLabel,
+						Style:    discordgo.SecondaryButton,
+						CustomID: fmt.Sprintf("back_manage_campaign:%s", campaignID),
+					},
+				}},
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
+/*
+manageDeleteConfirm handles the "Yes, Delete" confirmation button.
+
+Custom ID format: manage_delete_confirm:<campaignID>
+*/
+type manageDeleteConfirm struct {
+	db *bun.DB
+}
+
+func (h *manageDeleteConfirm) CustomIDPrefix() string {
+	return messages.ManageDeleteConfirmID
+}
+
+func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
+	if len(parts) < 2 {
+		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+	campaignID := parts[1]
+	userID := i.Member.User.ID
+
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
+	if err != nil || !ok {
+		respondInteraction(s, i, messages.ManageNotAuthorized)
+		return
+	}
+
+	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	if err != nil {
+		respondInteraction(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	if !campaign.CanMutate() {
+		respondInteraction(s, i, messages.CampaignArchivedMessage)
+		return
+	}
+
 	ctx := context.Background()
 	_, err = h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
 		Where("campaign_id = ?", campaignID).Exec(ctx)
 	if err != nil {
-		log.Printf("manage_delete: failed to delete campaign players: %v", err)
+		log.Printf("manage_delete_confirm: failed to delete campaign players: %v", err)
 		respondInteraction(s, i, messages.ManageDeleteFailure)
 		return
 	}
 
 	if err := db.Delete[models.Campaign](h.db, campaignID); err != nil {
-		log.Printf("manage_delete: failed to delete campaign: %v", err)
+		log.Printf("manage_delete_confirm: failed to delete campaign: %v", err)
 		respondInteraction(s, i, messages.ManageDeleteFailure)
 		return
 	}
 
-	log.Printf("manage_delete: %s deleted campaign %s (%s)", userID, campaign.Name, campaignID)
+	log.Printf("manage_delete_confirm: %s deleted campaign %s (%s)", userID, campaign.Name, campaignID)
 	respondInteraction(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
 }
 
