@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -203,6 +204,14 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 	campaign, err := db.GetByID[models.Campaign](m.db, campaignID)
 	if err != nil {
 		respondInteraction(s, i, messages.CampaignApproveNotFound)
+		return
+	}
+
+	ctx := context.Background()
+	if _, err := m.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
+		Where("campaign_id = ?", campaignID).Exec(ctx); err != nil {
+		log.Printf("campaign_deny_modal: failed to delete campaign players for %s: %v", campaignID, err)
+		respondInteraction(s, i, messages.CampaignApproveError)
 		return
 	}
 

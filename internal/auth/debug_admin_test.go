@@ -49,7 +49,7 @@ func TestSyncRoles_DebugAdminElevated(t *testing.T) {
 	require.NoError(t, err)
 
 	withDebugAdmin(t, "debug1", func() {
-		err := syncRoles(database, nil)
+		err := syncRoles(database, nil, nil)
 		require.NoError(t, err)
 
 		var p models.Player
@@ -63,13 +63,14 @@ func TestSyncRoles_DebugAdminElevated(t *testing.T) {
 When:
 
 	SafeMode = OFF;
-	DebugAdminID = set.
+	DebugAdminID = set;
+	User does NOT have the Discord admin role.
 
 Expected:
 
-	Debug admin is elevated regardless of safe mode.
+	Elevation denied. In production, DEBUG_ADMIN_ID requires the Discord role as confirmation.
 */
-func TestSyncRoles_DebugAdminElevatedWhenSafeModeOff(t *testing.T) {
+func TestSyncRoles_DebugAdminDeniedWithoutDiscordRole(t *testing.T) {
 	database := testutil.NewTestDB(t)
 	ctx := context.Background()
 
@@ -85,13 +86,51 @@ func TestSyncRoles_DebugAdminElevatedWhenSafeModeOff(t *testing.T) {
 		guard.DebugAdminID = origID
 	})
 
-	err = syncRoles(database, nil)
+	// nil adminIDs = no Discord role confirmation
+	err = syncRoles(database, nil, nil)
 	require.NoError(t, err)
 
 	var p models.Player
 	err = database.NewSelect().Model(&p).Where("id = ?", "debug1").Scan(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, models.ServerRoleAdmin, p.Role, "debug admin should be elevated even when safe mode is off")
+	assert.Equal(t, models.ServerRolePlayer, p.Role, "debug admin must NOT be elevated without the Discord admin role when safe mode is off")
+}
+
+/*
+When:
+
+	SafeMode = OFF;
+	DebugAdminID = set;
+	User HAS the Discord admin role.
+
+Expected:
+
+	Elevated. Two-factor confirmed (env var + Discord role).
+*/
+func TestSyncRoles_DebugAdminElevatedWithDiscordRole(t *testing.T) {
+	database := testutil.NewTestDB(t)
+	ctx := context.Background()
+
+	_, err := database.NewInsert().Model(newPlayer("debug1", models.ServerRolePlayer, false)).Exec(ctx)
+	require.NoError(t, err)
+
+	origSafe := guard.SafeMode
+	origID := guard.DebugAdminID
+	guard.SafeMode = false
+	guard.DebugAdminID = "debug1"
+	t.Cleanup(func() {
+		guard.SafeMode = origSafe
+		guard.DebugAdminID = origID
+	})
+
+	// "debug1" is in the Discord admin set — two-factor confirmed
+	err = syncRoles(database, []string{"debug1"}, nil)
+	require.NoError(t, err)
+
+	var p models.Player
+	err = database.NewSelect().Model(&p).Where("id = ?", "debug1").Scan(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, models.ServerRoleAdmin, p.Role, "debug admin should be elevated when confirmed by Discord role")
 }
 
 /*
@@ -107,7 +146,7 @@ func TestSyncRoles_DebugAdminUnregisteredIsNoOp(t *testing.T) {
 	database := testutil.NewTestDB(t)
 
 	withDebugAdmin(t, "ghost", func() {
-		err := syncRoles(database, nil)
+		err := syncRoles(database, nil, nil)
 		require.NoError(t, err)
 	})
 }

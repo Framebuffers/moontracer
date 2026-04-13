@@ -32,6 +32,9 @@ func init() {
 	}
 	if DebugAdminID != "" {
 		log.Printf("guard: DEBUG_ADMIN_ID is set — user %s will be treated as admin", DebugAdminID)
+		if !SafeMode {
+			log.Println("guard: WARNING — DEBUG_ADMIN_ID is set with SAFE_MODE OFF; elevation requires the Discord admin role as confirmation")
+		}
 	}
 }
 

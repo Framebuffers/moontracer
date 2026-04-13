@@ -10,7 +10,7 @@ import (
 
 /*
 Flow:
- 1. Read required env vars: DISCORD_BOT_TOKEN, ADMIN_ROLE_NAME.
+ 1. Read required env vars: DISCORD_BOT_TOKEN, ADMIN_ROLE_NAME. Optional: MOD_ROLE_NAME.
  2. Read optional DISCORD_GUILD_ID (dev mode: register commands to single guild).
  3. Each guild gets its own SQLite DB in the "data" directory (bind-mounted via Docker).
  4. Create GuildDBManager (per-guild databases are created on demand).
@@ -36,6 +36,8 @@ func main() {
 		log.Fatal("ADMIN_ROLE_NAME is required")
 	}
 
+	modRole := os.Getenv("MOD_ROLE_NAME") // optional: if empty, mods are admin-assigned only
+
 	dbDir := "data"
 
 	if err := os.MkdirAll(dbDir, 0755); err != nil {
@@ -44,7 +46,7 @@ func main() {
 
 	guildDBM := db.NewGuildDBManager(dbDir)
 
-	bot, err := discord.New(token, guildID, adminRole, guildDBM)
+	bot, err := discord.New(token, guildID, adminRole, modRole, guildDBM)
 	if err != nil {
 		log.Fatalf("failed to create bot: %v", err)
 	}
