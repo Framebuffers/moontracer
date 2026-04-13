@@ -4,14 +4,18 @@ services:
     image: moontracer:latest
     container_name: moontracer
     restart: unless-stopped
-    secrets:
-      - discord_bot_token
-      - discord_guild_id
+      #secrets:
+        #- discord_bot_token
+        #- discord_guild_id
     environment:
-      DB_PATH: /app/data/moontracer.db
+      DB_PATH: ${DB_PATH}
       ADMIN_ROLE_NAME: ${ADMIN_ROLE_NAME}
-      VERBOSE: "true"
-      SAFE_MODE: "true"
+      VERBOSE: ${VERBOSE}
+      SAFE_MODE: ${SAFE_MODE}
+      DEBUG_ADMIN_ID: ${DEBUG_ADMIN_ID}
+      API_SECRET_KEY: ${API_SECRET_KEY}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      DISCORD_PUBLIC_KEY: ${DISCORD_PUBLIC_KEY}
     volumes:
       - /mnt/shared/suncaster/moontracer:/app/data
     networks:
@@ -21,9 +25,9 @@ networks:
   caddy_proxy:
     external: true
 
-secrets:
-  discord_bot_token:
-    file: /mnt/shared/suncaster/moontracer/secrets/discord_bot_token.txt
-  discord_guild_id:
-    file: /mnt/shared/suncaster/moontracer/secrets/discord_guild_id.txt
+      #secrets:
+      #discord_bot_token:
+      #file: /mnt/shared/suncaster/moontracer/secrets/discord_bot_token.txt
+      #  discord_guild_id:
+      #file: /mnt/shared/suncaster/moontracer/secrets/discord_guild_id.txt
 
