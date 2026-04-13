@@ -123,6 +123,12 @@ func (m *GuildDBManager) openAndMigrate(guildID string) (*bun.DB, error) {
 		return nil, fmt.Errorf("migrate guild DB %s: %w", guildID, err)
 	}
 
+	if n, err := ScrubOrphanedCampaignPlayers(bunDB); err != nil {
+		log.Printf("guild_db_manager: scrub warning for guild %s: %v", guildID, err)
+	} else if n > 0 {
+		log.Printf("guild_db_manager: scrubbed %d orphaned campaign_player rows for guild %s", n, guildID)
+	}
+
 	log.Printf("guild_db_manager: initialized DB for guild %s at %s", guildID, path)
 	return bunDB, nil
 }

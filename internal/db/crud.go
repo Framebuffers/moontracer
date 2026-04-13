@@ -78,3 +78,23 @@ func Insert[T any](db *bun.DB, model *T) error {
 	_, err := db.NewInsert().Model(model).Exec(ctx)
 	return err
 }
+
+/*
+ScrubOrphanedCampaignPlayers removes CampaignPlayer rows whose campaign
+no longer exists. This cleans up records left by older code that deleted
+campaigns without cascade-deleting their players.
+*/
+func ScrubOrphanedCampaignPlayers(db *bun.DB) (int64, error) {
+	ctx := context.Background()
+	res, err := db.NewDelete().
+		Model((*models.CampaignPlayer)(nil)).
+		Where("campaign_id NOT IN (?)",
+			db.NewSelect().Model((*models.Campaign)(nil)).Column("id"),
+		).
+		Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+	n, _ := res.RowsAffected()
+	return n, nil
+}
