@@ -55,6 +55,11 @@ func (m *meCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 						CustomID: messages.BackMyCampaignsID,
 					},
 					discordgo.Button{
+						Label:    messages.NewCampaignLabel,
+						Style:    discordgo.PrimaryButton,
+						CustomID: messages.ManageNewCampaignPrefix,
+					},
+					discordgo.Button{
 						Label:    messages.NextSessionsLabel,
 						Style:    discordgo.SecondaryButton,
 						CustomID: messages.NextSessionsPrefix,
@@ -84,6 +89,11 @@ func RenderMeHub(s *discordgo.Session, i *discordgo.InteractionCreate, userID st
 						Label:    messages.MyCampaignsLabel,
 						Style:    discordgo.PrimaryButton,
 						CustomID: messages.BackMyCampaignsID,
+					},
+					discordgo.Button{
+						Label:    messages.NewCampaignLabel,
+						Style:    discordgo.PrimaryButton,
+						CustomID: messages.ManageNewCampaignPrefix,
 					},
 					discordgo.Button{
 						Label:    messages.NextSessionsLabel,
