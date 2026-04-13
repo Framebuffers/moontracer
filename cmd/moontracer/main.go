@@ -10,9 +10,9 @@ import (
 
 /*
 Flow:
- 1. Read required env vars: DISCORD_TOKEN, ADMIN_ROLE_NAME.
+ 1. Read required env vars: DISCORD_BOT_TOKEN, ADMIN_ROLE_NAME.
  2. Read optional DISCORD_GUILD_ID (dev mode: register commands to single guild).
- 3. Read optional DB_DIR (defaults to "data"). Each guild gets its own SQLite DB in this directory.
+ 3. Each guild gets its own SQLite DB in the "data" directory (bind-mounted via Docker).
  4. Create GuildDBManager (per-guild databases are created on demand).
  5. Create Discord bot with token, guild ID, admin role name, and GuildDBManager.
  6. Start the bot — open gateway, discover guilds, init DBs, register commands, listen for interactions.
@@ -24,9 +24,9 @@ func main() {
 		log.Println("verbose mode enabled")
 	}
 
-	token := os.Getenv("DISCORD_TOKEN")
+	token := os.Getenv("DISCORD_BOT_TOKEN")
 	if token == "" {
-		log.Fatal("DISCORD_TOKEN is required")
+		log.Fatal("DISCORD_BOT_TOKEN is required")
 	}
 
 	guildID := os.Getenv("DISCORD_GUILD_ID") // optional: if set, commands register to that guild only (instant); if empty, commands register globally (up to 1h propagation)
@@ -36,10 +36,7 @@ func main() {
 		log.Fatal("ADMIN_ROLE_NAME is required")
 	}
 
-	dbDir := os.Getenv("DB_DIR")
-	if dbDir == "" {
-		dbDir = "data"
-	}
+	dbDir := "data"
 
 	if err := os.MkdirAll(dbDir, 0755); err != nil {
 		log.Fatalf("failed to create DB directory %s: %v", dbDir, err)
