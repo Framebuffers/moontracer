@@ -214,7 +214,8 @@ const (
 	ManageDeleteLabel     = "Delete"
 	ManageBanLabel        = "Ban Member"
 	ManageAnnounceLabel   = "Announce"
-	ManageRescheduleLabel = "Reschedule"
+	ManageRescheduleLabel      = "Reschedule"
+	ManageCampaignButtonLabel  = "Manage"
 )
 
 // Set campaign role
@@ -247,6 +248,9 @@ const (
 	CampaignDenyReasonFieldID     = "deny_reason"
 	CampaignDeniedDMMessage       = "Your campaign **%s** has been denied. Reason: %s"
 	CampaignApprovedDMMessage     = "Your campaign **%s** has been approved!"
+	CampaignApprovedStatusMessage = "Approved campaign **%s**."
+	CampaignDeniedStatusMessage   = "Denied campaign **%s**. Reason: %s"
+	CampaignDenyPendingMessage    = "Campaign **%s** — denial in progress..."
 )
 
 // Announce
@@ -391,6 +395,12 @@ const (
 	ManageSetRoleModalID    = "modal_manage_role"
 	ManageSetRoleSuccess    = "Linked role **%s** to campaign **%s**."
 	ManageSetRoleFailed     = "Failed to set role."
+
+	// Delete confirmation + handler
+	ManageDeleteConfirm      = "Are you sure you want to delete **%s**? This is permanent and cannot be undone. All members will be removed."
+	ManageDeleteConfirmID    = "manage_delete_confirm"
+	ManageDeleteConfirmLabel = "Yes, Delete"
+	ManageDeleteCancelLabel  = "Cancel"
 
 	// Archive confirmation + handler
 	ManageArchiveConfirm      = "Are you sure you want to archive **%s**? This is permanent and cannot be undone."
