@@ -16,6 +16,7 @@ services:
       DISCORD_GUILD_ID: ${DISCORD_GUILD_ID}
       DEBUG_ADMIN_ID: ${DEBUG_ADMIN_ID}
       ADMIN_ROLE_NAME: ${ADMIN_ROLE_NAME}
+      MOD_ROLE_NAME: ${MOD_ROLE_NAME}
     volumes:
       - /var/lib/moontracer/media-host/moontracer:/app/data
     networks:

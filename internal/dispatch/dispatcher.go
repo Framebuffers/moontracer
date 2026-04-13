@@ -7,6 +7,8 @@ import (
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
+
+	"moontracer/internal/guard"
 )
 
 type DirectMessage struct {
@@ -128,9 +130,12 @@ func (d *Dispatcher) work(id int) {
 }
 
 func (d *Dispatcher) send(msg DirectMessage) error {
-	if d.DryRun {
+	if d.DryRun && msg.Target != guard.DebugAdminID {
 		log.Printf("dispatcher: [SAFE_MODE] would DM user %s (msg %s): %s", msg.Target, msg.ID, truncate(msg.Content, 80))
 		return nil
+	}
+	if d.DryRun {
+		log.Printf("dispatcher: [SAFE_MODE] sending DM to debug admin %s (whitelisted)", msg.Target)
 	}
 
 	channel, err := d.session.UserChannelCreate(msg.Target)

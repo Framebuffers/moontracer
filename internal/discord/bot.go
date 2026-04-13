@@ -24,18 +24,19 @@ type Bot struct {
 	session    *discordgo.Session
 	guildID    string
 	guildDBM   *db.GuildDBManager
-	role       string
+	adminRole  string
+	modRole    string
 	registered []*discordgo.ApplicationCommand
 	dispatcher *dispatch.Dispatcher
 }
 
-// New creates a Bot with the given token, guild ID, admin role name, and guild DB manager.
-func New(token, guildID, adminRole string, guildDBM *db.GuildDBManager) (*Bot, error) {
+// New creates a Bot with the given token, guild ID, role names, and guild DB manager.
+func New(token, guildID, adminRole, modRole string, guildDBM *db.GuildDBManager) (*Bot, error) {
 	s, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{session: s, guildID: guildID, guildDBM: guildDBM, role: adminRole}, nil
+	return &Bot{session: s, guildID: guildID, guildDBM: guildDBM, adminRole: adminRole, modRole: modRole}, nil
 }
 
 /*
@@ -62,7 +63,7 @@ func (b *Bot) Run() error {
 		discordgo.IntentsGuildMessages |
 		discordgo.IntentsDirectMessages
 
-	b.session.AddHandler(NewHandler(b.guildDBM, b.dispatcher, b.role))
+	b.session.AddHandler(NewHandler(b.guildDBM, b.dispatcher, b.adminRole))
 
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
 		guildDB, err := b.guildDBM.GetOrCreate(e.GuildID)
@@ -70,7 +71,7 @@ func (b *Bot) Run() error {
 			log.Printf("bot: warning: could not get DB for guild %s on member update: %v", e.GuildID, err)
 			return
 		}
-		if err := auth.SyncServerRoles(guildDB, s, e.GuildID, b.role); err != nil {
+		if err := auth.SyncServerRoles(guildDB, s, e.GuildID, b.adminRole, b.modRole); err != nil {
 			log.Printf("bot: warning: role sync on member update failed for guild %s: %v", e.GuildID, err)
 		}
 	})
@@ -87,7 +88,7 @@ func (b *Bot) Run() error {
 		if err := commands.RegisterCommands(guildDB, nil); err != nil {
 			log.Printf("bot: failed to register commands in DB for guild %s: %v", e.Guild.ID, err)
 		}
-		if err := auth.SyncServerRoles(guildDB, s, e.Guild.ID, b.role); err != nil {
+		if err := auth.SyncServerRoles(guildDB, s, e.Guild.ID, b.adminRole, b.modRole); err != nil {
 			log.Printf("bot: failed to sync roles for guild %s: %v", e.Guild.ID, err)
 		}
 		log.Printf("bot: initialized guild %s (%s)", e.Guild.Name, e.Guild.ID)
@@ -125,7 +126,7 @@ func (b *Bot) Run() error {
 			if err := commands.RegisterCommands(guildDB, nil); err != nil {
 				log.Printf("bot: failed to register commands in DB for guild %s: %v", guild.ID, err)
 			}
-			if err := auth.SyncServerRoles(guildDB, b.session, guild.ID, b.role); err != nil {
+			if err := auth.SyncServerRoles(guildDB, b.session, guild.ID, b.adminRole, b.modRole); err != nil {
 				log.Printf("bot: role sync failed for guild %s: %v", guild.ID, err)
 			}
 		}(g)

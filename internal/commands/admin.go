@@ -258,6 +258,10 @@ func getConfigDiag() string {
 	if adminRole == "" {
 		adminRole = "(not set)"
 	}
+	modRole := os.Getenv("MOD_ROLE_NAME")
+	if modRole == "" {
+		modRole = "(not set)"
+	}
 	dbDir := "data"
 	verbose := os.Getenv("VERBOSE")
 	if verbose == "" {
@@ -268,11 +272,13 @@ func getConfigDiag() string {
 - Safe mode: **%t**
 - Debug admin ID: %s
 - Admin role name: %s
+- Mod role name: %s
 - DB path: %s
 - Verbose: %s`,
 		guard.SafeMode,
 		debugAdmin,
 		adminRole,
+		modRole,
 		dbDir,
 		verbose)
 }
