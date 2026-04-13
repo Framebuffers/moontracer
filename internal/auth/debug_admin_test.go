@@ -67,9 +67,9 @@ When:
 
 Expected:
 
-	Should have no effect. Elevation only works under SafeMode.
+	Debug admin is elevated regardless of safe mode.
 */
-func TestSyncRoles_DebugAdminIgnoredWhenSafeModeOff(t *testing.T) {
+func TestSyncRoles_DebugAdminElevatedWhenSafeModeOff(t *testing.T) {
 	database := testutil.NewTestDB(t)
 	ctx := context.Background()
 
@@ -91,7 +91,7 @@ func TestSyncRoles_DebugAdminIgnoredWhenSafeModeOff(t *testing.T) {
 	var p models.Player
 	err = database.NewSelect().Model(&p).Where("id = ?", "debug1").Scan(ctx)
 	require.NoError(t, err)
-	assert.Equal(t, models.ServerRolePlayer, p.Role, "debug admin must NOT be elevated when safe mode is off")
+	assert.Equal(t, models.ServerRoleAdmin, p.Role, "debug admin should be elevated even when safe mode is off")
 }
 
 /*

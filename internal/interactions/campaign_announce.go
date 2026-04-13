@@ -12,6 +12,7 @@ import (
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
+	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -127,10 +128,19 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 		return
 	}
 
+	/*
+		When DEBUG_ADMIN_ID matches the sender, include them in the recipient list
+		so a solo tester can verify announcement DMs.
+	*/
+	skipSelf := guard.DebugAdminID == "" || guard.DebugAdminID != userID
+
 	msgID := uuid.NewString()
 	sent := 0
 	for _, p := range players {
-		if p.Status != models.StatusActive || p.PlayerID == userID {
+		if p.Status != models.StatusActive {
+			continue
+		}
+		if p.PlayerID == userID && skipSelf {
 			continue
 		}
 		h.dispatcher.Push(dispatch.DirectMessage{

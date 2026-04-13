@@ -48,7 +48,7 @@ so it can be tested without a live session.
 
 Note:
 
-	When in Safe Mode, elevate the debug admin through the normal role path.
+	When DEBUG_ADMIN_ID is set, elevate the debug admin through the normal role path.
 	Preserve DB-only mod assignments. Don't demote Mods to Player
 */
 func syncRoles(database *bun.DB, adminIDs []string) error {
@@ -59,10 +59,10 @@ func syncRoles(database *bun.DB, adminIDs []string) error {
 		adminSet[id] = true
 	}
 
-	if guard.SafeMode && guard.DebugAdminID != "" {
+	if guard.DebugAdminID != "" {
 		if !adminSet[guard.DebugAdminID] {
 			adminSet[guard.DebugAdminID] = true
-			log.Printf("sync: debug admin %s injected into admin set (safe mode)", guard.DebugAdminID)
+			log.Printf("sync: debug admin %s injected into admin set", guard.DebugAdminID)
 		}
 	}
 
