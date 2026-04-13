@@ -83,6 +83,10 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 func CampaignButtons(callerID string, c models.Campaign, players []models.CampaignPlayer) []discordgo.MessageComponent {
 	var buttons []discordgo.MessageComponent
 
+	if c.IsArchived {
+		return buttons
+	}
+
 	if c.DungeonMaster == callerID {
 		buttons = append(buttons, discordgo.Button{
 			Label:    messages.ManageCampaignButtonLabel,
