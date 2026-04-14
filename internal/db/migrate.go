@@ -21,6 +21,7 @@ func Migrate(db *bun.DB) error {
 		(*models.Campaign)(nil),
 		(*models.CampaignPlayer)(nil),
 		(*models.AuditEntry)(nil),
+		(*models.PlayerSettings)(nil),
 	}
 
 	for _, model := range tables {
