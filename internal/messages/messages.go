@@ -474,6 +474,18 @@ const (
 	NotificationsPrefix  = "notifications"
 	NotificationsHeader  = "Notification settings:"
 	NotificationsNone    = "No notification preferences configured yet."
+
+	NotifTogglePrefix           = "notif_toggle"
+	NotifFieldAnnouncements     = "announcements"
+	NotifFieldSessions          = "sessions"
+	NotifFieldInvitations       = "invitations"
+	NotifLabelAnnouncements     = "Announcements"
+	NotifLabelSessions          = "Session Reminders"
+	NotifLabelInvitations       = "Invitations"
+	NotifLoadFailed             = "Failed to load notification settings."
+	NotifUpdateFailed           = "Failed to update notification settings."
+	NotifEnabledSuffix          = "%s: ON"
+	NotifDisabledSuffix         = "%s: OFF"
 )
 
 // Admin hub: Campaign browser (all campaigns)

@@ -54,6 +54,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		// Player hub
 		&nextSessionsHandler{db: db},
 		&notificationsHandler{db: db},
+		&notifToggleHandler{db: db},
 
 		// Admin hub
 		&adminCampaignsHandler{db: db},
