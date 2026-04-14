@@ -46,6 +46,11 @@ type Campaign struct {
 	// Empty string means no role has been linked yet.
 	RoleID string `bun:",default:''" json:"role_id"`
 
+	// Discord channel/thread IDs created on approval.
+	ChannelID             string `bun:",default:''" json:"channel_id"`
+	CategoryID            string `bun:",default:''" json:"category_id"`
+	AnnouncementsThreadID string `bun:",default:''" json:"announcements_thread_id"`
+
 	// Has this campaign been approved to be published?
 	IsApproved bool `bun:",notnull,default:false"`
 

@@ -123,6 +123,11 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageSetRolePrefix, campaignID),
 						},
 						discordgo.Button{
+							Label:    messages.ManageInviteLabel,
+							Style:    discordgo.SecondaryButton,
+							CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
+						},
+						discordgo.Button{
 							Label:    messages.ManageArchiveLabel,
 							Style:    discordgo.DangerButton,
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),

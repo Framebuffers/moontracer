@@ -58,6 +58,9 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE campaigns ADD COLUMN is_archived INTEGER NOT NULL DEFAULT 0",
 		"ALTER TABLE campaigns ADD COLUMN archived_at TIMESTAMP",
 		"ALTER TABLE campaigns ADD COLUMN archived_reason TEXT",
+		"ALTER TABLE campaigns ADD COLUMN channel_id TEXT DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN category_id TEXT DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN announcements_thread_id TEXT DEFAULT ''",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {

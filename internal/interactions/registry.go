@@ -65,6 +65,12 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		// Manage: edit + new campaign from button
 		&manageEditHandler{db: db},
 		&manageNewCampaignButton{db: db},
+
+		// Invitations
+		&manageCampaignInvite{db: db, dispatcher: d},
+		&manageCampaignInviteSelect{db: db, dispatcher: d},
+		&campaignInviteAccept{db: db},
+		&campaignInviteDecline{db: db},
 	}
 }
 

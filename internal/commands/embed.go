@@ -63,6 +63,9 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 	if c.Game.VTT != "" {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "VTT", Value: c.Game.VTT, Inline: true})
 	}
+	if c.ChannelID != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{Name: "Channel", Value: fmt.Sprintf("<#%s>", c.ChannelID), Inline: true})
+	}
 
 	fields = append(fields,
 		&discordgo.MessageEmbedField{Name: "Books", Value: books, Inline: false},
