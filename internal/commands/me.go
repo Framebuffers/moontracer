@@ -14,13 +14,41 @@ import (
 )
 
 /*
-	Flow:
+	/me is the player hub. The landing page every other player-facing view
+	backs out to. Button layout is composed from the invoker's scope so users
+	only see affordances they can actually use.
+
+	Flow (slash command):
 		1. User runs `/me`.
-		2. Authorize: check if registered.
-		3. Show player hub with scope-composed action buttons:
-		   - Always: My Campaigns, New Campaign, Browse, Next Sessions, Notifications.
-		   - If DM of any campaign: + Manage Campaigns.
-		   - If Mod/Admin: + Admin Panel.
+		2. Authorize ScopePlayer (is the user registered?). Unregistered ->
+		   NotRegisteredMessage and abort.
+		3. Call buildMeHubComponents(db, userID) to produce a scope-aware
+		   []MessageComponent.
+		4. Respond with InteractionResponseChannelMessageWithSource
+		   (fresh ephemeral message).
+
+	Flow (back navigation → RenderMeHub):
+		1. User clicks "Back" on any child view that pointed at ViewMe.
+		2. navHandler -> router.Navigate -> the ViewMe adapter in views.go.
+		3. Adapter calls RenderMeHub(s, i, db, userID).
+		4. RenderMeHub re-runs buildMeHubComponents and responds with
+		   InteractionResponseUpdateMessage (replaces the current view
+		   in place, no new ephemeral).
+
+	Flow (buildMeHubComponents scope composition):
+		1. Start with a fixed row1: My Campaigns, New Campaign, Browse,
+		   Next Sessions, Notifications. These are available to every
+		   registered player.
+		2. Probe isDMOfAnyCampaign(db, userID): loads the user's
+		   CampaignPlayer rows and checks for any Role == DM. If true,
+		   append a "Manage Campaigns" button to row2.
+		3. Probe auth.Authorize(ScopeMod). If true, append an "Admin Panel"
+		   button to row2. ScopeAdmin is a superset of ScopeMod so this
+		   check covers both.
+		4. On probe failure (DB error), the button is silently omitted
+		   rather than blocking the whole hub — /me must always render
+		   something for a registered user.
+		5. Return [row1] if row2 is empty, else [row1, row2].
 */
 
 type meCommand struct {

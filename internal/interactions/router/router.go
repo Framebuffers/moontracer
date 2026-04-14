@@ -3,23 +3,34 @@ package router
 /*
 	View router.
 
-	Every navigable screen in the bot is identified by a ViewID. Buttons that navigate
-	to a view use the CustomID format:
+	Every navigable screen in the bot is identified by a ViewID. Buttons that
+	navigate to a view use the CustomID format:
 
 		nav:<view>[:arg1[:arg2…]]
 
-	A single navHandler (under the "nav:" prefix) receives the click, parses out the
-	ViewID and positional args, and dispatches to the RenderFunc that was registered
-	at startup.
+	Flow (click-to-render):
+		1. User clicks a button whose CustomID starts with "nav:".
+		2. discordgo's prefix dispatcher routes the interaction to navHandler
+		   (registered once in registry.go, defined in nav_handler.go).
+		3. navHandler calls router.ParseCustomID -> (ViewID, args, ok).
+		4. router.Navigate looks up the ViewID in the registry map and invokes
+		   the registered RenderFunc with (session, interaction, args).
+		5. The RenderFunc (defined in interactions/views.go as a thin adapter)
+		   calls the real render function: e.g. commands.RenderMeHub; which
+		   issues an InteractionResponseUpdateMessage to replace the current
+		   ephemeral message with the new view.
 
-	Design: back-only. The "parent view" is encoded into each Back button's CustomID
-	at render time, so navigation is stateless and survives bot restarts. There is no
-	forward button and no in-memory stack — if a user wants to go forward, they click
-	the target button again.
+	Flow (startup registration):
+		1. main() builds ComponentHandlers via interactions.AllComponents.
+		2. AllComponents calls RegisterAllViews(db) before returning.
+		3. RegisterAllViews performs a router.Register(ViewID, RenderFunc)
+		   call per view, populating the registry map used above.
 
-	Views are registered from `interactions.RegisterAllViews`, which runs once at
-	startup and wires package-local render functions (e.g. `commands.RenderMeHub`,
-	`interactions.RenderManageCampaignMenu`) under their ViewID.
+	Design:
+		Back-only. The "parent view" is encoded into each Back button's
+		CustomID at render time, so navigation is stateless and survives bot
+		restarts. There is no forward button and no in-memory stack: if a user
+		wants to go forward, they click the target button again.
 */
 
 import (

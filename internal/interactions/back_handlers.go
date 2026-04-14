@@ -1,16 +1,36 @@
 package interactions
 
 /*
-	Render functions for the list-style views ("My Campaigns" and "Manage Campaigns").
+	Render functions for the list-style player views.
 
-	Note:
-		Previously this file held one ComponentHandler per "back_*" CustomID. Those have
-		been replaced by the view router (see router/ and nav_handler.go). The rendering
-		bodies live here as package-level functions, registered with the router in views.go.
+	RenderMyCampaignsList and RenderManageList are registered with the router
+	(see views.go) under ViewMyCampaigns and ViewManage respectively. They are
+	invoked both as forward links from /me and as "Back" targets from child
+	views that came from one of these lists.
 
-	Also exports `getUserID`, a small helper used across the interactions package to
-	pull the invoking user's ID out of either the Member (guild context) or User (DM)
-	field on an InteractionCreate.
+	Flow (RenderMyCampaignsList):
+		1. Load CampaignPlayer rows for the invoking user (all roles).
+		2. On load failure -> ephemeral error and abort.
+		3. Empty result -> empty-state message with only a Back to /me button.
+		4. Otherwise build a string select of the user's approved campaigns
+		   plus a textual list header, and render via respondUpdate
+		   (replaces the current ephemeral message in place).
+
+	Flow (RenderManageList):
+		1. Load CampaignPlayer rows for the user.
+		2. Filter down to entries where Role == DM.
+		3. Empty filtered set → empty-state message with Back only.
+		4. Otherwise render a manage select plus a Back + "New Campaign"
+		   button row.
+
+	Also exports getUserID, a small helper used across the interactions
+	package to pull the invoking user's ID out of either the Member (guild
+	context) or User (DM) field on an InteractionCreate.
+
+	Historical note:
+		Previously this file held one ComponentHandler per
+		"back_*" CustomID. Those have been replaced by the view router; the
+		rendering bodies live here as package-level functions.
 */
 
 import (
