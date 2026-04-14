@@ -264,6 +264,7 @@ const (
 	AnnounceSentMessage      = "Announcement sent to %d members of **%s**."
 	AnnounceNoMembers        = "This campaign has no members to announce to."
 	AnnounceError            = "Failed to send announcement."
+	AnnouncePostedToThread   = "Announcement posted to the **%s** announcements thread."
 )
 
 // Reschedule
@@ -518,4 +519,19 @@ const (
 // Manage campaign: New Campaign from button (modal-from-component)
 const (
 	ManageNewCampaignPrefix = "manage_newcampaign"
+)
+
+// Manage campaign: Invite Player
+const (
+	ManageInviteLabel        = "Invite Player"
+	ManageInvitePrefix       = "manage_invite"
+	ManageInviteSelectPrefix = "manage_invite_select"
+	InviteAcceptPrefix       = "campaign_invite_accept"
+	InviteDeclinePrefix      = "campaign_invite_decline"
+	InviteSentMessage        = "Invitation sent to <@%s> for **%s**."
+	InviteDMMessage          = "You've been invited to join **%s** by <@%s>!"
+	InviteAcceptedDMUpdate   = "You accepted the invitation to **%s**."
+	InviteDeclinedDMUpdate   = "You declined the invitation to **%s**."
+	InviteAlreadyProcessed   = "This invitation has already been processed."
+	InviteCampaignFull       = "Cannot invite — campaign **%s** is full."
 )

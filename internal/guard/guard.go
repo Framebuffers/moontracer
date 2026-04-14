@@ -68,3 +68,30 @@ func GuildMemberRoleRemove(s *discordgo.Session, guildID, userID, roleID string)
 	}
 	return s.GuildMemberRoleRemove(guildID, userID, roleID)
 }
+
+// GuildChannelCreateComplex creates a guild channel, or logs and returns a fake channel in safe mode.
+func GuildChannelCreateComplex(s *discordgo.Session, guildID string, data discordgo.GuildChannelCreateData) (*discordgo.Channel, error) {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would create channel %q (type %d) in guild %s", data.Name, data.Type, guildID)
+		return &discordgo.Channel{ID: "safe-mode-channel", Name: data.Name, Type: data.Type, ParentID: data.ParentID}, nil
+	}
+	return s.GuildChannelCreateComplex(guildID, data)
+}
+
+// ChannelDelete deletes a channel, or logs in safe mode.
+func ChannelDelete(s *discordgo.Session, channelID string) (*discordgo.Channel, error) {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would delete channel %s", channelID)
+		return &discordgo.Channel{ID: channelID}, nil
+	}
+	return s.ChannelDelete(channelID)
+}
+
+// ThreadStart starts a new thread on a channel (no parent message), or logs in safe mode.
+func ThreadStart(s *discordgo.Session, channelID, name string, archiveDuration int) (*discordgo.Channel, error) {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would start thread %q in channel %s", name, channelID)
+		return &discordgo.Channel{ID: "safe-mode-thread-" + name, Name: name}, nil
+	}
+	return s.ThreadStart(channelID, name, discordgo.ChannelTypeGuildPublicThread, archiveDuration)
+}

@@ -90,6 +90,13 @@ func (h *manageCampaignAnnounceModal) CustomIDPrefix() string {
 	return messages.AnnounceModalPrefix
 }
 
+/*
+HandleModal processes and handles information to be presented inside the modal screen.
+
+Note:
+
+	The modal follows a Thread-first path. If there's one, post announcements on that thread.
+*/
 func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 2)
 	if len(parts) < 2 {
@@ -118,6 +125,17 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err != nil {
 		respondInteraction(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	if campaign.AnnouncementsThreadID != "" {
+		content := fmt.Sprintf("**Announcement from <@%s>:**\n\n%s", userID, message)
+		if _, err := s.ChannelMessageSend(campaign.AnnouncementsThreadID, content); err != nil {
+			log.Printf("campaign_announce: failed to post to thread %s: %v", campaign.AnnouncementsThreadID, err)
+			respondInteraction(s, i, messages.AnnounceError)
+			return
+		}
+		respondInteraction(s, i, fmt.Sprintf(messages.AnnouncePostedToThread, campaign.Name))
 		return
 	}
 
