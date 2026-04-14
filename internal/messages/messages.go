@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v1.0-beta"
+	BotVersion               = "v0.5.1"
 )
 
 // Command names and descriptions
@@ -365,12 +365,7 @@ const (
 
 // Navigation buttons
 const (
-	BackLabel         = "Back"
-	BackMeID          = "back_me"
-	BackCampaignsID   = "back_campaigns"
-	BackMyCampaignsID = "back_mycampaigns"
-	BackManageID      = "back_manage"
-	BackAdminID       = "back_admin"
+	BackLabel = "Back"
 )
 
 // Hub button labels
@@ -381,6 +376,7 @@ const (
 	BrowseCampaignsLabel = "Browse Campaigns"
 	MyProfileLabel       = "My Profile"
 	NewCampaignLabel     = "New Campaign"
+	AdminPanelLabel      = "Admin Panel"
 )
 
 // Manage campaign: additional buttons

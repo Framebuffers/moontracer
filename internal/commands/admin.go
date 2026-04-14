@@ -8,11 +8,14 @@ package commands
 */
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
 	"runtime"
 	"runtime/debug"
+	"strconv"
+	"text/tabwriter"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
@@ -20,8 +23,27 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/guard"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/messages"
 )
+
+/*
+kvTable renders a titled key/value table.
+
+The title is Markdown (rendered by Discord's TextDisplay),
+the rows are inside a code fence so tabwriter's alignment lands on monospace glyphs.
+*/
+func kvTable(title string, rows [][2]string) string {
+	var buf bytes.Buffer
+	buf.WriteString("# " + title + "\n```\n")
+	tw := tabwriter.NewWriter(&buf, 0, 0, 2, ' ', 0)
+	for _, r := range rows {
+		fmt.Fprintf(tw, "%s\t%s\n", r[0], r[1])
+	}
+	tw.Flush()
+	buf.WriteString("```")
+	return buf.String()
+}
 
 /*
 startedAt captures an approximation of process start time.
@@ -83,7 +105,7 @@ func adminHubData() *discordgo.InteractionResponseData {
 				discordgo.Button{
 					Label:    messages.ManageCampaignsCommandDesc,
 					Style:    discordgo.PrimaryButton,
-					CustomID: messages.BackManageID,
+					CustomID: router.NavCustomID(router.ViewManage),
 				},
 				discordgo.Button{
 					Label:    messages.AdminCampaignsLabel,
@@ -145,7 +167,7 @@ func adminDiagData(s *discordgo.Session) *discordgo.InteractionResponseData {
 				discordgo.Button{
 					Label:    messages.BackLabel,
 					Style:    discordgo.SecondaryButton,
-					CustomID: messages.BackAdminID,
+					CustomID: router.NavCustomID(router.ViewAdmin),
 				},
 			}},
 		},
@@ -181,29 +203,21 @@ func getGoDiag() string {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
-	uptime := time.Since(startedAt).Round(time.Second)
+	uptime := time.Since(startedAt).Round(time.Second).String()
 
-	return fmt.Sprintf(`# Runtime Information
-**Moontracer**
-- Build: %s
-- Commit: %s
-- Built: %s
-- Uptime: %s
-
-## Host
-- Hostname: %s
-- PID: %d
-
-## Runtime
-- Go: %s
-- OS/Arch: %s/%s
-- CPUs: %d
-- Goroutines: %d
-- Heap alloc: %d KiB`,
-		version, commit, buildTime, uptime,
-		hostname, os.Getpid(),
-		runtime.Version(), runtime.GOOS, runtime.GOARCH, runtime.NumCPU(), runtime.NumGoroutine(),
-		mem.HeapAlloc/1024)
+	return kvTable("Runtime", [][2]string{
+		{"Build", version},
+		{"Commit", commit},
+		{"Built", buildTime},
+		{"Uptime", uptime},
+		{"Host", hostname},
+		{"PID", strconv.Itoa(os.Getpid())},
+		{"Go", runtime.Version()},
+		{"OS/Arch", runtime.GOOS + "/" + runtime.GOARCH},
+		{"CPUs", strconv.Itoa(runtime.NumCPU())},
+		{"Goroutines", strconv.Itoa(runtime.NumGoroutine())},
+		{"Heap", fmt.Sprintf("%d KiB", mem.HeapAlloc/1024)},
+	})
 }
 
 func getDiscordgoSessionDiag(s *discordgo.Session) string {
@@ -230,22 +244,14 @@ func getDiscordgoSessionDiag(s *discordgo.Session) string {
 		gatewayVersion = s.State.Version
 	}
 
-	return fmt.Sprintf(`# Session Information
-discordgo v%s
-
-## Discordgo Info
-- Bot: %s (…%s)
-- Gateway latency: **%s**
-- Gateway protocol: v%d
-- Guilds: %d
-- Session ID: …%s
-`,
-		discordgo.VERSION,
-		userName, userTail,
-		s.HeartbeatLatency(),
-		gatewayVersion,
-		guildCount,
-		sidTail)
+	return kvTable("Session", [][2]string{
+		{"discordgo", "v" + discordgo.VERSION},
+		{"Bot", fmt.Sprintf("%s (…%s)", userName, userTail)},
+		{"Latency", s.HeartbeatLatency().String()},
+		{"Gateway", fmt.Sprintf("v%d", gatewayVersion)},
+		{"Guilds", strconv.Itoa(guildCount)},
+		{"Session ID", "…" + sidTail},
+	})
 }
 
 func getConfigDiag() string {
@@ -268,17 +274,12 @@ func getConfigDiag() string {
 		verbose = "false"
 	}
 
-	return fmt.Sprintf(`# Configuration
-- Safe mode: **%t**
-- Debug admin ID: %s
-- Admin role name: %s
-- Mod role name: %s
-- DB path: %s
-- Verbose: %s`,
-		guard.SafeMode,
-		debugAdmin,
-		adminRole,
-		modRole,
-		dbDir,
-		verbose)
+	return kvTable("Configuration", [][2]string{
+		{"Safe mode", strconv.FormatBool(guard.SafeMode)},
+		{"Debug admin", debugAdmin},
+		{"Admin role", adminRole},
+		{"Mod role", modRole},
+		{"DB path", dbDir},
+		{"Verbose", verbose},
+	})
 }

@@ -12,6 +12,7 @@ import (
 
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -252,7 +253,7 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 
 	respondUpdate(s, i, fmt.Sprintf(messages.NewCampaignSubmittedMessage, c.Name), nil, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			backButton(messages.BackLabel, messages.BackMeID),
+			router.BackButton(messages.BackLabel, router.ViewMe),
 		}},
 	})
 }

@@ -4,18 +4,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// backButton creates a standard back button component.
-func backButton(label, customID string) discordgo.Button {
-	return discordgo.Button{
-		Label:    label,
-		Style:    discordgo.SecondaryButton,
-		CustomID: customID,
-		Emoji: &discordgo.ComponentEmoji{
-			Name: "◀",
-		},
-	}
-}
-
 /*
 respondUpdate replaces the current message instead of sending a new one.
 

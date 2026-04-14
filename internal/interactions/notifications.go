@@ -27,6 +27,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -105,7 +106,7 @@ func renderNotificationsPanel(s *discordgo.Session, i *discordgo.InteractionCrea
 		notifToggleButton(messages.NotifFieldInvitations, messages.NotifLabelInvitations, settings.NotifyInvitations),
 	}}
 	backRow := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		backButton(messages.BackLabel, messages.BackMeID),
+		router.BackButton(messages.BackLabel, router.ViewMe),
 	}}
 
 	respondUpdate(s, i, messages.NotificationsHeader, nil, []discordgo.MessageComponent{row, backRow})

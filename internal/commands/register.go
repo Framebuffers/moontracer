@@ -6,6 +6,7 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 
@@ -65,12 +66,12 @@ func (r *registerCommand) Execute(s *discordgo.Session, i *discordgo.Interaction
 					discordgo.Button{
 						Label:    messages.BrowseCampaignsLabel,
 						Style:    discordgo.PrimaryButton,
-						CustomID: messages.BackCampaignsID,
+						CustomID: router.NavCustomID(router.ViewCampaignsBrowse, "all"),
 					},
 					discordgo.Button{
 						Label:    messages.MyProfileLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: messages.BackMeID,
+						CustomID: router.NavCustomID(router.ViewMe),
 					},
 				}},
 			},

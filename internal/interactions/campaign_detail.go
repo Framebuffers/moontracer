@@ -8,6 +8,7 @@ import (
 
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -47,7 +48,7 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	}
 
 	components = append(components, discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		backButton(messages.BackLabel, messages.BackCampaignsID),
+		router.BackButton(messages.BackLabel, router.ViewCampaignsBrowse, "all"),
 	}})
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
