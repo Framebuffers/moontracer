@@ -3,9 +3,23 @@ package interactions
 /*
 	View registration.
 
-	RegisterAllViews is called once at startup (from registry.go) and wires every
-	ViewID in the router to its render function. Adapters normalize render signatures
-	into the router's RenderFunc shape (s, i, args).
+	This file is the single place where ViewIDs are bound to render functions.
+	The actual rendering bodies live next to the feature they render
+	(commands.RenderMeHub, interactions.RenderManageCampaignMenu, etc.):
+	RegisterAllViews only glues them to the router.
+
+	Flow (startup):
+		1. main() calls interactions.AllComponents(db, dispatcher).
+		2. AllComponents calls RegisterAllViews(db) as its first statement,
+		   before returning the ComponentHandler list.
+		3. For each ViewID, RegisterAllViews calls router.Register with an
+		   adapter closure of shape RenderFunc — func(s, i, args).
+		4. The adapter unpacks `args` (e.g. args[0] as a campaignID) and
+		   forwards to the underlying render function with its natural
+		   signature. This keeps render functions free of the router's
+		   positional-args convention.
+		5. Once this completes, router.Navigate can resolve any registered
+		   ViewID for the lifetime of the process.
 */
 
 import (
