@@ -30,6 +30,7 @@ import (
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -84,7 +85,7 @@ func (h *manageCampaignInvite) HandleComponents(s *discordgo.Session, i *discord
 					},
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					backButton(messages.BackLabel, fmt.Sprintf("back_manage_campaign:%s", campaignID)),
+					router.BackButton(messages.BackLabel, router.ViewManageCampaign, campaignID),
 				}},
 			},
 			Flags: discordgo.MessageFlagsEphemeral,
@@ -209,7 +210,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 
 	respondUpdate(s, i, fmt.Sprintf(messages.InviteSentMessage, targetID, campaign.Name), nil, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			backButton(messages.BackLabel, fmt.Sprintf("back_manage_campaign:%s", campaignID)),
+			router.BackButton(messages.BackLabel, router.ViewManageCampaign, campaignID),
 		}},
 	})
 }

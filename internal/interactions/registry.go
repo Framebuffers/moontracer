@@ -6,8 +6,14 @@ import (
 	"moontracer/internal/dispatch"
 )
 
-// AllComponents returns an array with all the `ComponentHandler`s available to the bot.
+/*
+AllComponents returns an array with all the `ComponentHandler`s available to the bot.
+
+Also registers all router views — called once at startup.
+*/
 func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
+	RegisterAllViews(db)
+
 	return []ComponentHandler{
 		// Campaign actions
 		&campaignJoin{db: db},
@@ -37,13 +43,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		&myCampaignSelectHandler{db: db},
 		&manageSelectHandler{db: db},
 
-		// Back navigation
-		&backMe{db: db},
-		&backMyCampaigns{db: db},
-		&backManage{db: db},
-		&backCampaigns{db: db},
-		&backAdmin{db: db},
-		&backManageCampaign{db: db},
+		// Navigation (all "nav:*" CustomIDs go through the view router).
+		&navHandler{db: db},
 
 		// New campaign config (post-modal)
 		&newCampaignBookHandler{db: db},
