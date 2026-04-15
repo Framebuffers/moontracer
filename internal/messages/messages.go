@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.5.2"
+	BotVersion               = "v0.6.1"
 )
 
 // Command names and descriptions
@@ -337,16 +337,17 @@ const (
 
 // Admin hub (/admin)
 const (
-	AdminCommandName    = "admin"
-	AdminCommandDesc    = "Mod/Admin panel."
-	AdminNotStaff       = "Only mods or admins can use this command."
-	AdminHubMessage     = "Admin Panel:"
-	AdminCampaignsLabel = "Active Campaigns"
-	AdminDMsLabel       = "DMs"
-	AdminBroadcastLabel = "Broadcast"
-	AdminDatabaseLabel  = "Database"
-	AdminSettingsLabel  = "Settings"
-	AdminDiagLabel      = "Diagnostics"
+	AdminCommandName     = "admin"
+	AdminCommandDesc     = "Mod/Admin panel."
+	AdminNotStaff        = "Only mods or admins can use this command."
+	DebugSurfaceDisabled = "This surface is disabled in production. Set DEV_MODE=true to re-enable."
+	AdminHubMessage      = "Admin Panel:"
+	AdminCampaignsLabel  = "Active Campaigns"
+	AdminDMsLabel        = "DMs"
+	AdminBroadcastLabel  = "Broadcast"
+	AdminDatabaseLabel   = "Database"
+	AdminSettingsLabel   = "Settings"
+	AdminDiagLabel       = "Diagnostics"
 )
 
 // About (/moontracer)

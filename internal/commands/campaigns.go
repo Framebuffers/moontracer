@@ -81,7 +81,9 @@ func (c *campaignsCommand) Execute(s *discordgo.Session, i *discordgo.Interactio
 /*
 buildCampaignSelectMenu builds a select menu from campaigns.
 
-Note: in order to avoid an import cycle, this method is local.
+Note:
+
+	In order to avoid an import cycle, this method is local.
 */
 func buildCampaignSelectMenu(campaigns []models.Campaign, customID, placeholder string) discordgo.SelectMenu {
 	var options []discordgo.SelectMenuOption

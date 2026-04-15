@@ -6,12 +6,20 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/dispatch"
+	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
 )
 
-// All returns every registered command. Add new commands here.
+/*
+All returns every registered command. Add new commands here.
+
+Note:
+
+	Debug-only commands are gated on guard.DevMode so production deployments
+	don't expose them in Discord's command picker.
+*/
 func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
-	return []Command{
+	cmds := []Command{
 		&pingCommand{},
 		&awooCommand{db: db},
 		&helpCommand{db: *db, d: d},
@@ -24,11 +32,16 @@ func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
 		&banCommand{db: db},
 		&unbanCommand{db: db},
 		&manageCampaigns{db: db},
-		&campaignDatabaseCommand{db: db},
 		&adminCommand{db: db},
 		&aboutCommand{db: db},
 		&waosCommand{db: db},
 	}
+
+	if guard.DevMode {
+		cmds = append(cmds, &campaignDatabaseCommand{db: db})
+	}
+
+	return cmds
 }
 
 // RegisterCommands populates the commands table with metadata from all registered commands.

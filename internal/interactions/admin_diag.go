@@ -18,6 +18,7 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/commands"
+	"moontracer/internal/guard"
 	"moontracer/internal/messages"
 )
 
@@ -30,6 +31,18 @@ func (h *adminDiagHandler) CustomIDPrefix() string {
 }
 
 func (h *adminDiagHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	/*
+		Double-gate:
+			The button is hidden in adminHubData when DevMode is off,
+			but a stale ephemeral could still carry the CustomID.
+
+			Reject here so production never exposes the raw database view regardless.
+	*/
+	if !guard.DevMode {
+		respondInteraction(s, i, messages.DebugSurfaceDisabled)
+		return
+	}
+
 	userID := i.Member.User.ID
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")

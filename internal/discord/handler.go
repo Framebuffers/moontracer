@@ -9,6 +9,7 @@ import (
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
+	"moontracer/internal/guard"
 	"moontracer/internal/interactions"
 )
 
@@ -48,6 +49,12 @@ func NewHandler(
 		}
 		if guildID == "" {
 			respondEphemeral(s, i, "This command must be used in a server.")
+			return
+		}
+
+		if guard.DebugGuildID != "" && guildID != guard.DebugGuildID {
+			log.Printf("handler: rejecting interaction from guild %s (scoped to %s)", guildID, guard.DebugGuildID)
+			respondEphemeral(s, i, "This bot is scoped to a single server and will not respond here.")
 			return
 		}
 
