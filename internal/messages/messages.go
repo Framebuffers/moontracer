@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v1.0-beta"
+	BotVersion               = "v0.5.2"
 )
 
 // Command names and descriptions
@@ -210,12 +210,12 @@ const (
 
 // Manage campaigns — button labels
 const (
-	ManageEditLabel       = "Edit"
-	ManageDeleteLabel     = "Delete"
-	ManageBanLabel        = "Ban Member"
-	ManageAnnounceLabel   = "Announce"
-	ManageRescheduleLabel      = "Reschedule"
-	ManageCampaignButtonLabel  = "Manage"
+	ManageEditLabel           = "Edit"
+	ManageDeleteLabel         = "Delete"
+	ManageBanLabel            = "Ban Member"
+	ManageAnnounceLabel       = "Announce"
+	ManageRescheduleLabel     = "Reschedule"
+	ManageCampaignButtonLabel = "Manage"
 )
 
 // Set campaign role
@@ -264,6 +264,7 @@ const (
 	AnnounceSentMessage      = "Announcement sent to %d members of **%s**."
 	AnnounceNoMembers        = "This campaign has no members to announce to."
 	AnnounceError            = "Failed to send announcement."
+	AnnouncePostedToThread   = "Announcement posted to the **%s** announcements thread."
 )
 
 // Reschedule
@@ -353,6 +354,8 @@ const (
 	AboutCommandName           = "moontracer"
 	AboutCommandDesc           = "About this bot."
 	AboutCommandGitHubRepoLink = "https://github.com/framebuffers/moontracer"
+	AboutCommandGitHubLabel    = "GitHub"
+	HelpLabel                  = "Help"
 	AboutCommandWebsite        = "https://framebuffer.cl/moontracer"
 	AboutCommandBotDesc        = "Moontracer: a D&D campaign manager for players, DM and spectators!"
 	AboutCommandCopyright      = "(C) 2026 Framebuffer"
@@ -364,12 +367,7 @@ const (
 
 // Navigation buttons
 const (
-	BackLabel         = "Back"
-	BackMeID          = "back_me"
-	BackCampaignsID   = "back_campaigns"
-	BackMyCampaignsID = "back_mycampaigns"
-	BackManageID      = "back_manage"
-	BackAdminID       = "back_admin"
+	BackLabel = "Back"
 )
 
 // Hub button labels
@@ -380,6 +378,7 @@ const (
 	BrowseCampaignsLabel = "Browse Campaigns"
 	MyProfileLabel       = "My Profile"
 	NewCampaignLabel     = "New Campaign"
+	AdminPanelLabel      = "Admin Panel"
 )
 
 // Manage campaign: additional buttons
@@ -463,33 +462,45 @@ const (
 
 // Player hub: Next Sessions
 const (
-	NextSessionsPrefix  = "next_sessions"
-	NextSessionsHeader  = "Upcoming sessions:"
-	NextSessionsNone    = "You have no upcoming sessions."
+	NextSessionsPrefix = "next_sessions"
+	NextSessionsHeader = "Upcoming sessions:"
+	NextSessionsNone   = "You have no upcoming sessions."
 )
 
 // Player hub: Notifications
 const (
-	NotificationsPrefix  = "notifications"
-	NotificationsHeader  = "Notification settings:"
-	NotificationsNone    = "No notification preferences configured yet."
+	NotificationsPrefix = "notifications"
+	NotificationsHeader = "Notification settings:"
+	NotificationsNone   = "No notification preferences configured yet."
+
+	NotifTogglePrefix       = "notif_toggle"
+	NotifFieldAnnouncements = "announcements"
+	NotifFieldSessions      = "sessions"
+	NotifFieldInvitations   = "invitations"
+	NotifLabelAnnouncements = "Announcements"
+	NotifLabelSessions      = "Session Reminders"
+	NotifLabelInvitations   = "Invitations"
+	NotifLoadFailed         = "Failed to load notification settings."
+	NotifUpdateFailed       = "Failed to update notification settings."
+	NotifEnabledSuffix      = "%s: ON"
+	NotifDisabledSuffix     = "%s: OFF"
 )
 
 // Admin hub: Campaign browser (all campaigns)
 const (
-	AdminCampaignsPrefix     = "admin_campaigns"
-	AdminCampaignsHeader     = "All campaigns:"
-	AdminCampaignsNone       = "No campaigns in the database."
+	AdminCampaignsPrefix = "admin_campaigns"
+	AdminCampaignsHeader = "All campaigns:"
+	AdminCampaignsNone   = "No campaigns in the database."
 )
 
 // Admin hub: Broadcast
 const (
-	AdminBroadcastPrefix       = "admin_broadcast"
-	AdminBroadcastModalID      = "modal_admin_broadcast"
-	AdminBroadcastModalTitle   = "Broadcast Message"
-	AdminBroadcastFieldLabel   = "Message"
-	AdminBroadcastSuccess      = "Broadcast sent."
-	AdminBroadcastFailed       = "Failed to send broadcast."
+	AdminBroadcastPrefix     = "admin_broadcast"
+	AdminBroadcastModalID    = "modal_admin_broadcast"
+	AdminBroadcastModalTitle = "Broadcast Message"
+	AdminBroadcastFieldLabel = "Message"
+	AdminBroadcastSuccess    = "Broadcast sent."
+	AdminBroadcastFailed     = "Failed to send broadcast."
 )
 
 // Admin hub: Database viewer
@@ -518,4 +529,19 @@ const (
 // Manage campaign: New Campaign from button (modal-from-component)
 const (
 	ManageNewCampaignPrefix = "manage_newcampaign"
+)
+
+// Manage campaign: Invite Player
+const (
+	ManageInviteLabel        = "Invite Player"
+	ManageInvitePrefix       = "manage_invite"
+	ManageInviteSelectPrefix = "manage_invite_select"
+	InviteAcceptPrefix       = "campaign_invite_accept"
+	InviteDeclinePrefix      = "campaign_invite_decline"
+	InviteSentMessage        = "Invitation sent to <@%s> for **%s**."
+	InviteDMMessage          = "You've been invited to join **%s** by <@%s>!"
+	InviteAcceptedDMUpdate   = "You accepted the invitation to **%s**."
+	InviteDeclinedDMUpdate   = "You declined the invitation to **%s**."
+	InviteAlreadyProcessed   = "This invitation has already been processed."
+	InviteCampaignFull       = "Cannot invite — campaign **%s** is full."
 )

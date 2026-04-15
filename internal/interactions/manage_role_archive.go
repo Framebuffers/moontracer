@@ -25,6 +25,7 @@ import (
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
 	"moontracer/internal/guard"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -209,7 +210,7 @@ func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 					discordgo.Button{
 						Label:    messages.ManageArchiveCancelLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: fmt.Sprintf("back_manage_campaign:%s", campaignID),
+						CustomID: router.NavCustomID(router.ViewManageCampaign, campaignID),
 					},
 				}},
 			},

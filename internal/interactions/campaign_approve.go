@@ -50,8 +50,16 @@ func (c *campaignApprove) CustomIDPrefix() string {
 	return messages.CampaignApprovePrefix
 }
 
+/*
+HandleComponents processes and renders information that will be presented inside the modal window.
+
+Note:
+
+	createCampaignChannels: creates category, channel and standard Discord Threads.
+							errors are logged but non-fatal.
+*/
 func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	_, campaignID, userID, ok := parseApprovalInteraction(s, i)
+	guildID, campaignID, userID, ok := parseApprovalInteraction(s, i)
 	if !ok {
 		return
 	}
@@ -71,6 +79,11 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		log.Printf("campaign_approve: failed to approve campaign %s: %v", campaignID, err)
 		respondInteraction(s, i, messages.CampaignApproveError)
 		return
+	}
+
+	createCampaignChannels(s, guildID, campaign)
+	if err := db.Update(c.db, campaign); err != nil {
+		log.Printf("campaign_approve: failed to save channel IDs for %s: %v", campaignID, err)
 	}
 
 	msgApproved := &dispatch.DirectMessage{

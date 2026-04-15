@@ -9,6 +9,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/auth"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -92,12 +93,7 @@ func (m *manageCampaigns) Execute(s *discordgo.Session, i *discordgo.Interaction
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{selectMenu}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.Button{
-						Label:    messages.BackLabel,
-						Style:    discordgo.SecondaryButton,
-						CustomID: messages.BackMeID,
-						Emoji:    &discordgo.ComponentEmoji{Name: "◀"},
-					},
+					router.BackButton(messages.BackLabel, router.ViewMe),
 					discordgo.Button{
 						Label:    messages.NewCampaignLabel,
 						Style:    discordgo.SuccessButton,
