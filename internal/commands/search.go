@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"log"
 	"strings"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/db"
+	"moontracer/internal/interactions/cdn"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -63,7 +65,8 @@ func (c *searchCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 	}
 
 	userID := i.Member.User.ID
-	embed := CampaignEmbed(*campaign, players)
+	coverURL := cdn.ResolveCoverURL(context.Background(), c.db, campaign)
+	embed := CampaignEmbed(*campaign, players, coverURL)
 	buttons := CampaignButtons(userID, *campaign, players)
 
 	resp := &discordgo.InteractionResponse{

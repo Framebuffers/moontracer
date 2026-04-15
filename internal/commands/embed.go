@@ -10,8 +10,12 @@ import (
 	"moontracer/internal/messages"
 )
 
-// CampaignEmbed builds a rich embed for displaying campaign details.
-func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordgo.MessageEmbed {
+/*
+CampaignEmbed builds a rich embed for displaying campaign details.
+
+coverURL, if non-empty, is rendered as a thumbnail (top-right).
+*/
+func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL string) *discordgo.MessageEmbed {
 	status := messages.ClosedStatusLabel
 	if c.IsOpen {
 		status = messages.OpenStatusLabel
@@ -74,12 +78,16 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordg
 		&discordgo.MessageEmbedField{Name: fmt.Sprintf("Players (%d)", len(players)), Value: playersValue, Inline: false},
 	)
 
-	return &discordgo.MessageEmbed{
+	embed := &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("%s — %s", campaignType, c.Name),
 		Description: c.Description,
 		Color:       messages.EmbedColor,
 		Fields:      fields,
 	}
+	if coverURL != "" {
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: coverURL}
+	}
+	return embed
 }
 
 // CampaignButtons builds context-aware action buttons for a campaign view.

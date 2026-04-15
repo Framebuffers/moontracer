@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.6.1"
+	BotVersion               = "v0.6.2"
 )
 
 // Command names and descriptions
@@ -206,6 +206,29 @@ const (
 	ManageCampaignBanSuccess   = "Banned <@%s> from **%s**."
 	ManageCampaignBanFailure   = "Failed to ban player from campaign."
 	ManageSelectMember         = "Select a member to ban from **%s**:"
+)
+
+// Campaign cover / upload
+const (
+	CampaignUploadCommandName     = "campaignupload"
+	CampaignUploadCommandDesc     = "Upload an image for one of your campaigns."
+	CampaignUploadKindOptName     = "kind"
+	CampaignUploadKindOptDesc     = "What kind of image to upload."
+	CampaignUploadKindCoverChoice = "Cover"
+	CampaignUploadCampaignOptName = "campaign"
+	CampaignUploadCampaignOptDesc = "The campaign to upload an image for."
+	CampaignUploadImageOptName    = "image"
+	CampaignUploadImageOptDesc    = "Image file (JPEG/PNG/WebP, up to 8 MiB)."
+
+	CampaignUploadNotDM         = "Only the DM of this campaign can change its cover."
+	CampaignUploadNotImage      = "That file doesn't look like an image. Try JPEG, PNG, or WebP."
+	CampaignUploadTooLarge      = "Image is too large. Max 8 MiB."
+	CampaignUploadMissingAttach = "No image attached. Attach a file to the `image` option."
+	CampaignUploadFailure       = "Failed to save cover. Please try again."
+	CampaignUploadSuccess       = "Cover set for **%s**. The image will appear on the next render.\n\n_Note: Discord may rotate the image URL over time. If the cover disappears, re-run this command to set it again._"
+
+	SetCoverButtonLabel     = "Set Cover"
+	SetCoverInstructions    = "Use `/campaignupload kind:Cover campaign:<name> image:<file>` to set a cover for this campaign."
 )
 
 // Manage campaigns — button labels
