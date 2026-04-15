@@ -18,6 +18,25 @@ DB operations still run normally so the bot can be tested end-to-end without imp
 var SafeMode = os.Getenv("SAFE_MODE") == "true"
 
 /*
+DevMode is true when DEV_MODE=true is set.
+
+In dev mode, debug-only UI surfaces are exposed: the Diagnostics button on
+/admin, the /campaigndatabase slash command, and any future internal-tooling
+buttons.
+
+When false (the default, for production), those surfaces are hidden
+and their handlers refuse to execute even if a stale CustomID is clicked.
+
+Unrelated to SafeMode:
+
+	You can run production with DevMode off AND SafeMode off
+	(live mutations, hidden debug UI) or dev with both on.
+
+	Staging may set SafeMode off + DevMode on to rehearse live mutations with debug visibility.
+*/
+var DevMode = os.Getenv("DEV_MODE") == "true"
+
+/*
 DebugAdminID is the Discord user ID granted admin privileges for testing.
 
 The user must still be registered and not banned:
@@ -26,9 +45,24 @@ It does not bypass any other security checks.
 */
 var DebugAdminID = os.Getenv("DEBUG_ADMIN_ID")
 
+/*
+DebugGuildID is the Discord guild ID the bot is scoped to in dev mode.
+
+When DevMode is on and this is set, the handler refuses interactions from
+any other guild. Sourced from DISCORD_GUILD_ID, the same env that scopes
+command registration to a single guild in dev.
+*/
+var DebugGuildID = os.Getenv("DISCORD_GUILD_ID")
+
 func init() {
 	if SafeMode {
 		log.Println("guard: SAFE_MODE is ON — Discord-mutating operations will be logged but not executed")
+	}
+	if DevMode {
+		log.Println("guard: DEV_MODE is ON — debug UI surfaces (Diagnostics, /campaigndatabase) are visible")
+		if DebugGuildID != "" {
+			log.Printf("guard: DEV_MODE scoped to guild %s — interactions from other guilds will be rejected", DebugGuildID)
+		}
 	}
 	if DebugAdminID != "" {
 		log.Printf("guard: DEBUG_ADMIN_ID is set — user %s will be treated as admin", DebugAdminID)
