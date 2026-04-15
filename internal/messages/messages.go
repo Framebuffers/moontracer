@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.5.1"
+	BotVersion               = "v0.5.2"
 )
 
 // Command names and descriptions
@@ -210,12 +210,12 @@ const (
 
 // Manage campaigns — button labels
 const (
-	ManageEditLabel       = "Edit"
-	ManageDeleteLabel     = "Delete"
-	ManageBanLabel        = "Ban Member"
-	ManageAnnounceLabel   = "Announce"
-	ManageRescheduleLabel      = "Reschedule"
-	ManageCampaignButtonLabel  = "Manage"
+	ManageEditLabel           = "Edit"
+	ManageDeleteLabel         = "Delete"
+	ManageBanLabel            = "Ban Member"
+	ManageAnnounceLabel       = "Announce"
+	ManageRescheduleLabel     = "Reschedule"
+	ManageCampaignButtonLabel = "Manage"
 )
 
 // Set campaign role
@@ -354,6 +354,8 @@ const (
 	AboutCommandName           = "moontracer"
 	AboutCommandDesc           = "About this bot."
 	AboutCommandGitHubRepoLink = "https://github.com/framebuffers/moontracer"
+	AboutCommandGitHubLabel    = "GitHub"
+	HelpLabel                  = "Help"
 	AboutCommandWebsite        = "https://framebuffer.cl/moontracer"
 	AboutCommandBotDesc        = "Moontracer: a D&D campaign manager for players, DM and spectators!"
 	AboutCommandCopyright      = "(C) 2026 Framebuffer"
@@ -460,45 +462,45 @@ const (
 
 // Player hub: Next Sessions
 const (
-	NextSessionsPrefix  = "next_sessions"
-	NextSessionsHeader  = "Upcoming sessions:"
-	NextSessionsNone    = "You have no upcoming sessions."
+	NextSessionsPrefix = "next_sessions"
+	NextSessionsHeader = "Upcoming sessions:"
+	NextSessionsNone   = "You have no upcoming sessions."
 )
 
 // Player hub: Notifications
 const (
-	NotificationsPrefix  = "notifications"
-	NotificationsHeader  = "Notification settings:"
-	NotificationsNone    = "No notification preferences configured yet."
+	NotificationsPrefix = "notifications"
+	NotificationsHeader = "Notification settings:"
+	NotificationsNone   = "No notification preferences configured yet."
 
-	NotifTogglePrefix           = "notif_toggle"
-	NotifFieldAnnouncements     = "announcements"
-	NotifFieldSessions          = "sessions"
-	NotifFieldInvitations       = "invitations"
-	NotifLabelAnnouncements     = "Announcements"
-	NotifLabelSessions          = "Session Reminders"
-	NotifLabelInvitations       = "Invitations"
-	NotifLoadFailed             = "Failed to load notification settings."
-	NotifUpdateFailed           = "Failed to update notification settings."
-	NotifEnabledSuffix          = "%s: ON"
-	NotifDisabledSuffix         = "%s: OFF"
+	NotifTogglePrefix       = "notif_toggle"
+	NotifFieldAnnouncements = "announcements"
+	NotifFieldSessions      = "sessions"
+	NotifFieldInvitations   = "invitations"
+	NotifLabelAnnouncements = "Announcements"
+	NotifLabelSessions      = "Session Reminders"
+	NotifLabelInvitations   = "Invitations"
+	NotifLoadFailed         = "Failed to load notification settings."
+	NotifUpdateFailed       = "Failed to update notification settings."
+	NotifEnabledSuffix      = "%s: ON"
+	NotifDisabledSuffix     = "%s: OFF"
 )
 
 // Admin hub: Campaign browser (all campaigns)
 const (
-	AdminCampaignsPrefix     = "admin_campaigns"
-	AdminCampaignsHeader     = "All campaigns:"
-	AdminCampaignsNone       = "No campaigns in the database."
+	AdminCampaignsPrefix = "admin_campaigns"
+	AdminCampaignsHeader = "All campaigns:"
+	AdminCampaignsNone   = "No campaigns in the database."
 )
 
 // Admin hub: Broadcast
 const (
-	AdminBroadcastPrefix       = "admin_broadcast"
-	AdminBroadcastModalID      = "modal_admin_broadcast"
-	AdminBroadcastModalTitle   = "Broadcast Message"
-	AdminBroadcastFieldLabel   = "Message"
-	AdminBroadcastSuccess      = "Broadcast sent."
-	AdminBroadcastFailed       = "Failed to send broadcast."
+	AdminBroadcastPrefix     = "admin_broadcast"
+	AdminBroadcastModalID    = "modal_admin_broadcast"
+	AdminBroadcastModalTitle = "Broadcast Message"
+	AdminBroadcastFieldLabel = "Message"
+	AdminBroadcastSuccess    = "Broadcast sent."
+	AdminBroadcastFailed     = "Failed to send broadcast."
 )
 
 // Admin hub: Database viewer

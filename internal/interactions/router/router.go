@@ -64,6 +64,7 @@ const (
 	ViewInbox           ViewID = "inbox"
 	ViewConfig          ViewID = "config"
 	ViewNextSessions    ViewID = "next_sessions"
+	ViewHelp            ViewID = "help"
 )
 
 /*

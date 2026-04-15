@@ -12,7 +12,7 @@ AllComponents returns an array with all the `ComponentHandler`s available to the
 Also registers all router views — called once at startup.
 */
 func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
-	RegisterAllViews(db)
+	RegisterAllViews(db, d)
 
 	return []ComponentHandler{
 		// Campaign actions
