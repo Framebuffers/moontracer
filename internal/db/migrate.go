@@ -62,6 +62,11 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE campaigns ADD COLUMN channel_id TEXT DEFAULT ''",
 		"ALTER TABLE campaigns ADD COLUMN category_id TEXT DEFAULT ''",
 		"ALTER TABLE campaigns ADD COLUMN announcements_thread_id TEXT DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN cover_channel_id TEXT DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN cover_message_id TEXT DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN cover_attachment_id TEXT DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN cover_cached_url TEXT DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN cover_cached_refreshed TIMESTAMP",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {

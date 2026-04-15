@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -9,6 +10,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/db"
+	"moontracer/internal/interactions/cdn"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -23,9 +25,13 @@ import (
 
 */
 
-// campaignView is a ComponentHandler that shows campaign details **only to the user** through an ephemeral embed.
-// It's a quick preview of the campaigns a user is present on.
-// The difference with `/campaign` is that it is a quick, private, simplified view of a Campaign data.
+/*
+campaignView is a ComponentHandler that shows campaign details **only to the user** through an ephemeral embed.
+
+It's a quick preview of the campaigns a user is present on.
+
+The difference with `/campaign` is that it is a quick, private, simplified view of a Campaign data.
+*/
 type campaignView struct {
 	db *bun.DB
 }
@@ -62,7 +68,8 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
-	embed := buildCampaignEmbed(*campaign, players)
+	coverURL := cdn.ResolveCoverURL(context.Background(), h.db, campaign)
+	embed := buildCampaignEmbed(*campaign, players, coverURL)
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -74,7 +81,7 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 }
 
 // buildCampaignEmbed builds the ephemeral embed that the user will see, with all the Campaigns the Player is a player on.
-func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *discordgo.MessageEmbed {
+func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL string) *discordgo.MessageEmbed {
 	status := "Closed"
 	if c.IsOpen {
 		status = "Open"
@@ -94,7 +101,7 @@ func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *dis
 		playersValue = strings.Join(playerLines, "\n")
 	}
 
-	return &discordgo.MessageEmbed{
+	embed := &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("%s — %s", campaignType, c.Name),
 		Description: c.Description,
 		Color:       0x5865F2,
@@ -107,4 +114,8 @@ func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer) *dis
 			{Name: fmt.Sprintf("Players (%d)", len(players)), Value: playersValue, Inline: false},
 		},
 	}
+	if coverURL != "" {
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: coverURL}
+	}
+	return embed
 }
