@@ -97,6 +97,33 @@ func RenderAdminHubUpdate(s *discordgo.Session, i *discordgo.InteractionCreate) 
 }
 
 func adminHubData() *discordgo.InteractionResponseData {
+	/*
+		Note:
+			Second row is assembled conditionally:
+			Database and Diagnostics are debug-only surfaces gated on guard.DevMode.
+			Settings is always shown.
+	*/
+	secondRow := []discordgo.MessageComponent{}
+	if guard.DevMode {
+		secondRow = append(secondRow, discordgo.Button{
+			Label:    messages.AdminDatabaseLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: messages.AdminDatabasePrefix,
+		})
+	}
+	secondRow = append(secondRow, discordgo.Button{
+		Label:    messages.AdminSettingsLabel,
+		Style:    discordgo.SecondaryButton,
+		CustomID: messages.AdminSettingsPrefix,
+	})
+	if guard.DevMode {
+		secondRow = append(secondRow, discordgo.Button{
+			Label:    messages.AdminDiagLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: messages.AdminDiagPrefix,
+		})
+	}
+
 	return &discordgo.InteractionResponseData{
 		Content: messages.AdminHubMessage,
 		Embeds:  []*discordgo.MessageEmbed{},
@@ -118,23 +145,7 @@ func adminHubData() *discordgo.InteractionResponseData {
 					CustomID: messages.AdminBroadcastPrefix,
 				},
 			}},
-			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    messages.AdminDatabaseLabel,
-					Style:    discordgo.SecondaryButton,
-					CustomID: messages.AdminDatabasePrefix,
-				},
-				discordgo.Button{
-					Label:    messages.AdminSettingsLabel,
-					Style:    discordgo.SecondaryButton,
-					CustomID: messages.AdminSettingsPrefix,
-				},
-				discordgo.Button{
-					Label:    messages.AdminDiagLabel,
-					Style:    discordgo.SecondaryButton,
-					CustomID: messages.AdminDiagPrefix,
-				},
-			}},
+			discordgo.ActionsRow{Components: secondRow},
 			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 				router.BackButton(messages.BackLabel, router.ViewMe),
 			}},
@@ -285,6 +296,7 @@ func getConfigDiag() string {
 
 	return kvTable("Configuration", [][2]string{
 		{"Safe mode", strconv.FormatBool(guard.SafeMode)},
+		{"Dev mode", strconv.FormatBool(guard.DevMode)},
 		{"Debug admin", debugAdmin},
 		{"Admin role", adminRole},
 		{"Mod role", modRole},

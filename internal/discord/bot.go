@@ -13,6 +13,7 @@ import (
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
+	"moontracer/internal/guard"
 )
 
 /*
@@ -80,6 +81,10 @@ func (b *Bot) Run() error {
 
 	// Initialize new guilds joined mid-runtime.
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildCreate) {
+		if guard.DevMode && guard.DebugGuildID != "" && e.Guild.ID != guard.DebugGuildID {
+			log.Printf("bot: skipping guild %s (%s) — dev mode scoped to %s", e.Guild.Name, e.Guild.ID, guard.DebugGuildID)
+			return
+		}
 		guildDB, err := b.guildDBM.GetOrCreate(e.Guild.ID)
 		if err != nil {
 			log.Printf("bot: failed to create DB for guild %s (%s): %v", e.Guild.Name, e.Guild.ID, err)
@@ -105,8 +110,13 @@ func (b *Bot) Run() error {
 	log.Printf("bot: logged in as %s (app %s)", b.session.State.User.Username, appID)
 
 	// Discover all guilds and initialize their databases in parallel.
+	// In dev mode scoped to a single guild, ignore all other guilds.
 	var guildIDs []string
 	for _, g := range b.session.State.Guilds {
+		if guard.DevMode && guard.DebugGuildID != "" && g.ID != guard.DebugGuildID {
+			log.Printf("bot: skipping guild %s (%s) — dev mode scoped to %s", g.Name, g.ID, guard.DebugGuildID)
+			continue
+		}
 		guildIDs = append(guildIDs, g.ID)
 	}
 	log.Printf("bot: discovered %d guild(s), initializing databases...", len(guildIDs))
@@ -115,6 +125,9 @@ func (b *Bot) Run() error {
 	// Register command metadata in each guild's DB and sync roles in parallel.
 	var wg sync.WaitGroup
 	for _, g := range b.session.State.Guilds {
+		if guard.DevMode && guard.DebugGuildID != "" && g.ID != guard.DebugGuildID {
+			continue
+		}
 		wg.Add(1)
 		go func(guild *discordgo.Guild) {
 			defer wg.Done()
