@@ -52,9 +52,9 @@ func NewHandler(
 			return
 		}
 
-		if guard.DevMode && guard.DebugGuildID != "" && guildID != guard.DebugGuildID {
-			log.Printf("handler: rejecting interaction from guild %s (dev mode scoped to %s)", guildID, guard.DebugGuildID)
-			respondEphemeral(s, i, "This bot is running in dev mode and will not allow commands from this server.")
+		if guard.DebugGuildID != "" && guildID != guard.DebugGuildID {
+			log.Printf("handler: rejecting interaction from guild %s (scoped to %s)", guildID, guard.DebugGuildID)
+			respondEphemeral(s, i, "This bot is scoped to a single server and will not respond here.")
 			return
 		}
 
