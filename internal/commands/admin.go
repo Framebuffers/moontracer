@@ -135,6 +135,9 @@ func adminHubData() *discordgo.InteractionResponseData {
 					CustomID: messages.AdminDiagPrefix,
 				},
 			}},
+			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+				router.BackButton(messages.BackLabel, router.ViewMe),
+			}},
 		},
 		Flags: discordgo.MessageFlagsEphemeral,
 	}
@@ -151,27 +154,33 @@ func RenderAdminDiag(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 /*
-adminDiagData uses Components V2 (MessageFlagsIsComponentsV2) because TextDisplay
-is a V2-only component.
+adminDiagData renders diagnostics as a plain Content message.
 
-Under V2, Content and Embeds must NOT be set. Headers go inside TextDisplay blocks.
+Note:
+
+	Previously this used Components V2 (MessageFlagsIsComponentsV2) + TextDisplay
+	blocks, but Discord message flags are sticky.
+
+	Once IsComponentsV2 was set, the subsequent Back -> admin hub update (which is V1)
+	was silently rejected and the user got stuck on the diag screen.
+
+	Concatenating the three kvTables into Content keeps the whole flow in V1 so back navigation works.
 */
 func adminDiagData(s *discordgo.Session) *discordgo.InteractionResponseData {
+	content := fmt.Sprintf("# %s — Diagnostics\n%s\n%s\n%s",
+		messages.AdminHubMessage,
+		getGoDiag(),
+		getDiscordgoSessionDiag(s),
+		getConfigDiag(),
+	)
 	return &discordgo.InteractionResponseData{
+		Content: content,
 		Components: []discordgo.MessageComponent{
-			discordgo.TextDisplay{Content: "# " + messages.AdminHubMessage + " — Diagnostics"},
-			discordgo.TextDisplay{Content: getGoDiag()},
-			discordgo.TextDisplay{Content: getDiscordgoSessionDiag(s)},
-			discordgo.TextDisplay{Content: getConfigDiag()},
 			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    messages.BackLabel,
-					Style:    discordgo.SecondaryButton,
-					CustomID: router.NavCustomID(router.ViewAdmin),
-				},
+				router.BackButton(messages.BackLabel, router.ViewAdmin),
 			}},
 		},
-		Flags: discordgo.MessageFlagsEphemeral | discordgo.MessageFlagsIsComponentsV2,
+		Flags: discordgo.MessageFlagsEphemeral,
 	}
 }
 

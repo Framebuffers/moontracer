@@ -27,6 +27,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/commands"
+	"moontracer/internal/dispatch"
 	"moontracer/internal/interactions/router"
 )
 
@@ -35,7 +36,7 @@ RegisterAllViews wires every router ViewID to a package-local render function.
 
 Call once at startup before the bot starts handling interactions.
 */
-func RegisterAllViews(db *bun.DB) {
+func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 	router.Register(router.ViewMe, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
 		commands.RenderMeHub(s, i, db, getUserID(i))
 	})
@@ -76,5 +77,9 @@ func RegisterAllViews(db *bun.DB) {
 
 	router.Register(router.ViewAdminDiag, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
 		commands.RenderAdminDiag(s, i)
+	})
+
+	router.Register(router.ViewHelp, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		commands.RenderHelp(s, i, db, d)
 	})
 }
