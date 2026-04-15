@@ -20,6 +20,7 @@ import (
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
 	"moontracer/internal/guard"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -123,11 +124,16 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageSetRolePrefix, campaignID),
 						},
 						discordgo.Button{
+							Label:    messages.ManageInviteLabel,
+							Style:    discordgo.SecondaryButton,
+							CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
+						},
+						discordgo.Button{
 							Label:    messages.ManageArchiveLabel,
 							Style:    discordgo.DangerButton,
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),
 						},
-						backButton(messages.BackLabel, messages.BackManageID),
+						router.BackButton(messages.BackLabel, router.ViewManage),
 					},
 				},
 			},
@@ -191,7 +197,7 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 					discordgo.Button{
 						Label:    messages.ManageDeleteCancelLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: fmt.Sprintf("back_manage_campaign:%s", campaignID),
+						CustomID: router.NavCustomID(router.ViewManageCampaign, campaignID),
 					},
 				}},
 			},

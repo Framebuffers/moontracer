@@ -1,31 +1,22 @@
 package interactions
 
 /*
-	New Campaign from button handler for the /managecampaigns menu.
+	New Campaign from button handler for the /me hub and /managecampaigns menu.
 
 	Flow:
-		1. DM clicks "New Campaign" button on /managecampaigns.
-		2. Respond with InteractionResponseModal (same modal as /newcampaign slash command).
-		3. Modal submission is handled by the existing modalCampaignCreate handler.
-
-	The key challenge:
-		The existing modal-create flow (modalCampaignCreate) was built around a slash-command
-		entry point. Opening the same modal from a component button interaction requires that
-		the handler router supports InteractionResponseModal from component interactions.
-
-		The router in handler.go dispatches component interactions to ComponentHandler.HandleComponents,
-		which can respond with any InteractionResponse type — including InteractionResponseModal.
-		So the wiring works, we just need to build the same modal response here.
-
-	Note:
-		The modal's CustomID must match what modalCampaignCreate expects so the existing
-		submit handler picks it up.
+		1. Player clicks "New Campaign" button.
+		2. Auth check: must be a registered player.
+		3. Respond with InteractionResponseModal (same modal as /newcampaign slash command).
+		4. Modal submission is handled by the existing modalCampaignCreate handler.
 */
 
 import (
+	"log"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
 	"moontracer/internal/messages"
 )
 
@@ -38,14 +29,56 @@ func (h *manageNewCampaignButton) CustomIDPrefix() string {
 }
 
 func (h *manageNewCampaignButton) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO: implement
-	// 1. auth.Authorize(h.db, getUserID(i), auth.ScopePlayer, "")
-	// 2. respond with InteractionResponseModal using the same modal definition
-	//    as newCampaign.Execute in commands/new_campaign.go
-	//    CustomID must be messages.NewCampaignModalID (or whatever modalCampaignCreate expects)
-	//    so the existing modal submit handler picks it up seamlessly
-	//
-	// Note: check what CustomID modalCampaignCreate uses for its prefix,
-	// and build the identical modal here.
-	respondInteraction(s, i, "New Campaign from button is not yet implemented.")
+	userID := getUserID(i)
+
+	ok, err := auth.Authorize(h.db, userID, auth.ScopePlayer, "")
+	if err != nil {
+		log.Printf("manage_newcampaign: auth check failed: %v", err)
+		respondInteraction(s, i, messages.GenericErrorMessage)
+		return
+	}
+	if !ok {
+		respondInteraction(s, i, messages.NotRegisteredMessage)
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID: messages.NewCampaignModalCustomID,
+			Title:    messages.NewCampaignModalTitle,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.FieldNameID,
+						Label:       messages.FieldNameLabel,
+						Style:       discordgo.TextInputShort,
+						Placeholder: messages.FieldNamePlaceholder,
+						Required:    true,
+						MaxLength:   100,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.FieldSlotsID,
+						Label:       messages.FieldSlotsLabel,
+						Style:       discordgo.TextInputShort,
+						Placeholder: messages.FieldSlotsPlaceholderNew,
+						Required:    false,
+						MaxLength:   3,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.FieldDescriptionID,
+						Label:       messages.FieldSynopsisLabel,
+						Style:       discordgo.TextInputParagraph,
+						Placeholder: messages.FieldDescriptionPlaceholder,
+						Required:    true,
+						MaxLength:   1000,
+					},
+				}},
+			},
+		},
+	})
 }
