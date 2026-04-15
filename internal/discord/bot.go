@@ -81,8 +81,8 @@ func (b *Bot) Run() error {
 
 	// Initialize new guilds joined mid-runtime.
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildCreate) {
-		if guard.DevMode && guard.DebugGuildID != "" && e.Guild.ID != guard.DebugGuildID {
-			log.Printf("bot: skipping guild %s (%s) — dev mode scoped to %s", e.Guild.Name, e.Guild.ID, guard.DebugGuildID)
+		if guard.DebugGuildID != "" && e.Guild.ID != guard.DebugGuildID {
+			log.Printf("bot: skipping guild %s (%s) — scoped to %s", e.Guild.Name, e.Guild.ID, guard.DebugGuildID)
 			return
 		}
 		guildDB, err := b.guildDBM.GetOrCreate(e.Guild.ID)
@@ -113,8 +113,8 @@ func (b *Bot) Run() error {
 	// In dev mode scoped to a single guild, ignore all other guilds.
 	var guildIDs []string
 	for _, g := range b.session.State.Guilds {
-		if guard.DevMode && guard.DebugGuildID != "" && g.ID != guard.DebugGuildID {
-			log.Printf("bot: skipping guild %s (%s) — dev mode scoped to %s", g.Name, g.ID, guard.DebugGuildID)
+		if guard.DebugGuildID != "" && g.ID != guard.DebugGuildID {
+			log.Printf("bot: skipping guild %s (%s) — scoped to %s", g.Name, g.ID, guard.DebugGuildID)
 			continue
 		}
 		guildIDs = append(guildIDs, g.ID)
@@ -125,7 +125,7 @@ func (b *Bot) Run() error {
 	// Register command metadata in each guild's DB and sync roles in parallel.
 	var wg sync.WaitGroup
 	for _, g := range b.session.State.Guilds {
-		if guard.DevMode && guard.DebugGuildID != "" && g.ID != guard.DebugGuildID {
+		if guard.DebugGuildID != "" && g.ID != guard.DebugGuildID {
 			continue
 		}
 		wg.Add(1)
@@ -184,6 +184,28 @@ func (b *Bot) registerCommands(appID string) error {
 	if err != nil {
 		return err
 	}
+
+	/*
+		When scoped to a single guild, clear any stale global registrations
+		left over from earlier runs. Otherwise Discord keeps serving the old
+		global commands in every server the bot is in, even though we are
+		only registering to the debug guild this run.
+	*/
+	if b.guildID != "" {
+		existing, err := b.session.ApplicationCommands(appID, "")
+		if err != nil {
+			log.Printf("bot: warning: could not list global commands for cleanup: %v", err)
+		} else {
+			for _, g := range existing {
+				if err := b.session.ApplicationCommandDelete(appID, "", g.ID); err != nil {
+					log.Printf("bot: warning: failed to delete stale global /%s: %v", g.Name, err)
+				} else {
+					log.Printf("bot: deleted stale global /%s", g.Name)
+				}
+			}
+		}
+	}
+
 	for _, cmd := range commands.All(bunDB, b.dispatcher) {
 		created, err := b.session.ApplicationCommandCreate(appID, b.guildID, cmd.Data())
 		if err != nil {
