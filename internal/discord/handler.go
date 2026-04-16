@@ -1,10 +1,12 @@
 package discord
 
 import (
+	"context"
 	"log"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/uptrace/bun"
 
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
@@ -25,9 +27,10 @@ import (
 			d. Dispatch to the appropriate handler.
 */
 
-// NewHandler returns a discordgo event handler that resolves the guild's
-// database per interaction, then dispatches slash commands, component
-// interactions (buttons), and modal submissions.
+/*
+NewHandler returns a discordgo event handler that resolves the guild's
+database per interaction, then dispatches slash commands, component interactions (buttons), and modal submissions.
+*/
 func NewHandler(
 	guildDBM *db.GuildDBManager,
 	dispatcher *dispatch.Dispatcher,
@@ -81,6 +84,7 @@ func NewHandler(
 						userID = i.User.ID
 					}
 					log.Printf("handler: /%s invoked by %s in guild %s", name, userID, guildID)
+					incrementCommandCounter(guildDB, name)
 					cmd.Execute(s, i)
 					return
 				}
@@ -154,6 +158,23 @@ func extractGuildFromCustomID(i *discordgo.InteractionCreate) string {
 		return parts[1]
 	}
 	return ""
+}
+
+/*
+incrementCommandCounter bumps times_used for the given command name.
+
+Runs synchronously so command handlers observe the new value if they read it.
+Logs and swallows errors, since a counter bump must not block command execution.
+*/
+func incrementCommandCounter(guildDB *bun.DB, name string) {
+	_, err := guildDB.NewUpdate().
+		Table("commands").
+		Set("times_used = times_used + 1").
+		Where("name = ?", name).
+		Exec(context.Background())
+	if err != nil {
+		log.Printf("handler: failed to increment counter for /%s: %v", name, err)
+	}
 }
 
 func respondEphemeral(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {

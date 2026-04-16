@@ -81,6 +81,26 @@ func Migrate(db *bun.DB) error {
 		return err
 	}
 
+	/*
+		Refactoring note: deduping commands table.
+			Earlier builds (<0.6.2) used ON CONFLICT DO NOTHING with no unique index on (name),
+			so every startup inserted fresh rows.
+			This coalesces each name's times_used into the min-id row, drops the rest, then adds the
+			unique index, so future inserts actually short-circuit.
+	*/
+	dedupStmts := []string{
+		`UPDATE commands SET times_used = (
+			SELECT COALESCE(SUM(c2.times_used), 0) FROM commands c2 WHERE c2.name = commands.name
+		) WHERE id IN (SELECT MIN(id) FROM commands GROUP BY name)`,
+		`DELETE FROM commands WHERE id NOT IN (SELECT MIN(id) FROM commands GROUP BY name)`,
+		`CREATE UNIQUE INDEX IF NOT EXISTS commands_name_unique ON commands (name)`,
+	}
+	for _, stmt := range dedupStmts {
+		if _, err := db.ExecContext(ctx, stmt); err != nil {
+			return err
+		}
+	}
+
 	log.Println("database migration complete")
 	return nil
 }

@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.6.2"
+	BotVersion               = "v0.6.3"
 )
 
 // Command names and descriptions
