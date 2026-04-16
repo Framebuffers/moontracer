@@ -3,6 +3,7 @@ package testutil
 import (
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -65,6 +66,16 @@ type stubTransport struct {
 	captured []RecordedRequest
 }
 
+/*
+userLookupPath matches /users/<id> where <id> is not "@me" and has no further
+path segments.
+
+discordgo's UserValue(s) calls s.User(id) which hits this path;
+returning 404 here makes UserValue fall back to &User{ID: id} from its option
+data, preserving the target ID in command tests.
+*/
+var userLookupPath = regexp.MustCompile(`/users/[^/@][^/]*$`)
+
 func (t *stubTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	var body []byte
 	if r.Body != nil {
@@ -80,8 +91,13 @@ func (t *stubTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	})
 	t.mu.Unlock()
 
+	status := http.StatusOK
+	if r.Method == http.MethodGet && userLookupPath.MatchString(r.URL.Path) {
+		status = http.StatusNotFound
+	}
+
 	return &http.Response{
-		StatusCode: http.StatusOK,
+		StatusCode: status,
 		Body:       io.NopCloser(strings.NewReader("{}")),
 		Header:     make(http.Header),
 		Request:    r,
