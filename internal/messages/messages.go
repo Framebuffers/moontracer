@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.6.3"
+	BotVersion               = "v0.6.5"
 )
 
 // Command names and descriptions
@@ -227,8 +227,8 @@ const (
 	CampaignUploadFailure       = "Failed to save cover. Please try again."
 	CampaignUploadSuccess       = "Cover set for **%s**. The image will appear on the next render.\n\n_Note: Discord may rotate the image URL over time. If the cover disappears, re-run this command to set it again._"
 
-	SetCoverButtonLabel     = "Set Cover"
-	SetCoverInstructions    = "Use `/campaignupload kind:Cover campaign:<name> image:<file>` to set a cover for this campaign."
+	SetCoverButtonLabel  = "Set Cover"
+	SetCoverInstructions = "Use `/campaignupload kind:Cover campaign:<name> image:<file>` to set a cover for this campaign."
 )
 
 // Manage campaigns — button labels
