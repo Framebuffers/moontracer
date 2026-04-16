@@ -37,11 +37,10 @@ func (c *awooCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 
 	var record models.CommandRecord
 
-	_, err := c.db.NewUpdate().Model(&record).
-		Set("times_used = times_used + 1").
+	err := c.db.NewSelect().Model(&record).
+		Column("times_used").
 		Where("name = ?", "awoo").
-		Returning("times_used").
-		Exec(ctx)
+		Scan(ctx)
 
 	if err != nil {
 		log.Printf("awoo: smoke test failed: %v", err)

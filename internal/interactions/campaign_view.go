@@ -115,7 +115,7 @@ func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer, cove
 		},
 	}
 	if coverURL != "" {
-		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: coverURL}
+		embed.Image = &discordgo.MessageEmbedImage{URL: coverURL}
 	}
 	return embed
 }

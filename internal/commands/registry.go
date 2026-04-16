@@ -88,7 +88,7 @@ func RegisterCommands(db *bun.DB, d *dispatch.Dispatcher) error {
 			Name:        data.Name,
 			Description: data.Description,
 		}
-		_, err := db.NewInsert().Model(record).On("CONFLICT DO NOTHING").Exec(ctx)
+		_, err := db.NewInsert().Model(record).On("CONFLICT (name) DO NOTHING").Exec(ctx)
 		if err != nil {
 			return err
 		}
