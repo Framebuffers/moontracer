@@ -92,6 +92,20 @@ func (d *Dispatcher) Push(msg DirectMessage) {
 	d.cond.Signal()
 }
 
+/*
+Pending returns a snapshot of messages currently queued but not yet sent.
+
+Pending is useful for diagnostics and for tests that need to inspect dispatch state
+without starting worker goroutines.
+*/
+func (d *Dispatcher) Pending() []DirectMessage {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	out := make([]DirectMessage, len(d.stack))
+	copy(out, d.stack)
+	return out
+}
+
 func (d *Dispatcher) pop() (DirectMessage, bool) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
