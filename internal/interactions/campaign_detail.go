@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"context"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -8,6 +9,7 @@ import (
 
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
+	"moontracer/internal/interactions/cdn"
 	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
@@ -39,7 +41,8 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	}
 
 	userID := getUserID(i)
-	embed := commands.CampaignEmbed(*campaign, players)
+	coverURL := cdn.ResolveCoverURL(context.Background(), database, campaign)
+	embed := commands.CampaignEmbed(*campaign, players, coverURL)
 	actionButtons := commands.CampaignButtons(userID, *campaign, players)
 
 	var components []discordgo.MessageComponent

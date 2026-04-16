@@ -133,6 +133,11 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 							Style:    discordgo.DangerButton,
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),
 						},
+						discordgo.Button{
+							Label:    messages.SetCoverButtonLabel,
+							Style:    discordgo.SecondaryButton,
+							CustomID: fmt.Sprintf("manage_setcover:%s", campaignID),
+						},
 						router.BackButton(messages.BackLabel, router.ViewManage),
 					},
 				},

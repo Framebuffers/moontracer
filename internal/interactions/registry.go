@@ -9,7 +9,54 @@ import (
 /*
 AllComponents returns an array with all the `ComponentHandler`s available to the bot.
 
-Also registers all router views — called once at startup.
+Also registers all router views. It's called once at startup.
+
+How to add a new component (button / select menu) interaction:
+
+ 1. Create internal/interactions/<name>.go with a struct that holds
+    its dependencies (usually `db *bun.DB`, sometimes the dispatcher).
+
+ 2. Implement the ComponentHandler interface (interaction.go):
+
+    - CustomIDPrefix() string. It's the "<prefix>" part of CustomIDs of
+    the form "prefix:arg1:arg2". Must be unique across all handlers.
+
+    - HandleComponents(s, i). It's invoked when a button/select whose
+    CustomID starts with this prefix fires.
+
+ 3. Emit the CustomID from wherever the button is rendered, as
+    fmt.Sprintf("%s:%s", prefix, someID). Keep the prefix literal in
+    internal/messages/messages.go if it's shared, or as a constant on
+    the handler file if it's local.
+
+ 4. Add the handler to the slice below, grouped with its neighbors
+    (Campaign actions, Manage, Approval, Browse, Admin, etc).
+
+ 5. User-facing strings go in internal/messages/messages.go.
+
+ 6. If the handler needs auth, call auth.Authorize at the top. Same
+    scopes as commands.“
+
+How to add a new modal:
+
+ 1. Implement the ModalHandler interface (CustomIDPrefix + HandleModal).
+
+ 2. Register it in AllModals() below.
+
+ 3. Trigger it by responding to a prior interaction with
+    InteractionResponseModal and a matching CustomID.
+
+How to add a new router view (universal back-button support):
+
+	Views are addressable screens (ViewMe, ViewManage, ViewAdmin...) that
+	render via navHandler. Add new views in internal/interactions/views.go
+	by calling router.Register(router.ViewDragon, renderFn). The back button
+	then navigates by ViewID, so any new screen that wants Back support
+	needs to be a registered view.
+
+At startup the bot calls AllComponents/AllModals once per guild DB; the
+main handler (internal/discord/handler.go) dispatches incoming events to
+the first handler whose prefix matches.
 */
 func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 	RegisterAllViews(db, d)
@@ -32,6 +79,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		&manageSetRole{db: db},
 		&manageArchive{db: db},
 		&manageArchiveConfirm{db: db},
+		&manageSetCover{db: db},
 
 		// Approval (DM flow)
 		&campaignApprove{db: db, dispatcher: d},
