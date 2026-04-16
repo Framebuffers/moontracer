@@ -37,6 +37,15 @@ type Campaign struct {
 	VTTLink       string   `bun:",default:''" json:"vtt_link,omitempty"`
 	CampaignMedia []string `bun:",array,type:jsonb" json:"campaign_media,omitempty"`
 
+	// Cover image reference into the Discord CDN.
+	// Three ref columns pin the source attachment; two cache columns hold
+	// the last-fetched signed URL (rotated on ~24h sliding window by Discord).
+	CoverChannelID       string     `bun:",default:''" json:"cover_channel_id,omitempty"`
+	CoverMessageID       string     `bun:",default:''" json:"cover_message_id,omitempty"`
+	CoverAttachmentID    string     `bun:",default:''" json:"cover_attachment_id,omitempty"`
+	CoverCachedURL       string     `bun:",default:''" json:"cover_cached_url,omitempty"`
+	CoverCachedRefreshed *time.Time `bun:",nullzero" json:"cover_cached_refreshed,omitempty"`
+
 	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=campaign_id" json:"campaign_players,omitempty"` // Has-many relation.
 
 	// Can you add a new player *even if* the Campaign is full?
