@@ -18,7 +18,13 @@ DB operations still run normally so the bot can be tested end-to-end without imp
 var SafeMode = os.Getenv("SAFE_MODE") == "true"
 
 /*
-DevMode is true when DEV_MODE=true is set.
+DevMode is true when DEV_MODE=true is set, OR when DISCORD_GUILD_ID is set.
+
+Rationale:
+	Setting DISCORD_GUILD_ID scopes the bot to a single test server,
+	which is only done during development/staging. Treating that as dev mode
+	means debug UI lights up automatically on that guild with no second flag.
+	Production deployments leave DISCORD_GUILD_ID empty and DEV_MODE unset.
 
 In dev mode, debug-only UI surfaces are exposed: the Diagnostics button on
 /admin, the /campaigndatabase slash command, and any future internal-tooling
@@ -34,7 +40,7 @@ Unrelated to SafeMode:
 
 	Staging may set SafeMode off + DevMode on to rehearse live mutations with debug visibility.
 */
-var DevMode = os.Getenv("DEV_MODE") == "true"
+var DevMode = os.Getenv("DEV_MODE") == "true" || os.Getenv("DISCORD_GUILD_ID") != ""
 
 /*
 DebugAdminID is the Discord user ID granted admin privileges for testing.
