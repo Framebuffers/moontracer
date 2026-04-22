@@ -63,7 +63,7 @@ func (h *manageNewCampaignButton) HandleComponents(s *discordgo.Session, i *disc
 						CustomID:    messages.FieldSlotsID,
 						Label:       messages.FieldSlotsLabel,
 						Style:       discordgo.TextInputShort,
-						Placeholder: messages.FieldSlotsPlaceholderNew,
+						Placeholder: messages.FieldSlotsPlaceholder,
 						Required:    false,
 						MaxLength:   3,
 					},
