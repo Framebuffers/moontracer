@@ -115,7 +115,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 			activePlayerCount++
 		}
 	}
-	if activePlayerCount >= campaign.Slots {
+	if campaign.Slots > 0 && activePlayerCount >= campaign.Slots {
 		respondInteraction(s, i, messages.CampaignFullMessage)
 		return
 	}
