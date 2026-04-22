@@ -32,8 +32,31 @@ func Migrate(db *bun.DB) error {
 	}
 
 	/*
-		Init Procedure:
-			Campaigns -> Players -> Commands -> Add scheduling to Campaigns -> CampaignPlayers -> Audit/Archival
+		Migration process (three passes, all idempotent):
+
+		1. CreateTable loop above — `IfNotExists`, so fresh DBs get every column
+		   from the model struct tags. Existing DBs skip this entirely.
+		2. `alterStmts` below — `ADD COLUMN` retrofits for columns that were added
+		   to a model after deploy. Each statement is wrapped by `isDuplicateColumn`:
+		   SQLite errors "duplicate column name ..." on re-run, which we swallow.
+		   Any other error aborts migration. Columns MUST be appended (never
+		   reordered or removed) so old deploys advancing N versions at once
+		   replay history in order.
+		3. Post-migration cleanup — dedup passes, unique indexes, backfills.
+		   Each runs on every boot; must be idempotent.
+
+		Adding a new model:
+			- Define it under `internal/manager/models/` with bun tags.
+			- Append `(*models.Foo)(nil)` to `tables` (pass 1 handles fresh DBs).
+			- If the model will ever gain columns after first deploy, every such
+			  addition lands as a new `ALTER TABLE foos ADD COLUMN ...` line at
+			  the end of `alterStmts` (pass 2 retrofits existing DBs).
+			- If columns need a unique index, backfill, or dedup, add to pass 3.
+
+		Why this shape: bun has no migration framework wired up here, so the
+		three passes stand in. Ordering matters within `alterStmts` only when a
+		later statement depends on an earlier column existing — otherwise append
+		is safe.
 	*/
 
 	alterStmts := []string{

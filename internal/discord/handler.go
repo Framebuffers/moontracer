@@ -20,7 +20,7 @@ import (
 		1. NewHandler receives the GuildDBManager, dispatcher, and admin role name.
 		2. Returns a closure that acts as the main Discord event handler.
 		3. For each interaction:
-			a. Resolve the guild ID — from the interaction itself, or from the
+			a. Resolve the guild ID: from the interaction itself, or from the
 			   CustomID for DM interactions (approval buttons encode guild ID).
 			b. Look up or create the guild's database via GuildDBManager.
 			c. Build handler sets for that guild's DB.

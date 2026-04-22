@@ -90,8 +90,7 @@ func Register(id ViewID, fn RenderFunc) {
 Navigate dispatches to the render function for the given view.
 
 If no render is registered, it logs and responds with an ephemeral error,
-
-	so the user isn't left hanging on an interaction timeout.
+so the user isn't left hanging on an interaction timeout.
 */
 func Navigate(s *discordgo.Session, i *discordgo.InteractionCreate, id ViewID, args []string) {
 	fn, ok := registry[id]
