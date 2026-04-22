@@ -60,21 +60,16 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
-	// Slots: empty field -> unlimited (-1).
-	// Otherwise, must parse to a non-negative int.
+	// Slots: empty field -> unlimited (-1). Otherwise must be a positive int (>= 1).
 	slots := -1
 	slotsStr = strings.TrimSpace(slotsStr)
 	if slotsStr != "" {
 		parsed, err := strconv.Atoi(slotsStr)
-		if err != nil || parsed < 0 {
+		if err != nil || parsed < 1 {
 			respondInteraction(s, i, messages.SlotCountMismatchErrorMessage)
 			return
 		}
-		if parsed == 0 {
-			slots = -1
-		} else {
-			slots = parsed
-		}
+		slots = parsed
 	}
 
 	tag, err := uniqueTag(m.db, models.NormalizeTag(name))

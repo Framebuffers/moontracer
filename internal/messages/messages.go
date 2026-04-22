@@ -55,7 +55,7 @@ const (
 
 // Campaign creation
 const (
-	SlotCountMismatchErrorMessage              = "Invalid slot count. Please enter a number greater than 0."
+	SlotCountMismatchErrorMessage              = "Invalid slot count. Capacity must be a positive number. Leave the field empty for unlimited."
 	CampaignCreationFailureErrorMessage        = "campaign.CreateCampaign(): error creating campaign: "
 	CampaignAndRegistrationFailureErrorMessage = "Failed to create campaign. Make sure you are registered."
 	CampaignCreationMessage                    = "You just created a new campaign: "
@@ -144,7 +144,6 @@ const (
 	FieldTagPlaceholder         = "e.g. curse-of-strahd (short, no spaces)"
 	FieldDescriptionPlaceholder = "Describe your campaign setting and premise..."
 	FieldEditionPlaceholder     = "e.g. 5e, 3.5e, PF2e"
-	FieldSlotsPlaceholder       = "e.g. 4. Set 0 for open campaigns."
 )
 
 // Add player
@@ -463,7 +462,7 @@ const (
 
 // Campaign Modal
 const (
-	FieldSlotsPlaceholderNew = "e.g. 4 (leave empty for unlimited)"
+	FieldSlotsPlaceholder    = "e.g. 4 (leave empty for unlimited)"
 	FieldSynopsisLabel       = "Synopsis & Rules"
 )
 
