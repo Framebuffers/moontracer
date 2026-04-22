@@ -48,7 +48,9 @@ func New(token, guildID, adminRole, modRole string, guildDBM *db.GuildDBManager)
 		4. Sync server roles for each guild in parallel.
 		5. Register all commands globally with Discord.
 		6. Block waiting for SIGINT/SIGTERM (Ctrl+C).
-		7. On shutdown signal, remove all registered commands from Discord.
+		7. On shutdown signal, in dev mode (guildID set) remove the guild-scoped
+		   commands from Discord; in production (global registration) leave them
+		   in place so restarts don't wipe commands from every guild.
 		8. Close the gateway connection, close all guild databases, and return.
 */
 
@@ -159,7 +161,11 @@ func (b *Bot) Run() error {
 
 	log.Println("shutting down...")
 	b.dispatcher.Stop()
-	b.removeCommands(appID)
+	if b.guildID != "" {
+		b.removeCommands(appID)
+	} else {
+		log.Println("bot: leaving global commands registered across restart")
+	}
 	b.guildDBM.Close()
 
 	return nil
