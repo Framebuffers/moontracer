@@ -6,8 +6,10 @@ import (
 	"moontracer/internal/manager/models"
 )
 
-// BuildFlags renders a Campaign's status flags (approved/unapproved, archived,
-// open/closed) as a comma-separated string for display.
+/*
+BuildFlags renders a Campaign's status flags (approved/unapproved, archived,
+open/closed) as a comma-separated string for display.
+*/
 func BuildFlags(c models.Campaign) string {
 	flags := []string{"unapproved"}
 	if c.IsApproved {
