@@ -62,7 +62,7 @@ func (c *campaignDatabaseCommand) Execute(s *discordgo.Session, i *discordgo.Int
 
 	var lines []string
 	for _, camp := range campaigns {
-		flags := buildFlags(camp)
+		flags := messages.BuildFlags(camp)
 		lines = append(lines, fmt.Sprintf("**%s** (`%s`) — DM: <@%s> [%s]", camp.Name, camp.Tag, camp.DungeonMaster, flags))
 	}
 
@@ -79,22 +79,4 @@ func (c *campaignDatabaseCommand) Execute(s *discordgo.Session, i *discordgo.Int
 			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
-}
-
-func buildFlags(c models.Campaign) string {
-	var flags []string
-	if c.IsApproved {
-		flags = append(flags, "approved")
-	} else {
-		flags = append(flags, "unapproved")
-	}
-	if c.IsArchived {
-		flags = append(flags, "archived")
-	}
-	if c.IsOpen {
-		flags = append(flags, "open")
-	} else {
-		flags = append(flags, "closed")
-	}
-	return strings.Join(flags, ", ")
 }
