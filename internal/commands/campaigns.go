@@ -103,9 +103,9 @@ func buildCampaignSelectMenu(campaigns []models.Campaign, customID, placeholder 
 		if !c.IsOpen {
 			status = "Closed"
 		}
-		slots := "Unlimited"
-		if c.Slots > 0 {
-			slots = fmt.Sprintf("%d slots", c.Slots)
+		slots := c.DisplaySlots()
+		if c.Slots > 0 && c.Slots <= 10 {
+			slots = fmt.Sprintf("%s slots", slots)
 		}
 		desc := fmt.Sprintf("%s — %s, %s", format, status, slots)
 

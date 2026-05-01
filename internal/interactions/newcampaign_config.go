@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -173,7 +174,7 @@ func (h *newCampaignFormatHandler) HandleComponents(s *discordgo.Session, i *dis
 		c.IsOneshot = false
 		c.IsWestmarch = true
 		c.Schedule.Frequency = models.Westmarch
-		c.Slots = -1
+		c.Slots = math.MaxInt32
 	default:
 		c.IsOneshot = false
 		c.IsWestmarch = false

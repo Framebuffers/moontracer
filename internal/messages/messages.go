@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.6.5"
+	BotVersion               = "v0.7.0"
 )
 
 // Command names and descriptions
@@ -72,6 +72,10 @@ const (
 	PlayerFailedToJoinMessage      = "Failed to join campaign."
 	InsertPlayerErrorMessage       = "db.Insert(): Error inserting Campaign Player: "
 	PlayerJoinedCampaignMessage    = "You have joined campaign: "
+
+	// Westmarch session-capacity tripwire (FCFS soft alert).
+	WestmarchOverCapacityDMAlert      = "⚠️ **INFO:** <@%s> just joined westmarch **%s**. Roster is now %d active player(s). Session capacity is %d. They've been admitted; bring an extra seat or trim attendance for the next session."
+	WestmarchOverCapacityPlayerNotice = "You're in **%s**! Heads up: session capacity (%d) is already met, so the DM has been notified."
 )
 
 // Campaign leave
@@ -462,8 +466,8 @@ const (
 
 // Campaign Modal
 const (
-	FieldSlotsPlaceholder    = "e.g. 4 (leave empty for unlimited)"
-	FieldSynopsisLabel       = "Synopsis & Rules"
+	FieldSlotsPlaceholder = "e.g. 4 (leave empty for unlimited)"
+	FieldSynopsisLabel    = "Synopsis & Rules"
 )
 
 // Select menu placeholders + content prefixes for /mycampaigns and /managecampaigns

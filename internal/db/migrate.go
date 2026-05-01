@@ -90,6 +90,8 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE campaigns ADD COLUMN cover_attachment_id TEXT DEFAULT ''",
 		"ALTER TABLE campaigns ADD COLUMN cover_cached_url TEXT DEFAULT ''",
 		"ALTER TABLE campaigns ADD COLUMN cover_cached_refreshed TIMESTAMP",
+		"ALTER TABLE campaigns ADD COLUMN session_capacity INTEGER NOT NULL DEFAULT 6",
+		"UPDATE campaigns SET slots = 2147483647 WHERE is_westmarch = 1 AND slots = -1",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
