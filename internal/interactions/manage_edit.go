@@ -19,7 +19,6 @@ package interactions
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -36,9 +35,8 @@ func (h *manageEditHandler) CustomIDPrefix() string {
 }
 
 func (h *manageEditHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	_ = parts[1] // campaignID
@@ -64,9 +62,8 @@ func (h *manageEditModal) CustomIDPrefix() string {
 }
 
 func (h *manageEditModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]

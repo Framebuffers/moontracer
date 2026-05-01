@@ -3,7 +3,6 @@ package interactions
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -34,9 +33,8 @@ func (h *campaignToggle) CustomIDPrefix() string {
 }
 
 func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	tag := parts[1]
@@ -48,7 +46,7 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaign.ID)
+	ok, err = auth.Authorize(h.db, userID, auth.ScopeDM, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_toggle: auth check failed: %v", err)
 		respondInteraction(s, i, messages.GenericErrorMessage)
