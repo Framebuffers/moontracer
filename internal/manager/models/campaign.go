@@ -2,6 +2,8 @@ package models
 
 import (
 	"context"
+	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -23,12 +25,13 @@ type Campaign struct {
 
 	// Details about your campaign, like open slots, the style, trigger warnings, extra info by the DM to be added to the Campaign's description.
 
-	Slots       int      `bun:",notnull,default:0" json:"slots"` // note: if the campaign has unlimited slots (like a Westmarch), default to -1 (unlimited)
-	IsOpen      bool     `bun:",notnull,default:false" json:"is_open"`
-	IsOneshot   bool     `bun:",notnull,default:false" json:"is_oneshot"`
-	IsWestmarch bool     `bun:",notnull,default:false" json:"is_westmarch"`
-	Warnings    []string `bun:",array,type:jsonb" json:"warnings,omitempty"`
-	Extra       string   `bun:",default:''" json:"extra,omitempty"`
+	Slots           int      `bun:",notnull,default:0" json:"slots"`            // Total roster cap. Westmarches set this to math.MaxInt32 (effectively unlimited) and gate per-session admission via SessionCapacity instead.
+	SessionCapacity int      `bun:",notnull,default:6" json:"session_capacity"` // Westmarch tripwire — seats per sitting. Joining past this admits anyway and DMs the campaign DM. Ignored for non-westmarch campaigns.
+	IsOpen          bool     `bun:",notnull,default:false" json:"is_open"`
+	IsOneshot       bool     `bun:",notnull,default:false" json:"is_oneshot"`
+	IsWestmarch     bool     `bun:",notnull,default:false" json:"is_westmarch"`
+	Warnings        []string `bun:",array,type:jsonb" json:"warnings,omitempty"`
+	Extra           string   `bun:",default:''" json:"extra,omitempty"`
 
 	Schedule CampaignSchedule `bun:"embed:"` // Campaign schedule.
 
@@ -75,8 +78,29 @@ func (c *Campaign) CanMutate() bool {
 	return !c.IsArchived
 }
 
-// PlayerMap returns a map of player ID to CampaignPlayer for quick lookups.
-// Requires CampaignPlayers to be loaded (via Relation).
+/*
+DisplaySlots renders the roster cap for player-facing UI.
+
+Westmarches store math.MaxInt32 to mean "no roster cap" and must never leak that number;
+legacy rows with Slots <= 0 mean unset/unlimited.
+
+The "10+" form is similar to the stock counter at a dept-store: hide the exact figure once it stops being meaningful.
+*/
+func (c *Campaign) DisplaySlots() string {
+	if c.Slots <= 0 {
+		return "Unlimited"
+	}
+	if c.Slots > 10 {
+		return "10+"
+	}
+	return fmt.Sprintf("%d", c.Slots)
+}
+
+/*
+PlayerMap returns a map of player ID to CampaignPlayer for quick lookups.
+
+Requires CampaignPlayers to be loaded (via Relation).
+*/
 func (c *Campaign) PlayerMap() map[string]*CampaignPlayer {
 	m := make(map[string]*CampaignPlayer, len(c.CampaignPlayers))
 	for i := range c.CampaignPlayers {
@@ -85,8 +109,11 @@ func (c *Campaign) PlayerMap() map[string]*CampaignPlayer {
 	return m
 }
 
-// DMMap returns a map of player ID to CampaignPlayer for DMs only.
-// Requires CampaignPlayers to be loaded (via Relation).
+/*
+DMMap returns a map of player ID to CampaignPlayer for DMs only.
+
+Requires CampaignPlayers to be loaded (via Relation).
+*/
 func (c *Campaign) DMMap() map[string]*CampaignPlayer {
 	m := make(map[string]*CampaignPlayer)
 	for i := range c.CampaignPlayers {
@@ -266,9 +293,8 @@ func (c *Campaign) CreateCampaign(
 		return nil, err
 	}
 
-	// if it is a Westmarch, default to unlimited slots
-	if campaign.IsWestmarch == true {
-		campaign.Slots = -1
+	if campaign.IsWestmarch {
+		campaign.Slots = math.MaxInt32
 	}
 
 	return campaign, nil
