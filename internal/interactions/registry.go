@@ -63,7 +63,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 
 	return []ComponentHandler{
 		// Campaign actions
-		&campaignJoin{db: db},
+		&campaignJoin{db: db, dispatcher: d},
 		&campaignLeave{db: db},
 		&campaignToggle{db: db},
 		&campaignView{db: db},

@@ -42,12 +42,20 @@ const (
 	ScopeAdmin Scope = "admin"
 )
 
-// Authorize checks whether a user has the required scope.
-// For ScopePlayer, ScopeMod, and ScopeAdmin, campaignID can be empty.
-// For ScopeMember and ScopeDM, campaignID is required.
-// Loads the player in a single query, filtering CampaignPlayers to the
-// relevant campaign when needed.
-// Returns: true if authorized, false otherwise.
+/*
+Authorize checks whether a user has the required scope.
+
+- For ScopePlayer, ScopeMod, and ScopeAdmin, campaignID can be empty.
+
+- For ScopeMember and ScopeDM, campaignID is required.
+
+Authorize then loads the player in a single query, filtering CampaignPlayers to the
+relevant campaign when needed.
+
+Returns:
+
+	true if authorized, false otherwise.
+*/
 func Authorize(database *bun.DB, userID string, required Scope, campaignID string) (bool, error) {
 	ctx := context.Background()
 

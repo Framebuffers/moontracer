@@ -13,7 +13,7 @@ package interactions
 		- New model: GuildSettings with per-guild configuration.
 		- New DB table + migration.
 		- Possible settings: default session reminder time, auto-approve campaigns,
-		  westmarch rotation mode, notification channel, etc.
+		  notification channel, etc.
 */
 
 import (

@@ -6,10 +6,12 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
+	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
@@ -26,7 +28,8 @@ import (
 
 // campaignJoin handles when a player clicks "Join Campaign" on an open campaign.
 type campaignJoin struct {
-	db *bun.DB
+	db         *bun.DB
+	dispatcher *dispatch.Dispatcher
 }
 
 func (h *campaignJoin) CustomIDPrefix() string {
@@ -108,14 +111,19 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		}
 	}
 
-	// are there any slots available?
+	/*
+		Roster cap.
+
+		Westmarches store math.MaxInt32, so this never trips for them;
+		their tripwire is SessionCapacity, evaluated below after admission.
+	*/
 	activePlayerCount := 0
 	for _, p := range players {
 		if p.Status == models.StatusActive {
 			activePlayerCount++
 		}
 	}
-	if activePlayerCount >= campaign.Slots {
+	if !campaign.IsWestmarch && campaign.Slots > 0 && activePlayerCount >= campaign.Slots {
 		respondInteraction(s, i, messages.CampaignFullMessage)
 		return
 	}
@@ -131,12 +139,27 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		respondInteraction(s, i, messages.PlayerFailedToJoinMessage)
 		return
 	}
+	newActiveCount := activePlayerCount + 1
 
 	// if the campaign has a role set already, assign it to the player.
 	if campaign.RoleID != "" {
 		if err := guard.GuildMemberRoleAdd(s, i.GuildID, userID, campaign.RoleID); err != nil {
 			log.Printf("campaign_join: failed to assign role %s to %s: %v", campaign.RoleID, userID, err)
 		}
+	}
+
+	// Westmarch tripwire: admit, then alert if the limit is passed.
+	if campaign.IsWestmarch && campaign.SessionCapacity > 0 && newActiveCount > campaign.SessionCapacity {
+		h.dispatcher.Push(dispatch.DirectMessage{
+			ID:     uuid.NewString(),
+			Sender: userID,
+			Target: campaign.DungeonMaster,
+			Content: fmt.Sprintf(messages.WestmarchOverCapacityDMAlert,
+				userID, campaign.Name, newActiveCount, campaign.SessionCapacity),
+		})
+		respondInteraction(s, i, fmt.Sprintf(messages.WestmarchOverCapacityPlayerNotice,
+			campaign.Name, campaign.SessionCapacity))
+		return
 	}
 
 	respondInteraction(s, i, fmt.Sprintf("%s **%s**!", messages.PlayerJoinedCampaignMessage, campaign.Name))

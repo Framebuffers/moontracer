@@ -67,7 +67,7 @@ func (n *newCampaign) Execute(s *discordgo.Session, i *discordgo.InteractionCrea
 						CustomID:    messages.FieldSlotsID,
 						Label:       messages.FieldSlotsLabel,
 						Style:       discordgo.TextInputShort,
-						Placeholder: messages.FieldSlotsPlaceholderNew,
+						Placeholder: messages.FieldSlotsPlaceholder,
 						Required:    false,
 						MaxLength:   3,
 					},
