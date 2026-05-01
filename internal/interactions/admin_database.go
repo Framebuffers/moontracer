@@ -16,10 +16,16 @@ package interactions
 */
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
+	"moontracer/internal/db"
 	"moontracer/internal/guard"
+	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
 
@@ -50,5 +56,29 @@ func (h *adminDatabaseHandler) HandleComponents(s *discordgo.Session, i *discord
 	// 3. build formatted list (reuse buildFlags pattern from campaign_database.go)
 	// 4. truncate at 1900 chars
 	// 5. respond with list + back button (messages.BackAdminID)
+	userID := i.Member.User.ID
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
+	if err != nil || !ok {
+		return
+	}
+
+	campaigns, err := db.GetAll[models.Campaign](h.db)
+	if err != nil {
+		log.Printf("campaign_database: failed to load campaigns: %v", err)
+		return
+	}
+
+	if len(campaigns) == 0 {
+		return
+	}
+
+	var lines []string
+	for _, camp := range campaigns {
+		flags := messages.BuildFlags(camp)
+		lines = append(lines, truncate(fmt.Sprintf("**%s** (`%s`) — DM: <@%s> [%s]",
+			camp.Name, camp.Tag, camp.DungeonMaster, flags), 1900))
+	}
+	_ = lines
+
 	respondInteraction(s, i, "Database view is not yet implemented.")
 }
