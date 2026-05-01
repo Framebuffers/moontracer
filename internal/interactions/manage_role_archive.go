@@ -44,9 +44,8 @@ func (h *manageSetRole) CustomIDPrefix() string {
 }
 
 func (h *manageSetRole) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
@@ -86,9 +85,8 @@ func (h *manageSetRoleModal) CustomIDPrefix() string {
 }
 
 func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
@@ -170,9 +168,8 @@ func (h *manageArchive) CustomIDPrefix() string {
 }
 
 func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
@@ -233,9 +230,8 @@ func (h *manageArchiveConfirm) CustomIDPrefix() string {
 }
 
 func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]

@@ -40,9 +40,8 @@ func (h *manageCampaignReschedule) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignReschedule) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
@@ -115,9 +114,8 @@ func (h *manageCampaignRescheduleModal) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignRescheduleModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
