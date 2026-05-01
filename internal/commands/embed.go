@@ -49,10 +49,7 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL 
 		books = strings.Join(c.Game.BooksAllowed, ", ")
 	}
 
-	slotsValue := "Unlimited"
-	if c.Slots > 0 {
-		slotsValue = fmt.Sprintf("%d", c.Slots)
-	}
+	slotsValue := c.DisplaySlots()
 
 	fields := []*discordgo.MessageEmbedField{
 		{Name: "DM", Value: fmt.Sprintf("<@%s>", c.DungeonMaster), Inline: true},

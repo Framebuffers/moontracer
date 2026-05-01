@@ -109,7 +109,7 @@ func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer, cove
 			{Name: "Tag", Value: c.Tag, Inline: true},
 			{Name: "DM", Value: fmt.Sprintf("<@%s>", c.DungeonMaster), Inline: true},
 			{Name: "Status", Value: status, Inline: true},
-			{Name: "Slots", Value: fmt.Sprintf("%d", c.Slots), Inline: true},
+			{Name: "Slots", Value: c.DisplaySlots(), Inline: true},
 			{Name: "Edition", Value: c.Game.Edition, Inline: true},
 			{Name: fmt.Sprintf("Players (%d)", len(players)), Value: playersValue, Inline: false},
 		},
