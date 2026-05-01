@@ -15,12 +15,7 @@ WORKDIR /app
 COPY --from=build --chown=moontracer:moontracer /moontracer /app/moontracer
 
 RUN printf '#!/bin/sh\nset -e\n\
-if [ -f /run/secrets/discord_bot_token ]; then\n\
-  export DISCORD_TOKEN="$(cat /run/secrets/discord_bot_token)"\n\
-fi\n\
-if [ -f /run/secrets/discord_guild_id ]; then\n\
-  export DISCORD_GUILD_ID="$(cat /run/secrets/discord_guild_id)"\n\
-fi\n\
+chown -R moontracer:moontracer /app/data\n\
 exec su -s /bin/sh moontracer -c "/app/moontracer"\n' > /docker-entrypoint.sh \
     && chmod +x /docker-entrypoint.sh
 
