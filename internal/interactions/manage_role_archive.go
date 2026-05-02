@@ -96,8 +96,7 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -171,8 +170,7 @@ func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -226,8 +224,7 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
