@@ -9,7 +9,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/auth"
-	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
@@ -101,11 +100,10 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 		return
 	}
 	campaignID := parts[1]
-	userID := i.Member.User.ID
+	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -117,12 +115,6 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 				message = input.Value
 			}
 		}
-	}
-
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
 	}
 
 	if campaign.AnnouncementsThreadID != "" {

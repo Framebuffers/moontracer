@@ -21,7 +21,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
 	"moontracer/internal/guard"
@@ -92,15 +91,8 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 	campaignID := parts[1]
 	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
-		return
-	}
-
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -173,17 +165,9 @@ func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 		return
 	}
 	campaignID := parts[1]
-	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
-		return
-	}
-
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -237,15 +221,8 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 	campaignID := parts[1]
 	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
-		return
-	}
-
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
