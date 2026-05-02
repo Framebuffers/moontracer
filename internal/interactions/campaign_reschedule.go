@@ -124,6 +124,9 @@ func (h *manageCampaignRescheduleModal) HandleModal(s *discordgo.Session, i *dis
 	if !ok {
 		return
 	}
+	if !requireMutable(s, i, campaign) {
+		return
+	}
 
 	var dayStr, timeStr, durStr, freqStr string
 	for _, row := range i.ModalSubmitData().Components {
