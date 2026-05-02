@@ -3,14 +3,12 @@ package interactions
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/auth"
-	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
@@ -42,9 +40,8 @@ func (h *manageCampaignAnnounce) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignAnnounce) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
@@ -98,17 +95,15 @@ Note:
 	The modal follows a Thread-first path. If there's one, post announcements on that thread.
 */
 func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := i.Member.User.ID
+	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -120,12 +115,6 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 				message = input.Value
 			}
 		}
-	}
-
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
 	}
 
 	if campaign.AnnouncementsThreadID != "" {
