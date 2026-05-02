@@ -13,6 +13,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"fmt"
 	"log"
 	"strings"
@@ -36,18 +37,18 @@ func (h *adminCampaignsHandler) CustomIDPrefix() string {
 }
 
 func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
-		respondInteraction(s, i, messages.CampaignDBNotStaff)
+		helpers.Respond(s, i, messages.CampaignDBNotStaff)
 		return
 	}
 
 	campaigns, err := db.GetAll[models.Campaign](h.db)
 	if err != nil {
 		log.Printf("admin_campaigns: failed to laod campaigns: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 	}
 
 	var filtered []models.Campaign
@@ -58,14 +59,14 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 	}
 
 	if len(filtered) == 0 {
-		respondInteraction(s, i, messages.AdminCampaignsNone)
+		helpers.Respond(s, i, messages.AdminCampaignsNone)
 		return
 	}
 
 	var lines []string
 	for _, c := range filtered {
-		lines = append(lines, fmt.Sprintf(("• **%s** — DM <@%s> [%s]")),
-			c.Name, c.DungeonMaster, messages.BuildFlags(c))
+		lines = append(lines, fmt.Sprintf("• **%s** — DM <@%s> [%s]",
+			c.Name, c.DungeonMaster, messages.BuildFlags(c)))
 	}
 
 	overview := strings.Join(lines, "\n")

@@ -16,6 +16,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"fmt"
 	"log"
 	"strings"
@@ -48,26 +49,26 @@ func (h *adminDatabaseHandler) HandleComponents(s *discordgo.Session, i *discord
 			Reject here so production never exposes the raw database view regardless.
 	*/
 	if !guard.DevMode {
-		respondInteraction(s, i, messages.DebugSurfaceDisabled)
+		helpers.Respond(s, i, messages.DebugSurfaceDisabled)
 		return
 	}
 
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
-		respondInteraction(s, i, messages.CampaignDBNotStaff)
+		helpers.Respond(s, i, messages.CampaignDBNotStaff)
 		return
 	}
 
 	campaigns, err := db.GetAll[models.Campaign](h.db)
 	if err != nil {
 		log.Printf("admin_database: failed to load campaigns: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
 	if len(campaigns) == 0 {
-		respondInteraction(s, i, messages.CampaignDBEmpty)
+		helpers.Respond(s, i, messages.CampaignDBEmpty)
 		return
 	}
 
@@ -83,5 +84,5 @@ func (h *adminDatabaseHandler) HandleComponents(s *discordgo.Session, i *discord
 		content = content[:1900] + "\n... (truncated)"
 	}
 
-	respondWithBackButton(s, i, discordgo.InteractionResponseChannelMessageWithSource, content, nil, router.ViewAdmin)
+	helpers.RespondWithBack(s, i, discordgo.InteractionResponseChannelMessageWithSource, content, nil, router.ViewAdmin)
 }

@@ -18,6 +18,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"fmt"
 
 	"github.com/bwmarrin/discordgo"
@@ -36,7 +37,7 @@ func (h *manageEditHandler) CustomIDPrefix() string {
 
 func (h *manageEditHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// TODO: implement
-	// 1. auth.Authorize(h.db, getUserID(i), auth.ScopeDM, campaignID)
+	// 1. auth.Authorize(h.db, helpers.GetUserID(i), auth.ScopeDM, campaignID)
 	// 2. db.GetByID[models.Campaign](h.db, campaignID)
 	// 3. respond with InteractionResponseModal pre-filled with current values:
 	//    - Name (TextInputShort, pre-filled)
@@ -45,9 +46,7 @@ func (h *manageEditHandler) HandleComponents(s *discordgo.Session, i *discordgo.
 	//    - Extra Info (TextInputParagraph, pre-filled)
 	//    - VTT Link (TextInputShort, pre-filled)
 
-	campaign, ok :=
-
-		respondInteraction(s, i, "Edit is not yet implemented.")
+	helpers.Respond(s, i, "Edit is not yet implemented.")
 }
 
 type manageEditModal struct {
@@ -59,18 +58,18 @@ func (h *manageEditModal) CustomIDPrefix() string {
 }
 
 func (h *manageEditModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
 	if !ok {
 		return
 	}
 	campaignID := parts[1]
 
 	// TODO: implement
-	// 1. auth.Authorize(h.db, getUserID(i), auth.ScopeDM, campaignID)
+	// 1. auth.Authorize(h.db, helpers.GetUserID(i), auth.ScopeDM, campaignID)
 	// 2. db.GetByID[models.Campaign](h.db, campaignID)
 	// 3. parse all 5 fields from modal
 	// 4. update campaign fields
 	// 5. db.Update(h.db, campaign)
 	// 6. respond with confirmation
-	respondInteraction(s, i, fmt.Sprintf("Campaign %s updated.", campaignID))
+	helpers.Respond(s, i, fmt.Sprintf("Campaign %s updated.", campaignID))
 }

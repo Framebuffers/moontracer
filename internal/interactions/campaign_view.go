@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"context"
 	"fmt"
 	"log"
@@ -43,7 +44,7 @@ func (h *campaignView) CustomIDPrefix() string {
 
 // HandleComponents handles the process of fetching data from the DB and composing the final interaction to be returned to Discord.
 func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
@@ -51,19 +52,19 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 
 	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
-		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	if !campaign.IsApproved {
-		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_view: %s: %v", messages.PlayerFetchErrorMessage, err)
-		respondInteraction(s, i, messages.CampaignLoadFailureErrorMessage)
+		helpers.Respond(s, i, messages.CampaignLoadFailureErrorMessage)
 		return
 	}
 

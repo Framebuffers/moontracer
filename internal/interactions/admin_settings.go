@@ -17,6 +17,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
@@ -33,9 +34,9 @@ func (h *adminSettingsHandler) CustomIDPrefix() string {
 
 func (h *adminSettingsHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// TODO: implement
-	// 1. auth.Authorize(h.db, getUserID(i), auth.ScopeAdmin, "")
+	// 1. auth.Authorize(h.db, helpers.GetUserID(i), auth.ScopeAdmin, "")
 	// 2. load GuildSettings from DB (create default if not exists)
 	// 3. render settings as buttons/toggles
 	// 4. back button (messages.BackAdminID)
-	respondInteraction(s, i, "Settings are not yet implemented.")
+	helpers.Respond(s, i, "Settings are not yet implemented.")
 }
