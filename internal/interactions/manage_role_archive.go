@@ -190,7 +190,7 @@ func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 						Label:    messages.ManageArchiveCancelLabel,
 						Style:    discordgo.SecondaryButton,
 						CustomID: router.NavCustomID(router.ViewManageCampaign, campaignID),
-					},
+					}, // note for myself: buttons go on different components
 				}},
 			},
 			Flags: discordgo.MessageFlagsEphemeral,

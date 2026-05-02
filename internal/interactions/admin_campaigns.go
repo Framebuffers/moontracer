@@ -13,9 +13,17 @@ package interactions
 */
 
 import (
+	"fmt"
+	"log"
+	"strings"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
+	"moontracer/internal/db"
+	"moontracer/internal/interactions/router"
+	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
 
@@ -28,11 +36,78 @@ func (h *adminCampaignsHandler) CustomIDPrefix() string {
 }
 
 func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO: implement
-	// 1. auth.Authorize(h.db, getUserID(i), auth.ScopeMod, "")
-	// 2. db.GetAll[models.Campaign](h.db)
-	// 3. filter out archived
-	// 4. build select menu or list (max 25 options)
-	// 5. back button (messages.BackAdminID)
-	respondInteraction(s, i, messages.AdminCampaignsNone)
+	userID := getUserID(i)
+
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
+	if err != nil || !ok {
+		respondInteraction(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+
+	campaigns, err := db.GetAll[models.Campaign](h.db)
+	if err != nil {
+		log.Printf("admin_campaigns: failed to laod campaigns: %v", err)
+		respondInteraction(s, i, messages.GenericErrorMessage)
+	}
+
+	var filtered []models.Campaign
+	for _, c := range campaigns {
+		if !c.IsArchived {
+			filtered = append(filtered, c)
+		}
+	}
+
+	if len(filtered) == 0 {
+		respondInteraction(s, i, messages.AdminCampaignsNone)
+		return
+	}
+
+	var lines []string
+	for _, c := range filtered {
+		lines = append(lines, fmt.Sprintf(("• **%s** — DM <@%s> [%s]")),
+			c.Name, c.DungeonMaster, messages.BuildFlags(c))
+	}
+
+	overview := strings.Join(lines, "\n")
+	if len(overview) > 4000 {
+		overview = overview[:4000] + "\n... (truncated)"
+	}
+	embed := &discordgo.MessageEmbed{
+		Title:       fmt.Sprintf("%s (%d)", messages.AdminCampaignsHeader, len(filtered)),
+		Description: overview,
+	}
+
+	var options []discordgo.SelectMenuOption
+	for idx, c := range filtered {
+		if idx >= 25 {
+			break
+		}
+		options = append(options, discordgo.SelectMenuOption{
+			Label:       c.Name,
+			Description: fmt.Sprintf("DM: %s - %s", c.DungeonMaster, messages.BuildFlags(c)),
+			Value:       c.ID,
+		})
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Embeds:  []*discordgo.MessageEmbed{embed},
+			Content: "",
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						MenuType:    discordgo.StringSelectMenu,
+						CustomID:    messages.AdminCampaignSelectPrefix,
+						Placeholder: "Pick a campaign for details...",
+						Options:     options,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					router.BackButton(messages.BackLabel, router.ViewAdmin),
+				}},
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 }

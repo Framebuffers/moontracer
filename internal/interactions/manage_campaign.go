@@ -27,6 +27,7 @@ import (
 
 /*
 manageCampaignMenu provides a model to select options in a menu providing options to manage a Campaign. interaction: `manage_campaign:<id>` [interaction: menu]
+
  1. Authorize: check if invoker is DM or Mod for that Campaign.
  2. Show action buttons: [Edit, Delete, Ban, Announce, Reschedule]
 */
