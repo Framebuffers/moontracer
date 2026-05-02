@@ -166,17 +166,9 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 		return
 	}
 	campaignID := parts[1]
-	userID := i.Member.User.ID
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
-		return
-	}
-
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -228,17 +220,10 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		return
 	}
 	campaignID := parts[1]
-	userID := i.Member.User.ID
+	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
-		return
-	}
-
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -248,7 +233,7 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 	}
 
 	ctx := context.Background()
-	_, err = h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
+	_, err := h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
 		Where("campaign_id = ?", campaignID).Exec(ctx)
 	if err != nil {
 		log.Printf("manage_delete_confirm: failed to delete campaign players: %v", err)

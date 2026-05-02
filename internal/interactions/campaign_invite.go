@@ -25,7 +25,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
@@ -50,17 +49,9 @@ func (h *manageCampaignInvite) HandleComponents(s *discordgo.Session, i *discord
 		return
 	}
 	campaignID := parts[1]
-	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
-		return
-	}
-
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -109,9 +100,8 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 	campaignID := parts[1]
 	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -121,12 +111,6 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 		return
 	}
 	targetID := values[0]
-
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
-	}
 
 	if !campaign.CanMutate() {
 		respondInteraction(s, i, messages.CampaignArchivedMessage)
