@@ -58,18 +58,13 @@ Note:
 							errors are logged but non-fatal.
 */
 func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	guildID, campaignID, userID, ok := parseApprovalInteraction(s, i)
+	guildID, campaignID, _, ok := parseApprovalInteraction(s, i)
 	if !ok {
 		return
 	}
 
-	if !checkModAuth(c.db, s, i, userID) {
-		return
-	}
-
-	campaign, err := db.GetByID[models.Campaign](c.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.CampaignApproveNotFound)
+	campaign, ok := loadModCampaign(s, i, c.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -207,7 +202,8 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 		userID = i.Member.User.ID
 	}
 
-	if !checkModAuth(m.db, s, i, userID) {
+	campaign, ok := loadModCampaign(s, i, m.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -219,12 +215,6 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 				reason = input.Value
 			}
 		}
-	}
-
-	campaign, err := db.GetByID[models.Campaign](m.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.CampaignApproveNotFound)
-		return
 	}
 
 	ctx := context.Background()
