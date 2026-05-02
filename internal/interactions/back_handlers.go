@@ -13,7 +13,7 @@ package interactions
 		2. On load failure -> ephemeral error and abort.
 		3. Empty result -> empty-state message with only a Back to /me button.
 		4. Otherwise build a string select of the user's approved campaigns
-		   plus a textual list header, and render via respondUpdate
+		   plus a textual list header, and render via helpers.RespondUpdate
 		   (replaces the current ephemeral message in place).
 
 	Flow (RenderManageList):
@@ -23,7 +23,7 @@ package interactions
 		4. Otherwise render a manage select plus a Back + "New Campaign"
 		   button row.
 
-	Also exports getUserID, a small helper used across the interactions
+	Also exports helpers.GetUserID, a small helper used across the interactions
 	package to pull the invoking user's ID out of either the Member (guild
 	context) or User (DM) field on an InteractionCreate.
 
@@ -34,6 +34,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"fmt"
 	"strings"
 
@@ -49,12 +50,12 @@ import (
 func RenderMyCampaignsList(s *discordgo.Session, i *discordgo.InteractionCreate, db *bun.DB, userID string) {
 	entries, err := models.GetPlayerCampaigns(db, userID)
 	if err != nil {
-		respondInteraction(s, i, messages.MyCampaignsLoadError)
+		helpers.Respond(s, i, messages.MyCampaignsLoadError)
 		return
 	}
 
 	if len(entries) == 0 {
-		respondUpdate(s, i, messages.NoCampaignsMessage, nil, []discordgo.MessageComponent{
+		helpers.RespondUpdate(s, i, messages.NoCampaignsMessage, nil, []discordgo.MessageComponent{
 			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 				router.BackButton(messages.BackLabel, router.ViewMe),
 			}},
@@ -72,7 +73,7 @@ func RenderMyCampaignsList(s *discordgo.Session, i *discordgo.InteractionCreate,
 	}
 	content := messages.MyCampaignsListHeader + strings.Join(lines, "\n")
 
-	respondUpdate(s, i, content, nil, []discordgo.MessageComponent{
+	helpers.RespondUpdate(s, i, content, nil, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{selectMenu}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			router.BackButton(messages.BackLabel, router.ViewMe),
@@ -84,7 +85,7 @@ func RenderMyCampaignsList(s *discordgo.Session, i *discordgo.InteractionCreate,
 func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *bun.DB, userID string) {
 	entries, err := models.GetPlayerCampaigns(db, userID)
 	if err != nil {
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -96,7 +97,7 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 	}
 
 	if len(dmEntries) == 0 {
-		respondUpdate(s, i, messages.ManageNoDMCampaigns, nil, []discordgo.MessageComponent{
+		helpers.RespondUpdate(s, i, messages.ManageNoDMCampaigns, nil, []discordgo.MessageComponent{
 			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 				router.BackButton(messages.BackLabel, router.ViewMe),
 			}},
@@ -114,7 +115,7 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 	}
 	content := messages.ManageCampaignsListHeader + strings.Join(lines, "\n")
 
-	respondUpdate(s, i, content, nil, []discordgo.MessageComponent{
+	helpers.RespondUpdate(s, i, content, nil, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{selectMenu}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			router.BackButton(messages.BackLabel, router.ViewMe),
@@ -127,17 +128,3 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 	})
 }
 
-/*
-getUserID returns the invoking user's Discord ID, handling both guild (Member) and DM (User) contexts.
-
-Empty string if neither is populated.
-*/
-func getUserID(i *discordgo.InteractionCreate) string {
-	if i.Member != nil {
-		return i.Member.User.ID
-	}
-	if i.User != nil {
-		return i.User.ID
-	}
-	return ""
-}

@@ -20,6 +20,7 @@ package interactions
 import (
 	"fmt"
 	"log"
+	"moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
@@ -44,18 +45,18 @@ func (h *manageCampaignInvite) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignInvite) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
 	campaignID := parts[1]
 
-	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
@@ -92,26 +93,26 @@ func (h *manageCampaignInviteSelect) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 
-	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
 
 	values := i.MessageComponentData().Values
 	if len(values) == 0 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 	targetID := values[0]
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
@@ -120,7 +121,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 			1. Target must be registered.
 	*/
 	if _, err := db.GetByID[models.Player](h.db, targetID); err != nil {
-		respondInteraction(s, i, messages.AddPlayerTargetNotRegistered)
+		helpers.Respond(s, i, messages.AddPlayerTargetNotRegistered)
 		return
 	}
 
@@ -128,14 +129,14 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("campaign_invite_select: failed to load players: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
 	activeCount := 0
 	for _, p := range players {
 		if p.PlayerID == targetID {
-			respondInteraction(s, i, messages.AddPlayerAlreadyInCampaign)
+			helpers.Respond(s, i, messages.AddPlayerAlreadyInCampaign)
 			return
 		}
 		if p.Status == models.StatusActive {
@@ -145,7 +146,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 
 	// 		3. Campaign must not be full.
 	if campaign.Slots > 0 && activeCount >= campaign.Slots && !campaign.CanOverflow {
-		respondInteraction(s, i, fmt.Sprintf(messages.InviteCampaignFull, campaign.Name))
+		helpers.Respond(s, i, fmt.Sprintf(messages.InviteCampaignFull, campaign.Name))
 		return
 	}
 
@@ -158,7 +159,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 	}
 	if err := db.Insert(h.db, cp); err != nil {
 		log.Printf("campaign_invite_select: failed to insert campaign player: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -187,7 +188,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 		},
 	})
 
-	respondUpdate(s, i, fmt.Sprintf(messages.InviteSentMessage, targetID, campaign.Name), nil, []discordgo.MessageComponent{
+	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.InviteSentMessage, targetID, campaign.Name), nil, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			router.BackButton(messages.BackLabel, router.ViewManageCampaign, campaignID),
 		}},
@@ -205,7 +206,7 @@ func (h *campaignInviteAccept) CustomIDPrefix() string {
 
 func (h *campaignInviteAccept) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// CustomID: campaign_invite_accept:<guildID>:<campaignID>
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 3)
 	if !ok {
 		return
 	}
@@ -226,7 +227,7 @@ func (h *campaignInviteAccept) HandleComponents(s *discordgo.Session, i *discord
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("campaign_invite_accept: failed to load players: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -251,7 +252,7 @@ func (h *campaignInviteAccept) HandleComponents(s *discordgo.Session, i *discord
 	// 		2. Activate membership.
 	if err := models.SetCampaignPlayerStatus(h.db, userID, campaignID, models.StatusActive); err != nil {
 		log.Printf("campaign_invite_accept: failed to set status: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -289,7 +290,7 @@ func (h *campaignInviteDecline) CustomIDPrefix() string {
 
 func (h *campaignInviteDecline) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// CustomID: campaign_invite_decline:<guildID>:<campaignID>
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 3)
 	if !ok {
 		return
 	}
@@ -309,7 +310,7 @@ func (h *campaignInviteDecline) HandleComponents(s *discordgo.Session, i *discor
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("campaign_invite_decline: failed to load players: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -334,7 +335,7 @@ func (h *campaignInviteDecline) HandleComponents(s *discordgo.Session, i *discor
 	// 		2. Remove the pending membership.
 	if err := models.RemoveCampaignPlayer(h.db, userID, campaignID); err != nil {
 		log.Printf("campaign_invite_decline: failed to remove player: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 

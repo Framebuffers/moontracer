@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"fmt"
 	"log"
 
@@ -40,7 +41,7 @@ func (h *manageCampaignAnnounce) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignAnnounce) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
@@ -49,7 +50,7 @@ func (h *manageCampaignAnnounce) HandleComponents(s *discordgo.Session, i *disco
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
 	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+		helpers.Respond(s, i, messages.ManageNotAuthorized)
 		return
 	}
 
@@ -95,14 +96,14 @@ Note:
 	The modal follows a Thread-first path. If there's one, post announcements on that thread.
 */
 func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
 	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 
-	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -121,17 +122,17 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 		content := fmt.Sprintf("**Announcement from <@%s>:**\n\n%s", userID, message)
 		if _, err := s.ChannelMessageSend(campaign.AnnouncementsThreadID, content); err != nil {
 			log.Printf("campaign_announce: failed to post to thread %s: %v", campaign.AnnouncementsThreadID, err)
-			respondInteraction(s, i, messages.AnnounceError)
+			helpers.Respond(s, i, messages.AnnounceError)
 			return
 		}
-		respondInteraction(s, i, fmt.Sprintf(messages.AnnouncePostedToThread, campaign.Name))
+		helpers.Respond(s, i, fmt.Sprintf(messages.AnnouncePostedToThread, campaign.Name))
 		return
 	}
 
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("campaign_announce: failed to load players: %v", err)
-		respondInteraction(s, i, messages.AnnounceError)
+		helpers.Respond(s, i, messages.AnnounceError)
 		return
 	}
 
@@ -160,9 +161,9 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	}
 
 	if sent == 0 {
-		respondInteraction(s, i, messages.AnnounceNoMembers)
+		helpers.Respond(s, i, messages.AnnounceNoMembers)
 		return
 	}
 
-	respondInteraction(s, i, fmt.Sprintf(messages.AnnounceSentMessage, sent, campaign.Name))
+	helpers.Respond(s, i, fmt.Sprintf(messages.AnnounceSentMessage, sent, campaign.Name))
 }

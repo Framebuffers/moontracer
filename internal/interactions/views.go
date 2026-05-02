@@ -23,6 +23,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
@@ -38,15 +39,15 @@ Call once at startup before the bot starts handling interactions.
 */
 func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 	router.Register(router.ViewMe, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
-		commands.RenderMeHub(s, i, db, getUserID(i))
+		commands.RenderMeHub(s, i, db, helpers.GetUserID(i))
 	})
 
 	router.Register(router.ViewMyCampaigns, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
-		RenderMyCampaignsList(s, i, db, getUserID(i))
+		RenderMyCampaignsList(s, i, db, helpers.GetUserID(i))
 	})
 
 	router.Register(router.ViewManage, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
-		RenderManageList(s, i, db, getUserID(i))
+		RenderManageList(s, i, db, helpers.GetUserID(i))
 	})
 
 	router.Register(router.ViewManageCampaign, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {

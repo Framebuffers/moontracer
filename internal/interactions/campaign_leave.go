@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"fmt"
 	"log"
 
@@ -33,7 +34,7 @@ func (h *campaignLeave) CustomIDPrefix() string {
 }
 
 func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
@@ -42,12 +43,12 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 
 	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
-		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	if !campaign.IsApproved {
-		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
@@ -55,17 +56,17 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	isDM, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_leave: auth check failed: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if isDM {
-		respondInteraction(s, i, messages.MasterIsLeavingCampaignErrorMessage)
+		helpers.Respond(s, i, messages.MasterIsLeavingCampaignErrorMessage)
 		return
 	}
 
 	if err := models.RemoveCampaignPlayer(h.db, userID, campaign.ID); err != nil {
 		log.Printf("campaign_leave: %s: %v", messages.LeavingCampaignErrorMessage, err)
-		respondInteraction(s, i, messages.FailedToLeaveCampaignErrorMessage)
+		helpers.Respond(s, i, messages.FailedToLeaveCampaignErrorMessage)
 		return
 	}
 
@@ -76,5 +77,5 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 		}
 	}
 
-	respondInteraction(s, i, fmt.Sprintf("%s **%s**.", messages.PlayerLeftCampaignMessage, campaign.Name))
+	helpers.Respond(s, i, fmt.Sprintf("%s **%s**.", messages.PlayerLeftCampaignMessage, campaign.Name))
 }

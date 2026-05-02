@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -16,7 +17,7 @@ func RenderCampaignsBrowse(s *discordgo.Session, i *discordgo.InteractionCreate,
 	campaigns, err := db.GetAll[models.Campaign](database)
 	if err != nil {
 		log.Printf("campaigns_browse: failed to load campaigns: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 

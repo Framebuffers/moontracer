@@ -19,6 +19,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"context"
 	"fmt"
 	"log"
@@ -40,7 +41,7 @@ func (h *notificationsHandler) CustomIDPrefix() string {
 }
 
 func (h *notificationsHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 	renderNotificationsPanel(s, i, h.db, userID)
 }
 
@@ -54,17 +55,17 @@ func (h *notifToggleHandler) CustomIDPrefix() string {
 }
 
 func (h *notifToggleHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
 	field := parts[1]
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 
 	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
 	if err != nil {
 		log.Printf("notif_toggle: load failed for %s: %v", userID, err)
-		respondInteraction(s, i, messages.NotifLoadFailed)
+		helpers.Respond(s, i, messages.NotifLoadFailed)
 		return
 	}
 
@@ -76,13 +77,13 @@ func (h *notifToggleHandler) HandleComponents(s *discordgo.Session, i *discordgo
 	case messages.NotifFieldInvitations:
 		settings.NotifyInvitations = !settings.NotifyInvitations
 	default:
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 
 	if _, err := h.db.NewUpdate().Model(settings).WherePK().Exec(context.Background()); err != nil {
 		log.Printf("notif_toggle: update failed for %s: %v", userID, err)
-		respondInteraction(s, i, messages.NotifUpdateFailed)
+		helpers.Respond(s, i, messages.NotifUpdateFailed)
 		return
 	}
 
@@ -94,7 +95,7 @@ func renderNotificationsPanel(s *discordgo.Session, i *discordgo.InteractionCrea
 	settings, err := models.GetOrCreatePlayerSettings(db, userID)
 	if err != nil {
 		log.Printf("notifications: load failed for %s: %v", userID, err)
-		respondInteraction(s, i, messages.NotifLoadFailed)
+		helpers.Respond(s, i, messages.NotifLoadFailed)
 		return
 	}
 
@@ -107,7 +108,7 @@ func renderNotificationsPanel(s *discordgo.Session, i *discordgo.InteractionCrea
 		router.BackButton(messages.BackLabel, router.ViewMe),
 	}}
 
-	respondUpdate(s, i, messages.NotificationsHeader, nil, []discordgo.MessageComponent{row, backRow})
+	helpers.RespondUpdate(s, i, messages.NotificationsHeader, nil, []discordgo.MessageComponent{row, backRow})
 }
 
 func notifToggleButton(field, label string, enabled bool) discordgo.Button {

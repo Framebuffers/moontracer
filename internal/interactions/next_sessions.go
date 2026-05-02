@@ -13,6 +13,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
@@ -29,10 +30,10 @@ func (h *nextSessionsHandler) CustomIDPrefix() string {
 
 func (h *nextSessionsHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// TODO: implement
-	// 1. getUserID(i)
+	// 1. helpers.GetUserID(i)
 	// 2. models.GetPlayerCampaigns(h.db, userID)
 	// 3. filter: Campaign.Schedule.NextSession > now, Status == active
 	// 4. sort by NextSession
 	// 5. render list + back button (messages.BackMeID)
-	respondInteraction(s, i, messages.NextSessionsNone)
+	helpers.Respond(s, i, messages.NextSessionsNone)
 }

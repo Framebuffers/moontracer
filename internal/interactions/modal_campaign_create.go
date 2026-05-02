@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"fmt"
 	"log"
 	"strconv"
@@ -56,7 +57,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 
 	name = strings.TrimSpace(name)
 	if name == "" {
-		respondInteraction(s, i, messages.CampaignCreationFailureErrorMessage)
+		helpers.Respond(s, i, messages.CampaignCreationFailureErrorMessage)
 		return
 	}
 
@@ -66,7 +67,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	if slotsStr != "" {
 		parsed, err := strconv.Atoi(slotsStr)
 		if err != nil || parsed < 1 {
-			respondInteraction(s, i, messages.SlotCountMismatchErrorMessage)
+			helpers.Respond(s, i, messages.SlotCountMismatchErrorMessage)
 			return
 		}
 		slots = parsed
@@ -75,7 +76,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	tag, err := uniqueTag(m.db, models.NormalizeTag(name))
 	if err != nil {
 		log.Printf("modal_campaign_create: tag dedup failed: %v", err)
-		respondInteraction(s, i, messages.CampaignCreationFailureErrorMessage)
+		helpers.Respond(s, i, messages.CampaignCreationFailureErrorMessage)
 		return
 	}
 
@@ -105,11 +106,11 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	)
 	if err != nil {
 		log.Printf("modal_campaign_create: %s: %v", messages.CampaignCreationFailureErrorMessage, err)
-		respondInteraction(s, i, messages.CampaignAndRegistrationFailureErrorMessage)
+		helpers.Respond(s, i, messages.CampaignAndRegistrationFailureErrorMessage)
 		return
 	}
 
-	respondInteraction(s, i, fmt.Sprintf(messages.NewCampaignConfigMessage, created.Name))
+	helpers.Respond(s, i, fmt.Sprintf(messages.NewCampaignConfigMessage, created.Name))
 	_, err = s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Content:    fmt.Sprintf(messages.NewCampaignConfigHeader, created.Name),
 		Components: newCampaignConfigComponents(created.ID),
