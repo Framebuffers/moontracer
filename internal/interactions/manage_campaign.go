@@ -39,9 +39,8 @@ func (h *manageCampaignMenu) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	RenderManageCampaignMenu(s, i, h.db, parts[1])
@@ -76,8 +75,7 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -162,28 +160,18 @@ func (h *manageCampaignDelete) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := i.Member.User.ID
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
-	}
-
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -225,33 +213,24 @@ func (h *manageDeleteConfirm) CustomIDPrefix() string {
 }
 
 func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := i.Member.User.ID
+	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
-	}
-
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
 	ctx := context.Background()
-	_, err = h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
+	_, err := h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
 		Where("campaign_id = ?", campaignID).Exec(ctx)
 	if err != nil {
 		log.Printf("manage_delete_confirm: failed to delete campaign players: %v", err)
@@ -311,9 +290,8 @@ func (h *manageCampaignBan) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
@@ -336,8 +314,7 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 

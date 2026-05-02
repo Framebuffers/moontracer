@@ -135,13 +135,3 @@ func uniqueTag(database *bun.DB, base string) (string, error) {
 	}
 	return "", fmt.Errorf("could not find a unique tag for %q", base)
 }
-
-func respondInteraction(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: content,
-			Flags:   discordgo.MessageFlagsEphemeral,
-		},
-	})
-}

@@ -43,9 +43,8 @@ func (h *campaignView) CustomIDPrefix() string {
 
 // HandleComponents handles the process of fetching data from the DB and composing the final interaction to be returned to Discord.
 func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	tag := parts[1]

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -155,9 +154,8 @@ Custom ID format: prefix:<guildID>:<campaignID>
 Note: In DMs, i.Member is nil. i.User is used instead.
 */
 func parseApprovalInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) (guildID, campaignID, userID string, ok bool) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 3)
-	if len(parts) < 3 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, valid := splitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	if !valid {
 		return "", "", "", false
 	}
 
@@ -196,9 +194,8 @@ func (m *campaignDenyModal) CustomIDPrefix() string {
 
 func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// CustomID format: campaign_deny_modal:<guildID>:<campaignID>
-	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 3)
-	if len(parts) < 3 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 3)
+	if !ok {
 		return
 	}
 	campaignID := parts[2]

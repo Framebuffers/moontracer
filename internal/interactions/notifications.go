@@ -22,7 +22,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -55,9 +54,8 @@ func (h *notifToggleHandler) CustomIDPrefix() string {
 }
 
 func (h *notifToggleHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	field := parts[1]

@@ -20,13 +20,11 @@ package interactions
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
@@ -46,28 +44,18 @@ func (h *manageCampaignInvite) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignInvite) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
-	}
-
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -104,17 +92,15 @@ func (h *manageCampaignInviteSelect) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
 	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -125,14 +111,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 	}
 	targetID := values[0]
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
-	}
-
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -226,9 +205,8 @@ func (h *campaignInviteAccept) CustomIDPrefix() string {
 
 func (h *campaignInviteAccept) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// CustomID: campaign_invite_accept:<guildID>:<campaignID>
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 3)
-	if len(parts) < 3 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	if !ok {
 		return
 	}
 	guildID := parts[1]
@@ -311,9 +289,8 @@ func (h *campaignInviteDecline) CustomIDPrefix() string {
 
 func (h *campaignInviteDecline) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// CustomID: campaign_invite_decline:<guildID>:<campaignID>
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 3)
-	if len(parts) < 3 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	if !ok {
 		return
 	}
 	campaignID := parts[2]

@@ -21,7 +21,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
 	"moontracer/internal/guard"
@@ -44,9 +43,8 @@ func (h *manageSetRole) CustomIDPrefix() string {
 }
 
 func (h *manageSetRole) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
@@ -86,28 +84,19 @@ func (h *manageSetRoleModal) CustomIDPrefix() string {
 }
 
 func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
 	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
-	}
-
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -170,28 +159,18 @@ func (h *manageArchive) CustomIDPrefix() string {
 }
 
 func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
-	}
-
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -233,28 +212,19 @@ func (h *manageArchiveConfirm) CustomIDPrefix() string {
 }
 
 func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts := strings.SplitN(i.MessageComponentData().CustomID, ":", 2)
-	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
 		return
 	}
 	campaignID := parts[1]
 	userID := getUserID(i)
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
-	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
-	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
-		return
-	}
-
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
