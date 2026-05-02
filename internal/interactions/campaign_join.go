@@ -69,8 +69,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 

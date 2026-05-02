@@ -75,8 +75,7 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -172,8 +171,7 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -227,8 +225,7 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -317,8 +314,7 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 

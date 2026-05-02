@@ -55,8 +55,7 @@ func (h *manageCampaignInvite) HandleComponents(s *discordgo.Session, i *discord
 		return
 	}
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 
@@ -112,8 +111,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 	}
 	targetID := values[0]
 
-	if !campaign.CanMutate() {
-		respondInteraction(s, i, messages.CampaignArchivedMessage)
+	if !requireMutable(s, i, campaign) {
 		return
 	}
 

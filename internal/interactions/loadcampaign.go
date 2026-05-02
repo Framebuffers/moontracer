@@ -44,3 +44,19 @@ func loadDMCampaign(
 	}
 	return campaign, true
 }
+
+/*
+requireMutable rejects archived (or otherwise non-mutable) campaigns by sending
+the standard CampaignArchivedMessage response. Returns true when the campaign
+is mutable; false when the caller should early-return.
+
+Pair with a load helper at any site that writes to the campaign or fires a
+campaign-bound side-effect.
+*/
+func requireMutable(s *discordgo.Session, i *discordgo.InteractionCreate, c *models.Campaign) bool {
+	if !c.CanMutate() {
+		respondInteraction(s, i, messages.CampaignArchivedMessage)
+		return false
+	}
+	return true
+}
