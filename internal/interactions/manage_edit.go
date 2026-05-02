@@ -35,12 +35,6 @@ func (h *manageEditHandler) CustomIDPrefix() string {
 }
 
 func (h *manageEditHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
-	if !ok {
-		return
-	}
-	_ = parts[1] // campaignID
-
 	// TODO: implement
 	// 1. auth.Authorize(h.db, getUserID(i), auth.ScopeDM, campaignID)
 	// 2. db.GetByID[models.Campaign](h.db, campaignID)
@@ -50,7 +44,10 @@ func (h *manageEditHandler) HandleComponents(s *discordgo.Session, i *discordgo.
 	//    - Max Players (TextInputShort, pre-filled)
 	//    - Extra Info (TextInputParagraph, pre-filled)
 	//    - VTT Link (TextInputShort, pre-filled)
-	respondInteraction(s, i, "Edit is not yet implemented.")
+
+	campaign, ok :=
+
+		respondInteraction(s, i, "Edit is not yet implemented.")
 }
 
 type manageEditModal struct {
