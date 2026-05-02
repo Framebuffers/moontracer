@@ -60,3 +60,31 @@ func requireMutable(s *discordgo.Session, i *discordgo.InteractionCreate, c *mod
 	}
 	return true
 }
+
+/*
+loadModCampaign authorizes the invoking user as a mod (ScopeMod) and loads the
+campaign by ID. On either failure it sends the approval-flow response and
+returns (nil, false), so callers can early-return.
+
+This is the mod-scoped counterpart to loadDMCampaign, used by the campaign
+approval/denial handlers. Sites that only need the auth check (no load) should
+keep using checkModAuth.
+*/
+func loadModCampaign(
+	s *discordgo.Session,
+	i *discordgo.InteractionCreate,
+	database *bun.DB,
+	campaignID string,
+) (*models.Campaign, bool) {
+	ok, err := auth.Authorize(database, getUserID(i), auth.ScopeMod, "")
+	if err != nil || !ok {
+		respondInteraction(s, i, messages.CampaignApproveNotModError)
+		return nil, false
+	}
+	campaign, err := db.GetByID[models.Campaign](database, campaignID)
+	if err != nil {
+		respondInteraction(s, i, messages.CampaignApproveNotFound)
+		return nil, false
+	}
+	return campaign, true
+}
