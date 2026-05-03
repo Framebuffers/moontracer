@@ -56,10 +56,15 @@ func main() {
 	if mediaPort == "" {
 		mediaPort = "8090"
 	}
+	mediaBaseURL := os.Getenv("MEDIA_BASE_URL")
+	if mediaBaseURL == "" {
+		mediaBaseURL = "http://localhost:" + mediaPort + "/api/v1/cdn"
+	}
+
 	mediaserver.Serve(dbDir, ":"+mediaPort)
 	mediaserver.Probe(":" + mediaPort)
 
-	bot, err := discord.New(token, guildID, adminRole, modRole, guildDBM)
+	bot, err := discord.New(token, guildID, adminRole, modRole, dbDir, mediaBaseURL, guildDBM)
 	if err != nil {
 		log.Fatalf("failed to create bot: %v", err)
 	}

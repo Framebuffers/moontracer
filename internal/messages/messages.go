@@ -257,8 +257,8 @@ const (
 	CampaignUploadNotImage      = "That file doesn't look like an image. Try JPEG, PNG, or WebP."
 	CampaignUploadTooLarge      = "Image is too large. Max 8 MiB."
 	CampaignUploadMissingAttach = "No image attached. Attach a file to the `image` option."
-	CampaignUploadFailure       = "Failed to save cover. Please try again."
-	CampaignUploadSuccess       = "Cover set for **%s**. The image will appear on the next render.\n\n_Note: Discord may rotate the image URL over time. If the cover disappears, re-run this command to set it again._"
+	CampaignUploadFailure = "Failed to save cover. Please try again."
+	CampaignUploadSuccess = "Cover set for **%s**.\n%s"
 
 	SetCoverButtonLabel  = "Set Cover"
 	SetCoverInstructions = "Use `/campaignupload kind:Cover campaign:<name> image:<file>` to set a cover for this campaign."
