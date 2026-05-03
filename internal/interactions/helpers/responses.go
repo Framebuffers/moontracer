@@ -90,6 +90,21 @@ func RespondUpdate(s *discordgo.Session, i *discordgo.InteractionCreate, content
 }
 
 /*
+BackRow builds an ActionsRow with a back button pointing at target.
+When target is not ViewMe, a secondary Home button (-> ViewMe) is appended so
+users can always return to the player hub from any depth.
+*/
+func BackRow(target router.ViewID, args ...string) discordgo.ActionsRow {
+	row := []discordgo.MessageComponent{
+		router.BackButton(messages.BackLabel, target, args...),
+	}
+	if target != router.ViewMe {
+		row = append(row, router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe))
+	}
+	return discordgo.ActionsRow{Components: row}
+}
+
+/*
 RespondWithBack sends a response that ends with a back-button row navigating to
 view. typ controls whether this is a new ephemeral message
 (InteractionResponseChannelMessageWithSource) or an in-place update
@@ -104,13 +119,7 @@ func RespondWithBack(s *discordgo.Session,
 	content string,
 	components []discordgo.MessageComponent,
 	view router.ViewID) {
-	navRow := []discordgo.MessageComponent{
-		router.BackButton(messages.BackLabel, view),
-	}
-	if view != router.ViewMe {
-		navRow = append(navRow, router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe))
-	}
-	components = append(components, discordgo.ActionsRow{Components: navRow})
+	components = append(components, BackRow(view))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: typ,

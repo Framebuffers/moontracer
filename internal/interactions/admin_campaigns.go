@@ -124,9 +124,7 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 						Options:     options,
 					},
 				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					router.BackButton(messages.BackLabel, router.ViewAdmin),
-				}},
+				helpers.BackRow(router.ViewAdmin),
 			},
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
@@ -212,6 +210,7 @@ func (h *adminCampaignSelectHandler) HandleComponents(s *discordgo.Session, i *d
 						URL:   fmt.Sprintf("discord://-/users/%s", campaign.DungeonMaster),
 					},
 					router.BackButton(messages.BackLabel, router.ViewAdmin),
+					router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
 				}},
 			},
 			Flags: discordgo.MessageFlagsEphemeral,

@@ -152,11 +152,7 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 						},
 					},
 				},
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						router.BackButton(messages.BackLabel, router.ViewManage),
-					},
-				},
+				helpers.BackRow(router.ViewManage),
 			},
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
