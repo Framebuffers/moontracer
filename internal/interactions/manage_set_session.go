@@ -157,5 +157,5 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 	}
 	h.sched.Schedule(i.GuildID, campaign)
 
-	helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetSessionSuccess, campaign.Name, when.Format(messages.SessionTimeFormat)))
+	helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetSessionSuccess, campaign.Name, when.Format(messages.SessionTimeFormat), helpers.TimeRemaining(when)))
 }
