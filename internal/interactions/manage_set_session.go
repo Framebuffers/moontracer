@@ -1,17 +1,19 @@
 package interactions
 
 /*
-	Set Next Session flow.
+	Set / Reschedule Session flow.
 
-	Step 1: Button click (manage_set_session:<campaignID>) opens a modal with
-	        date and time fields.
-	Step 2: Modal submit (modal_manage_set_session:<campaignID>) parses the
-	        fields, validates them, and writes campaign.NextSession in UTC.
+	Step 1 — Button (manage_set_session:<campaignID>):
+		Opens a modal. Title and fields adapt to context:
+		  - First set: "Set Session" title, date + time fields.
+		  - Re-schedule: "Reschedule Session" title, date + time + optional reason.
+		Date/time fields are pre-filled and labelled in the DM's local timezone
+		(from PlayerSettings). Input is parsed in that timezone and stored as UTC.
 
-	NextSession is the *specific* upcoming session date — distinct from the
-	recurring Schedule (DayOfWeek/StartTime/Frequency). DMs can use this to
-	override the schedule for a one-off, or to anchor the next sitting when
-	the campaign is freshly approved and has no derived next-date yet.
+	Step 2 — Modal (modal_manage_set_session:<campaignID>):
+		Validates and writes campaign.Schedule.NextSession (UTC).
+		On re-schedule with a reason: posts to the campaign's announcements thread
+		(if one is set) and writes an audit entry.
 */
 
 import (
@@ -25,6 +27,7 @@ import (
 
 	"moontracer/internal/db"
 	"moontracer/internal/interactions/helpers"
+	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 	"moontracer/internal/scheduler"
 )
@@ -43,6 +46,7 @@ func (h *manageSetSession) HandleComponents(s *discordgo.Session, i *discordgo.I
 		return
 	}
 	campaignID := parts[1]
+	userID := helpers.GetUserID(i)
 
 	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
@@ -52,41 +56,70 @@ func (h *manageSetSession) HandleComponents(s *discordgo.Session, i *discordgo.I
 		return
 	}
 
-	dateValue := ""
-	timeValue := ""
-	if !campaign.Schedule.NextSession.IsZero() {
-		next := campaign.Schedule.NextSession.UTC()
+	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
+	if err != nil {
+		log.Printf("manage_set_session: load settings for %s: %v", userID, err)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
+		return
+	}
+	loc := settings.Location()
+
+	isReschedule := !campaign.Schedule.NextSession.IsZero()
+
+	dateValue, timeValue := "", ""
+	if isReschedule {
+		next := campaign.Schedule.NextSession.In(loc)
 		dateValue = next.Format(messages.DateInputFormat)
 		timeValue = next.Format(messages.TimeInputFormat)
+	}
+
+	timeLabel := fmt.Sprintf("%s (%s)", messages.ManageSetSessionTimeLabel, helpers.TZLabel(loc))
+
+	modalTitle := messages.ManageSetSessionModalTitle
+	if isReschedule {
+		modalTitle = messages.ManageRescheduleModalTitle
+	}
+
+	rows := []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.TextInput{
+				CustomID:    messages.ManageSetSessionDateFieldID,
+				Label:       messages.ManageSetSessionDateLabel,
+				Style:       discordgo.TextInputShort,
+				Required:    true,
+				Placeholder: messages.ManageSetSessionDatePlaceholder,
+				Value:       dateValue,
+			},
+		}},
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.TextInput{
+				CustomID:    messages.ManageSetSessionTimeFieldID,
+				Label:       timeLabel,
+				Style:       discordgo.TextInputShort,
+				Required:    true,
+				Placeholder: messages.ManageSetSessionTimePlaceholder,
+				Value:       timeValue,
+			},
+		}},
+	}
+	if isReschedule {
+		rows = append(rows, discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.TextInput{
+				CustomID:    messages.ManageSetSessionReasonFieldID,
+				Label:       messages.ManageSetSessionReasonLabel,
+				Style:       discordgo.TextInputParagraph,
+				Required:    false,
+				Placeholder: messages.ManageSetSessionReasonPlaceholder,
+			},
+		}})
 	}
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
-			CustomID: fmt.Sprintf("%s:%s", messages.ManageSetSessionModalID, campaignID),
-			Title:    messages.ManageSetSessionModalTitle,
-			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.ManageSetSessionDateFieldID,
-						Label:       messages.ManageSetSessionDateLabel,
-						Style:       discordgo.TextInputShort,
-						Required:    true,
-						Placeholder: messages.ManageSetSessionDatePlaceholder,
-						Value:       dateValue,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.ManageSetSessionTimeFieldID,
-						Label:       messages.ManageSetSessionTimeLabel,
-						Style:       discordgo.TextInputShort,
-						Required:    true,
-						Placeholder: messages.ManageSetSessionTimePlaceholder,
-						Value:       timeValue,
-					},
-				}},
-			},
+			CustomID:   fmt.Sprintf("%s:%s", messages.ManageSetSessionModalID, campaignID),
+			Title:      modalTitle,
+			Components: rows,
 		},
 	})
 }
@@ -106,6 +139,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		return
 	}
 	campaignID := parts[1]
+	userID := helpers.GetUserID(i)
 
 	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
@@ -115,7 +149,17 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		return
 	}
 
-	var dateStr, timeStr string
+	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
+	if err != nil {
+		log.Printf("manage_set_session: load settings for %s: %v", userID, err)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
+		return
+	}
+	loc := settings.Location()
+
+	isReschedule := !campaign.Schedule.NextSession.IsZero()
+
+	var dateStr, timeStr, reason string
 	for _, row := range i.ModalSubmitData().Components {
 		for _, comp := range row.(*discordgo.ActionsRow).Components {
 			input := comp.(*discordgo.TextInput)
@@ -124,6 +168,8 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 				dateStr = strings.TrimSpace(input.Value)
 			case messages.ManageSetSessionTimeFieldID:
 				timeStr = strings.TrimSpace(input.Value)
+			case messages.ManageSetSessionReasonFieldID:
+				reason = strings.TrimSpace(input.Value)
 			}
 		}
 	}
@@ -137,7 +183,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		return
 	}
 
-	when, err := time.ParseInLocation(messages.DateTimeInputFormat, dateStr+" "+timeStr, time.UTC)
+	when, err := time.ParseInLocation(messages.DateTimeInputFormat, dateStr+" "+timeStr, loc)
 	if err != nil {
 		helpers.Respond(s, i, messages.ManageSetSessionInvalidTime)
 		return
@@ -148,7 +194,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		return
 	}
 
-	campaign.Schedule.NextSession = when
+	campaign.Schedule.NextSession = when.UTC()
 	campaign.Schedule.AlertSent = false
 	if err := db.Update(h.db, campaign); err != nil {
 		log.Printf("manage_set_session: failed to update campaign %s: %v", campaign.ID, err)
@@ -157,5 +203,22 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 	}
 	h.sched.Schedule(i.GuildID, campaign)
 
-	helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetSessionSuccess, campaign.Name, when.Format(messages.SessionTimeFormat), helpers.TimeRemaining(when)))
+	displayTime := helpers.FormatInLocation(when, messages.SessionTimeFormat, loc) + " " + helpers.TZLabel(loc)
+	remaining := helpers.TimeRemaining(when)
+
+	if isReschedule && reason != "" {
+		if campaign.AnnouncementsThreadID != "" {
+			threadMsg := fmt.Sprintf(messages.ManageSetSessionRescheduleThread, displayTime, reason)
+			if _, err := s.ChannelMessageSend(campaign.AnnouncementsThreadID, threadMsg); err != nil {
+				log.Printf("manage_set_session: post to thread %s: %v", campaign.AnnouncementsThreadID, err)
+			}
+		}
+		if err := models.InsertAuditEntry(h.db, userID, userID, models.AuditSessionReschedule, reason); err != nil {
+			log.Printf("manage_set_session: audit entry for campaign %s: %v", campaign.ID, err)
+		}
+		helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetSessionRescheduleSuccess, campaign.Name, displayTime, remaining))
+		return
+	}
+
+	helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetSessionSuccess, campaign.Name, displayTime, remaining))
 }

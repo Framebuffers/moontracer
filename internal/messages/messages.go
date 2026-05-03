@@ -321,6 +321,17 @@ const (
 	AnnouncePostedToThread   = "Announcement posted to the **%s** announcements thread."
 )
 
+// DayOfWeekInput maps accepted day-name inputs (lower-cased) to 0-based weekday index (Mon=0).
+var DayOfWeekInput = map[string]int{
+	"mon": 0, "monday": 0,
+	"tue": 1, "tuesday": 1,
+	"wed": 2, "wednesday": 2,
+	"thu": 3, "thursday": 3,
+	"fri": 4, "friday": 4,
+	"sat": 5, "saturday": 5,
+	"sun": 6, "sunday": 6,
+}
+
 // Reschedule
 const (
 	RescheduleModalPrefix      = "manage_reschedule_modal"

@@ -7,6 +7,7 @@ import (
 
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
+	"moontracer/internal/interactions/helpers"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -48,11 +49,6 @@ func fireReminder(s *Scheduler, guildID, campaignID string) {
 		return
 	}
 
-	content := fmt.Sprintf(messages.ReminderContent,
-		campaign.Name,
-		campaign.Schedule.NextSession.Format(messages.SessionTimeFormat),
-	)
-
 	sent := 0
 	for _, p := range players {
 		if p.Status != models.StatusActive &&
@@ -68,6 +64,13 @@ func fireReminder(s *Scheduler, guildID, campaignID string) {
 		if !settings.NotifySessionRemind {
 			continue
 		}
+		loc := settings.Location()
+		displayTime := helpers.FormatInLocation(campaign.Schedule.NextSession, messages.SessionTimeFormat, loc)
+		content := fmt.Sprintf(messages.ReminderContent,
+			campaign.Name,
+			displayTime,
+			helpers.TZLabel(loc),
+		)
 		s.dispatcher.Push(dispatch.DirectMessage{
 			ID:      fmt.Sprintf("reminder:%s:%s", campaignID, p.PlayerID),
 			Target:  p.PlayerID,
