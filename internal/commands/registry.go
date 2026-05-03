@@ -6,7 +6,6 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/dispatch"
-	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
 )
 
@@ -55,7 +54,6 @@ func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
 		&pingCommand{},
 		&awooCommand{db: db},
 		&helpCommand{db: *db, d: d},
-		&playerCommand{db: db},
 		&registerCommand{db: db},
 		&meCommand{db: db},
 		&campaignsCommand{db: db},
@@ -63,15 +61,10 @@ func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
 		&newCampaign{db: db},
 		&banCommand{db: db},
 		&unbanCommand{db: db},
-		&manageCampaigns{db: db},
 		&adminCommand{db: db},
 		&aboutCommand{db: db},
 		&waosCommand{db: db},
 		&campaignUploadCommand{db: db},
-	}
-
-	if guard.DevMode {
-		cmds = append(cmds, &campaignDatabaseCommand{db: db})
 	}
 
 	return cmds

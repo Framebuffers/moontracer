@@ -75,6 +75,7 @@ const (
 // Campaign lookup
 const (
 	CampaignNotFoundMessage         = "Campaign not found."
+	CampaignArchivedFooter          = "This campaign is archived — it is an immutable record."
 	CampaignLoadFailureErrorMessage = "Failed to load campaign."
 	CampaignPlayersLoadError        = "Failed to load campaign players."
 	CampaignFetchError              = "campaign: error fetching campaign %s: "
@@ -136,6 +137,7 @@ const (
 	EmbedColor                 = 0x5865F2
 	ClosedStatusLabel          = "Closed"
 	OpenStatusLabel            = "Open"
+	ArchivedStatusLabel        = "Archived"
 	CampaignLabel              = "Campaign"
 	CampaignTypeOneShotLabel   = "One-shot"
 	CampaignTypeWestmarchLabel = "Westmarch"
