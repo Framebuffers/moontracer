@@ -14,6 +14,7 @@ import (
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
+	"moontracer/internal/scheduler"
 )
 
 /*
@@ -29,6 +30,7 @@ type Bot struct {
 	modRole    string
 	registered []*discordgo.ApplicationCommand
 	dispatcher *dispatch.Dispatcher
+	scheduler  *scheduler.Scheduler
 }
 
 // New creates a Bot with the given token, guild ID, role names, and guild DB manager.
@@ -59,14 +61,16 @@ Run opens the gateway, registers global commands, blocks until
 SIGINT/SIGTERM, then removes commands and closes the session.
 */
 func (b *Bot) Run() error {
+	// workers
 	b.dispatcher = dispatch.NewDispatcher(b.session, 5)
+	b.scheduler = scheduler.New(b.guildDBM, b.dispatcher)
 
 	b.session.Identify.Intents = discordgo.IntentsGuilds |
 		discordgo.IntentsGuildMembers |
 		discordgo.IntentsGuildMessages |
 		discordgo.IntentsDirectMessages
 
-	b.session.AddHandler(NewHandler(b.guildDBM, b.dispatcher, b.adminRole))
+	b.session.AddHandler(NewHandler(b.guildDBM, b.dispatcher, b.adminRole, b.scheduler))
 
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
 		guildDB, err := b.guildDBM.GetOrCreate(e.GuildID)
@@ -79,7 +83,7 @@ func (b *Bot) Run() error {
 		}
 	})
 
-	b.session.AddHandler(HandleGuildMemberRemove(b.guildDBM))
+	b.session.AddHandler(HandleGuildMemberRemove(b.guildDBM, b.scheduler))
 
 	// Initialize new guilds joined mid-runtime.
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildCreate) {
@@ -111,8 +115,12 @@ func (b *Bot) Run() error {
 	appID := b.session.State.User.ID
 	log.Printf("bot: logged in as %s (app %s)", b.session.State.User.Username, appID)
 
-	// Discover all guilds and initialize their databases in parallel.
-	// In dev mode scoped to a single guild, ignore all other guilds.
+	/*
+		Discover all guilds and initialize their databases in parallel.
+
+		NOTE:
+			In dev mode scoped to a single guild, ignore all other guilds.
+	*/
 	var guildIDs []string
 	for _, g := range b.session.State.Guilds {
 		if guard.DebugGuildID != "" && g.ID != guard.DebugGuildID {
@@ -123,6 +131,7 @@ func (b *Bot) Run() error {
 	}
 	log.Printf("bot: discovered %d guild(s), initializing databases...", len(guildIDs))
 	b.guildDBM.InitForGuilds(guildIDs)
+	b.scheduler.BootScan(guildIDs)
 
 	// Register command metadata in each guild's DB and sync roles in parallel.
 	var wg sync.WaitGroup
@@ -160,6 +169,7 @@ func (b *Bot) Run() error {
 	<-stop
 
 	log.Println("shutting down...")
+	b.scheduler.Stop()
 	b.dispatcher.Stop()
 	if b.guildID != "" {
 		b.removeCommands(appID)

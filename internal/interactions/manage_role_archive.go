@@ -28,6 +28,7 @@ import (
 	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
+	"moontracer/internal/scheduler"
 )
 
 /*
@@ -205,7 +206,8 @@ func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 */
 
 type manageArchiveConfirm struct {
-	db *bun.DB
+	db    *bun.DB
+	sched *scheduler.Scheduler
 }
 
 func (h *manageArchiveConfirm) CustomIDPrefix() string {
@@ -234,6 +236,7 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 		helpers.Respond(s, i, messages.ManageArchiveFailed)
 		return
 	}
+	h.sched.Cancel(i.GuildID, campaign.ID)
 
 	if err := models.InsertAuditEntry(h.db, userID, userID, models.AuditCampaignArchive, fmt.Sprintf("archived campaign %s (%s) via manage menu", campaign.Name, campaign.Tag)); err != nil {
 		log.Printf("manage_archive: failed to write audit entry: %v", err)
