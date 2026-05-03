@@ -129,6 +129,11 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
 						},
 						discordgo.Button{
+							Label:    messages.ManageSetSessionLabel,
+							Style:    discordgo.SecondaryButton,
+							CustomID: fmt.Sprintf("%s:%s", messages.ManageSetSessionPrefix, campaignID),
+						},
+						discordgo.Button{
 							Label:    messages.ManageArchiveLabel,
 							Style:    discordgo.DangerButton,
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),
@@ -138,6 +143,10 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 							Style:    discordgo.SecondaryButton,
 							CustomID: fmt.Sprintf("manage_setcover:%s", campaignID),
 						},
+					},
+				},
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
 						router.BackButton(messages.BackLabel, router.ViewManage),
 					},
 				},

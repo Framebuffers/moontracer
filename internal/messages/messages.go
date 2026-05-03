@@ -13,7 +13,34 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.7.3"
+	BotVersion               = "v0.8.0"
+)
+
+/*
+Date/time formats.
+
+There are two different kinds of formats: input and display.
+
+Input formats are interface contracts: they describe what DMs type into
+modals and aren't locale-dependent.
+
+Display formats render human-readable strings and could be localized:
+to translate them, swap these per locale to get day/month names
+in the user's language.
+
+NOTE:
+	Go's time package uses the reference time `Mon Jan 2 15:04:05 MST 2006` to
+	define layouts; see https://pkg.go.dev/time#Layout.
+*/
+const (
+	// Input: what the DM types (and it's parsed).
+	DateInputFormat     = "2006-01-02"       // YYYY-MM-DD (ISO 8601 date)
+	TimeInputFormat     = "15:04"            // HH:MM (24h)
+	DateTimeInputFormat = "2006-01-02 15:04" // combined for ParseInLocation
+
+	// Display: these can be translated later when localization can occur.
+	SessionTimeFormat = "Mon 2 Jan 2006 15:04" // long form, includes year
+	SessionListFormat = "Mon 2 Jan 15:04"      // compact, year implied
 )
 
 // Command names and descriptions
@@ -562,15 +589,31 @@ const (
 
 // Manage campaign: Invite Player
 const (
-	ManageInviteLabel        = "Invite Player"
-	ManageInvitePrefix       = "manage_invite"
-	ManageInviteSelectPrefix = "manage_invite_select"
-	InviteAcceptPrefix       = "campaign_invite_accept"
-	InviteDeclinePrefix      = "campaign_invite_decline"
-	InviteSentMessage        = "Invitation sent to <@%s> for **%s**."
-	InviteDMMessage          = "You've been invited to join **%s** by <@%s>!"
-	InviteAcceptedDMUpdate   = "You accepted the invitation to **%s**."
-	InviteDeclinedDMUpdate   = "You declined the invitation to **%s**."
-	InviteAlreadyProcessed   = "This invitation has already been processed."
-	InviteCampaignFull       = "Cannot invite — campaign **%s** is full."
+	ManageInviteLabel  = "Invite Player"
+	ManageInvitePrefix = "manage_invite"
+
+	ManageSetSessionLabel           = "Set Next Session"
+	ManageSetSessionPrefix          = "manage_set_session"
+	ManageSetSessionModalID         = "modal_manage_set_session"
+	ManageSetSessionModalTitle      = "Set Next Session"
+	ManageSetSessionDateLabel       = "Date (YYYY-MM-DD)"
+	ManageSetSessionDatePlaceholder = "2026-05-08"
+	ManageSetSessionTimeLabel       = "Time UTC (HH:MM, 24h)"
+	ManageSetSessionTimePlaceholder = "19:00"
+	ManageSetSessionDateFieldID     = "session_date"
+	ManageSetSessionTimeFieldID     = "session_time"
+	ManageSetSessionInvalidDate     = "Invalid date format. Use YYYY-MM-DD."
+	ManageSetSessionInvalidTime     = "Invalid time format. Use HH:MM (24h)."
+	ManageSetSessionInPast          = "Cannot set a session in the past."
+	ManageSetSessionSuccess         = "Next session for **%s** set to **%s** UTC."
+	ManageSetSessionUpdateFailed    = "Failed to update next session."
+	ManageInviteSelectPrefix        = "manage_invite_select"
+	InviteAcceptPrefix              = "campaign_invite_accept"
+	InviteDeclinePrefix             = "campaign_invite_decline"
+	InviteSentMessage               = "Invitation sent to <@%s> for **%s**."
+	InviteDMMessage                 = "You've been invited to join **%s** by <@%s>!"
+	InviteAcceptedDMUpdate          = "You accepted the invitation to **%s**."
+	InviteDeclinedDMUpdate          = "You declined the invitation to **%s**."
+	InviteAlreadyProcessed          = "This invitation has already been processed."
+	InviteCampaignFull              = "Cannot invite — campaign **%s** is full."
 )
