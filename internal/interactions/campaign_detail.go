@@ -51,9 +51,7 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		components = append(components, discordgo.ActionsRow{Components: actionButtons})
 	}
 
-	components = append(components, discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		router.BackButton(messages.BackLabel, router.ViewCampaignsBrowse, "all"),
-	}})
+	components = append(components, helpers.BackRow(router.ViewCampaignsBrowse, "all"))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
