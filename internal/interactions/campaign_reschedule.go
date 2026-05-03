@@ -146,8 +146,8 @@ func (h *manageCampaignRescheduleModal) HandleModal(s *discordgo.Session, i *dis
 		}
 	}
 
-	day, err := strconv.Atoi(dayStr)
-	if err != nil || day < 0 || day > 6 {
+	day, ok := parseDayOfWeek(dayStr)
+	if !ok {
 		helpers.Respond(s, i, messages.RescheduleInvalidDay)
 		return
 	}
@@ -198,6 +198,19 @@ func isValidTime(t string) bool {
 		return false
 	}
 	return true
+}
+
+func parseDayOfWeek(s string) (int, bool) {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if n, ok := messages.DayOfWeekInput[s]; ok {
+		return n, true
+	}
+	// also accept numeric for backwards compat
+	n, err := strconv.Atoi(s)
+	if err == nil && n >= 0 && n <= 6 {
+		return n, true
+	}
+	return 0, false
 }
 
 func isValidFrequency(f models.CampaignFrequency) bool {

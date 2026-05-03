@@ -4,6 +4,9 @@ import (
 	"log"
 	"os"
 
+	// NOTE: this embeds the IANA timezone database so LoadLocation works without system tzdata
+	_ "time/tzdata"
+
 	"moontracer/internal/db"
 	"moontracer/internal/discord"
 )
@@ -29,14 +32,16 @@ func main() {
 		log.Fatal("DISCORD_BOT_TOKEN is required")
 	}
 
-	guildID := os.Getenv("DISCORD_GUILD_ID") // optional: if set, commands register to that guild only (instant); if empty, commands register globally (up to 1h propagation)
+	// optional: if set, commands register to that guild only (instant); if empty, commands register globally (up to 1h propagation)
+	guildID := os.Getenv("DISCORD_GUILD_ID")
 
 	adminRole := os.Getenv("ADMIN_ROLE_NAME")
 	if adminRole == "" {
 		log.Fatal("ADMIN_ROLE_NAME is required")
 	}
 
-	modRole := os.Getenv("MOD_ROLE_NAME") // optional: if empty, mods are admin-assigned only
+	// optional: if empty, mods are admin-assigned only
+	modRole := os.Getenv("MOD_ROLE_NAME")
 
 	dbDir := "data"
 

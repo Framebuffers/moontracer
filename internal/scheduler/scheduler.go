@@ -74,6 +74,9 @@ Schedule cancels any existing timer for the campaign and sets a new one.
 Safe to call after every NextSession update. It always replaces the prior timer.
 */
 func (s *Scheduler) Schedule(guildID string, campaign *models.Campaign) {
+	if s == nil {
+		return
+	}
 	if campaign.IsArchived || campaign.Schedule.AlertSent || campaign.Schedule.NextSession.IsZero() {
 		return
 	}
@@ -112,6 +115,9 @@ Cancel stops the pending timer for a campaign without firing it.
 Call whenever a campaign is archived or its session is cleared.
 */
 func (s *Scheduler) Cancel(guildID, campaignID string) {
+	if s == nil {
+		return
+	}
 	key := timerKey(guildID, campaignID)
 	s.mu.Lock()
 	defer s.mu.Unlock()

@@ -134,7 +134,13 @@ func buildMeHubComponents(db *bun.DB, userID string) []discordgo.MessageComponen
 		},
 	}
 
-	var row2 []discordgo.MessageComponent
+	row2 := []discordgo.MessageComponent{
+		discordgo.Button{
+			Label:    messages.TimezoneLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: messages.TimezonePrefix,
+		},
+	}
 	if isDMOfAnyCampaign(db, userID) {
 		row2 = append(row2, discordgo.Button{
 			Label:    messages.ManageCampaignsCommandDesc,
