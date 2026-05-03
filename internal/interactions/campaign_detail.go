@@ -29,7 +29,7 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		return
 	}
 
-	if !campaign.IsApproved {
+	if !campaign.IsApproved && !campaign.IsArchived {
 		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
@@ -44,6 +44,9 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	userID := helpers.GetUserID(i)
 	coverURL := cdn.ResolveCoverURL(context.Background(), database, campaign)
 	embed := commands.CampaignEmbed(*campaign, players, coverURL)
+	if campaign.IsArchived {
+		embed.Footer = &discordgo.MessageEmbedFooter{Text: messages.CampaignArchivedFooter}
+	}
 	actionButtons := commands.CampaignButtons(userID, *campaign, players)
 
 	var components []discordgo.MessageComponent
@@ -51,9 +54,7 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		components = append(components, discordgo.ActionsRow{Components: actionButtons})
 	}
 
-	components = append(components, discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		router.BackButton(messages.BackLabel, router.ViewCampaignsBrowse, "all"),
-	}})
+	components = append(components, helpers.BackRow(router.ViewCampaignsBrowse, "all"))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,

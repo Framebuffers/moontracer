@@ -147,6 +147,7 @@ func adminDiagData(s *discordgo.Session, guildDB *bun.DB, guildID string) *disco
 		Components: []discordgo.MessageComponent{
 			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 				router.BackButton(messages.BackLabel, router.ViewAdmin),
+				router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
 			}},
 		},
 		Flags: discordgo.MessageFlagsEphemeral,
