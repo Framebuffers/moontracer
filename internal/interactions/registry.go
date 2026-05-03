@@ -107,6 +107,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 
 		// Admin hub
 		&adminCampaignsHandler{db: db},
+		&adminCampaignSelectHandler{db: db},
 		&adminBroadcastHandler{db: db, dispatcher: d},
 		&adminDatabaseHandler{db: db},
 		&adminSettingsHandler{db: db},

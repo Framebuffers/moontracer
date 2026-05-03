@@ -526,7 +526,9 @@ const (
 	AdminBroadcastModalID    = "modal_admin_broadcast"
 	AdminBroadcastModalTitle = "Broadcast Message"
 	AdminBroadcastFieldLabel = "Message"
+	AdminBroadcastFieldID    = "broadcast_message"
 	AdminBroadcastSuccess    = "Broadcast sent."
+	AdminBroadcastSent       = "Broadcast sent to %d players."
 	AdminBroadcastFailed     = "Failed to send broadcast."
 )
 
