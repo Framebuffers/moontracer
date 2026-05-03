@@ -321,6 +321,9 @@ const (
 	AnnouncePostedToThread   = "Announcement posted to the **%s** announcements thread."
 )
 
+// CampaignsCategoryName is the shared Discord category all campaign channels are grouped under.
+const CampaignsCategoryName = "Campaigns"
+
 // DayOfWeekInput maps accepted day-name inputs (lower-cased) to 0-based weekday index (Mon=0).
 var DayOfWeekInput = map[string]int{
 	"mon": 0, "monday": 0,

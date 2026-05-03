@@ -135,3 +135,12 @@ func ThreadStart(s *discordgo.Session, channelID, name string, archiveDuration i
 	}
 	return s.ThreadStart(channelID, name, discordgo.ChannelTypeGuildPublicThread, archiveDuration)
 }
+
+// ChannelMessageSend sends a message to a channel, or logs in safe mode.
+func ChannelMessageSend(s *discordgo.Session, channelID, content string) (*discordgo.Message, error) {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would send message to channel %s: %q", channelID, content)
+		return &discordgo.Message{ID: "safe-mode-message"}, nil
+	}
+	return s.ChannelMessageSend(channelID, content)
+}

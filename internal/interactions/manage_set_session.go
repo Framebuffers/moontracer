@@ -26,6 +26,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/db"
+	"moontracer/internal/guard"
 	"moontracer/internal/interactions/helpers"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
@@ -209,7 +210,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 	if isReschedule && reason != "" {
 		if campaign.AnnouncementsThreadID != "" {
 			threadMsg := fmt.Sprintf(messages.ManageSetSessionRescheduleThread, displayTime, reason)
-			if _, err := s.ChannelMessageSend(campaign.AnnouncementsThreadID, threadMsg); err != nil {
+			if _, err := guard.ChannelMessageSend(s, campaign.AnnouncementsThreadID, threadMsg); err != nil {
 				log.Printf("manage_set_session: post to thread %s: %v", campaign.AnnouncementsThreadID, err)
 			}
 		}
