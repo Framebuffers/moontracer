@@ -73,9 +73,7 @@ func (h *manageCampaignInvite) HandleComponents(s *discordgo.Session, i *discord
 						Placeholder: "Select a player...",
 					},
 				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					router.BackButton(messages.BackLabel, router.ViewManageCampaign, campaignID),
-				}},
+				helpers.BackRow(router.ViewManageCampaign, campaignID),
 			},
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
@@ -189,9 +187,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 	})
 
 	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.InviteSentMessage, targetID, campaign.Name), nil, []discordgo.MessageComponent{
-		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			router.BackButton(messages.BackLabel, router.ViewManageCampaign, campaignID),
-		}},
+		helpers.BackRow(router.ViewManageCampaign, campaignID),
 	})
 }
 

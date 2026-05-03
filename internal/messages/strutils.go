@@ -16,9 +16,8 @@ func BuildFlags(c models.Campaign) string {
 		flags[0] = "approved"
 	}
 	if c.IsArchived {
-		flags = append(flags, "archived")
-	}
-	if c.IsOpen {
+		flags = append(flags, "archived", "closed")
+	} else if c.IsOpen {
 		flags = append(flags, "open")
 	} else {
 		flags = append(flags, "closed")

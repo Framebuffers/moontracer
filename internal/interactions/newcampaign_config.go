@@ -253,9 +253,7 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 	}
 
 	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.NewCampaignSubmittedMessage, c.Name), nil, []discordgo.MessageComponent{
-		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			router.BackButton(messages.BackLabel, router.ViewMe),
-		}},
+		helpers.BackRow(router.ViewManage),
 	})
 }
 
