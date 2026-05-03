@@ -1,0 +1,81 @@
+package scheduler
+
+import (
+	"fmt"
+	"log"
+	"time"
+
+	"moontracer/internal/db"
+	"moontracer/internal/dispatch"
+	"moontracer/internal/manager/models"
+	"moontracer/internal/messages"
+)
+
+func fireReminder(s *Scheduler, guildID, campaignID string) {
+	gdb, err := s.guildDBM.GetOrCreate(guildID)
+	if err != nil {
+		log.Printf("scheduler: fire: get db for guild %s: %v", guildID, err)
+		return
+	}
+
+	campaign, err := db.GetByID[models.Campaign](gdb, campaignID)
+	if err != nil {
+		log.Printf("scheduler: fire: load campaign %s: %v", campaignID, err)
+		return
+	}
+
+	// Re-validate reminder. State may have changed since the timer was set.
+	if campaign.IsArchived || campaign.Schedule.AlertSent || campaign.Schedule.NextSession.IsZero() {
+		return
+	}
+	if !campaign.Schedule.NextSession.After(time.Now().UTC()) {
+		return
+	}
+
+	/*
+		Persist the idempotency flag BEFORE fan-out, so a restart between
+		here and the dispatcher push never sends duplicate reminders.
+	*/
+	campaign.Schedule.AlertSent = true
+	if err := db.Update(gdb, campaign); err != nil {
+		log.Printf("scheduler: fire: mark AlertSent for campaign %s: %v", campaignID, err)
+		return
+	}
+
+	players, err := models.GetCampaignPlayers(gdb, campaignID)
+	if err != nil {
+		log.Printf("scheduler: fire: load players for campaign %s: %v", campaignID, err)
+		return
+	}
+
+	content := fmt.Sprintf(messages.ReminderContent,
+		campaign.Name,
+		campaign.Schedule.NextSession.Format(messages.SessionTimeFormat),
+	)
+
+	sent := 0
+	for _, p := range players {
+		if p.Status != models.StatusActive &&
+			p.Status != models.StatusPending &&
+			p.Status != models.StatusHiatus {
+			continue
+		}
+		settings, err := models.GetOrCreatePlayerSettings(gdb, p.PlayerID)
+		if err != nil {
+			log.Printf("scheduler: fire: load settings for player %s: %v", p.PlayerID, err)
+			continue
+		}
+		if !settings.NotifySessionRemind {
+			continue
+		}
+		s.dispatcher.Push(dispatch.DirectMessage{
+			ID:      fmt.Sprintf("reminder:%s:%s", campaignID, p.PlayerID),
+			Target:  p.PlayerID,
+			Content: content,
+		})
+		sent++
+	}
+
+	log.Printf("scheduler: fired reminder for %s (%s, guild %s) — %d DM(s) queued",
+		campaign.Name, campaignID, guildID, sent)
+}

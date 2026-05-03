@@ -57,5 +57,5 @@ func (h *adminDiagHandler) HandleComponents(s *discordgo.Session, i *discordgo.I
 		return
 	}
 
-	commands.RenderAdminDiag(s, i)
+	commands.RenderAdminDiag(s, i, h.db, i.GuildID)
 }

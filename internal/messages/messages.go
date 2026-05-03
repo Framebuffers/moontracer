@@ -607,6 +607,9 @@ const (
 	ManageSetSessionInPast          = "Cannot set a session in the past."
 	ManageSetSessionSuccess         = "Next session for **%s** set to **%s** UTC."
 	ManageSetSessionUpdateFailed    = "Failed to update next session."
+
+	// Session reminder DM (sent ~1 hour before NextSession).
+	ReminderContent = "**Session Reminder: %s**\nYour next session starts in about 1 hour — **%s UTC**"
 	ManageInviteSelectPrefix        = "manage_invite_select"
 	InviteAcceptPrefix              = "campaign_invite_accept"
 	InviteDeclinePrefix             = "campaign_invite_decline"

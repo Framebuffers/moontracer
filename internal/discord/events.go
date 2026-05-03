@@ -9,6 +9,7 @@ import (
 	"moontracer/internal/db"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
+	"moontracer/internal/scheduler"
 )
 
 /*
@@ -28,7 +29,7 @@ import (
 
 This enforces DM sovereignty: if the DM leaves, the campaign becomes an immutable record rather than being handed off.
 */
-func HandleGuildMemberRemove(guildDBM *db.GuildDBManager) func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
+func HandleGuildMemberRemove(guildDBM *db.GuildDBManager, sched *scheduler.Scheduler) func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
 	return func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
 		database, err := guildDBM.GetOrCreate(e.GuildID)
 		if err != nil {
@@ -66,6 +67,7 @@ func HandleGuildMemberRemove(guildDBM *db.GuildDBManager) func(s *discordgo.Sess
 				log.Printf("events: failed to archive campaign %s for departing DM %s: %v", cp.CampaignID, userID, err)
 				continue
 			}
+			sched.Cancel(e.GuildID, cp.CampaignID)
 
 			if err := models.InsertAuditEntry(database, userID, "system", models.AuditCampaignArchive, "DM left server, campaign auto-archived"); err != nil {
 				log.Printf("events: failed to write audit entry for campaign %s: %v", cp.CampaignID, err)
