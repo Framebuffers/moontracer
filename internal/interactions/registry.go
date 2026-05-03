@@ -105,6 +105,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&nextSessionsHandler{db: db},
 		&notificationsHandler{db: db},
 		&notifToggleHandler{db: db},
+		&timezoneButtonHandler{db: db},
+		&timezoneSelectHandler{db: db},
 
 		// Admin hub
 		&adminCampaignsHandler{db: db},

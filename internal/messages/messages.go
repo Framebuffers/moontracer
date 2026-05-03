@@ -29,6 +29,7 @@ to translate them, swap these per locale to get day/month names
 in the user's language.
 
 NOTE:
+
 	Go's time package uses the reference time `Mon Jan 2 15:04:05 MST 2006` to
 	define layouts; see https://pkg.go.dev/time#Layout.
 */
@@ -267,7 +268,7 @@ const (
 	ManageDeleteLabel         = "Delete"
 	ManageBanLabel            = "Ban Member"
 	ManageAnnounceLabel       = "Announce"
-	ManageRescheduleLabel     = "Reschedule"
+	ManageRescheduleLabel     = "Configure Schedule"
 	ManageCampaignButtonLabel = "Manage"
 )
 
@@ -324,10 +325,10 @@ const (
 const (
 	RescheduleModalPrefix      = "manage_reschedule_modal"
 	RescheduleComponentPrefix  = "manage_reschedule"
-	RescheduleModalTitle       = "Reschedule Campaign"
+	RescheduleModalTitle       = "Configure Schedule"
 	RescheduleDayFieldID       = "reschedule_day"
-	RescheduleDayLabel         = "Day of Week (0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun)"
-	RescheduleDayPlaceholder   = "e.g. 5 for Saturday"
+	RescheduleDayLabel         = "Day of Week"
+	RescheduleDayPlaceholder   = "e.g. Saturday or sat"
 	RescheduleTimeFieldID      = "reschedule_time"
 	RescheduleTimeLabel        = "Start Time (HH:MM UTC)"
 	RescheduleTimePlaceholder  = "e.g. 19:00"
@@ -338,7 +339,7 @@ const (
 	RescheduleFreqLabel        = "Frequency (weekly, biweekly, monthly, quarterly, yearly)"
 	RescheduleFreqPlaceholder  = "e.g. weekly"
 	RescheduleSuccess          = "Schedule updated for **%s**: %s %s UTC (%sh), %s."
-	RescheduleInvalidDay       = "Invalid day of week. Use 0 (Mon) through 6 (Sun)."
+	RescheduleInvalidDay       = "Invalid day. Use a name like Monday, Tuesday... or abbreviation like mon, tue..."
 	RescheduleInvalidTime      = "Invalid time format. Use HH:MM (e.g. 19:00)."
 	RescheduleInvalidDuration  = "Invalid duration. Enter a number (e.g. 3)."
 	RescheduleInvalidFrequency = "Invalid frequency. Use: weekly, biweekly, monthly, quarterly, yearly."
@@ -592,7 +593,8 @@ const (
 	ManageInviteLabel  = "Invite Player"
 	ManageInvitePrefix = "manage_invite"
 
-	ManageSetSessionLabel           = "Set Next Session"
+	ManageSetSessionLabel           = "Set Session"
+	ManageRescheduleSessionLabel    = "Reschedule"
 	ManageSetSessionPrefix          = "manage_set_session"
 	ManageSetSessionModalID         = "modal_manage_set_session"
 	ManageSetSessionModalTitle      = "Set Next Session"
@@ -605,18 +607,37 @@ const (
 	ManageSetSessionInvalidDate     = "Invalid date format. Use YYYY-MM-DD."
 	ManageSetSessionInvalidTime     = "Invalid time format. Use HH:MM (24h)."
 	ManageSetSessionInPast          = "Cannot set a session in the past."
-	ManageSetSessionSuccess         = "Next session for **%s** set to **%s** UTC."
+	ManageSetSessionSuccess         = "Next session for **%s** set to **%s** — %s."
 	ManageSetSessionUpdateFailed    = "Failed to update next session."
 
+	// Reschedule-specific (existing session → new date + reason).
+	ManageRescheduleModalTitle        = "Reschedule Session"
+	ManageSetSessionReasonFieldID     = "session_reason"
+	ManageSetSessionReasonLabel       = "Reason for change (optional)"
+	ManageSetSessionReasonPlaceholder = "e.g. DM unavailable this week"
+	ManageSetSessionRescheduleThread  = "📅 Session rescheduled to **%s** — _%s_"
+	ManageSetSessionRescheduleSuccess = "Session for **%s** rescheduled to **%s** — %s. Reason posted to thread."
+
 	// Session reminder DM (sent ~1 hour before NextSession).
-	ReminderContent = "**Session Reminder: %s**\nYour next session starts in about 1 hour — **%s UTC**"
-	ManageInviteSelectPrefix        = "manage_invite_select"
-	InviteAcceptPrefix              = "campaign_invite_accept"
-	InviteDeclinePrefix             = "campaign_invite_decline"
-	InviteSentMessage               = "Invitation sent to <@%s> for **%s**."
-	InviteDMMessage                 = "You've been invited to join **%s** by <@%s>!"
-	InviteAcceptedDMUpdate          = "You accepted the invitation to **%s**."
-	InviteDeclinedDMUpdate          = "You declined the invitation to **%s**."
-	InviteAlreadyProcessed          = "This invitation has already been processed."
-	InviteCampaignFull              = "Cannot invite — campaign **%s** is full."
+	ReminderContent          = "**Session Reminder: %s**\nYour next session starts in about 1 hour — **%s** (%s)"
+	ManageInviteSelectPrefix = "manage_invite_select"
+	InviteAcceptPrefix       = "campaign_invite_accept"
+	InviteDeclinePrefix      = "campaign_invite_decline"
+	InviteSentMessage        = "Invitation sent to <@%s> for **%s**."
+	InviteDMMessage          = "You've been invited to join **%s** by <@%s>!"
+	InviteAcceptedDMUpdate   = "You accepted the invitation to **%s**."
+	InviteDeclinedDMUpdate   = "You declined the invitation to **%s**."
+	InviteAlreadyProcessed   = "This invitation has already been processed."
+	InviteCampaignFull       = "Cannot invite — campaign **%s** is full."
+)
+
+// Timezone preference
+const (
+	TimezoneLabel             = "Timezone"
+	TimezonePrefix            = "set_timezone"
+	TimezoneSelectID          = "timezone_select"
+	TimezoneHeader            = "**Set your timezone**\nTimes will be shown in your local time.\nCurrent: **%s**"
+	TimezoneSelectPlaceholder = "Select your timezone…"
+	TimezoneSuccess           = "Timezone set to **%s**."
+	TimezoneInvalid           = "Unknown timezone. Please select from the list."
 )
