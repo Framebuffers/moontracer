@@ -107,6 +107,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 
 		// Admin hub
 		&adminCampaignsHandler{db: db},
+		&adminCampaignSelectHandler{db: db},
 		&adminBroadcastHandler{db: db, dispatcher: d},
 		&adminDatabaseHandler{db: db},
 		&adminSettingsHandler{db: db},
@@ -115,6 +116,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		// Manage: edit + new campaign from button
 		&manageEditHandler{db: db},
 		&manageNewCampaignButton{db: db},
+		&manageSetSession{db: db},
 
 		// Invitations
 		&manageCampaignInvite{db: db, dispatcher: d},
@@ -133,6 +135,7 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher) []ModalHandler {
 		&manageCampaignRescheduleModal{db: db},
 		&manageSetRoleModal{db: db},
 		&manageEditModal{db: db},
+		&manageSetSessionModal{db: db},
 		&adminBroadcastModal{db: db, dispatcher: d},
 	}
 }

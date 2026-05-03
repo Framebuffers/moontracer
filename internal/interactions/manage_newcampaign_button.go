@@ -11,6 +11,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -29,16 +30,16 @@ func (h *manageNewCampaignButton) CustomIDPrefix() string {
 }
 
 func (h *manageNewCampaignButton) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("manage_newcampaign: auth check failed: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		respondInteraction(s, i, messages.NotRegisteredMessage)
+		helpers.Respond(s, i, messages.NotRegisteredMessage)
 		return
 	}
 

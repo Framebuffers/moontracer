@@ -3,6 +3,7 @@ package interactions
 import (
 	"fmt"
 	"log"
+	"moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
@@ -38,7 +39,7 @@ func (h *campaignJoin) CustomIDPrefix() string {
 func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	// split the custom ID in two: id and params
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
@@ -49,27 +50,27 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	ok, err := auth.Authorize(h.db, userID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("campaign_join: auth check failed: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		respondInteraction(s, i, messages.NotRegisteredMessage)
+		helpers.Respond(s, i, messages.NotRegisteredMessage)
 		return
 	}
 
 	// does the campaign exist and is it active?
 	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
-		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	if !campaign.IsApproved {
-		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
@@ -86,7 +87,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 
 	// Campaign must be open OR the player must have the linked role.
 	if !campaign.IsOpen && !hasLinkedRole {
-		respondInteraction(s, i, messages.CampaignClosedMessage)
+		helpers.Respond(s, i, messages.CampaignClosedMessage)
 		return
 	}
 
@@ -94,16 +95,16 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_join: %s: %v", messages.PlayerFetchErrorMessage, err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	for _, p := range players {
 		if p.PlayerID == userID {
 			if p.Status == models.StatusBanned {
-				respondInteraction(s, i, messages.PlayerBannedMessage)
+				helpers.Respond(s, i, messages.PlayerBannedMessage)
 				return
 			}
-			respondInteraction(s, i, messages.PlayerAlreadyOnCampaignMessage)
+			helpers.Respond(s, i, messages.PlayerAlreadyOnCampaignMessage)
 			return
 		}
 	}
@@ -121,7 +122,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		}
 	}
 	if !campaign.IsWestmarch && campaign.Slots > 0 && activePlayerCount >= campaign.Slots {
-		respondInteraction(s, i, messages.CampaignFullMessage)
+		helpers.Respond(s, i, messages.CampaignFullMessage)
 		return
 	}
 
@@ -133,7 +134,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	}
 	if err := db.Insert(h.db, cp); err != nil {
 		log.Printf("campaign_join: %s: %v", messages.InsertPlayerErrorMessage, err)
-		respondInteraction(s, i, messages.PlayerFailedToJoinMessage)
+		helpers.Respond(s, i, messages.PlayerFailedToJoinMessage)
 		return
 	}
 	newActiveCount := activePlayerCount + 1
@@ -154,10 +155,10 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 			Content: fmt.Sprintf(messages.WestmarchOverCapacityDMAlert,
 				userID, campaign.Name, newActiveCount, campaign.SessionCapacity),
 		})
-		respondInteraction(s, i, fmt.Sprintf(messages.WestmarchOverCapacityPlayerNotice,
+		helpers.Respond(s, i, fmt.Sprintf(messages.WestmarchOverCapacityPlayerNotice,
 			campaign.Name, campaign.SessionCapacity))
 		return
 	}
 
-	respondInteraction(s, i, fmt.Sprintf("%s **%s**!", messages.PlayerJoinedCampaignMessage, campaign.Name))
+	helpers.Respond(s, i, fmt.Sprintf("%s **%s**!", messages.PlayerJoinedCampaignMessage, campaign.Name))
 }

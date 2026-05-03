@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"context"
 	"log"
 
@@ -24,23 +25,23 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	campaign, err := db.GetByID[models.Campaign](database, campaignID)
 	if err != nil {
 		log.Printf("campaign_detail: campaign %s not found: %v", campaignID, err)
-		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	if !campaign.IsApproved {
-		respondInteraction(s, i, messages.CampaignNotFoundMessage)
+		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	players, err := models.GetCampaignPlayers(database, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_detail: failed to load players for %s: %v", campaignID, err)
-		respondInteraction(s, i, messages.CampaignPlayersLoadError)
+		helpers.Respond(s, i, messages.CampaignPlayersLoadError)
 		return
 	}
 
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 	coverURL := cdn.ResolveCoverURL(context.Background(), database, campaign)
 	embed := commands.CampaignEmbed(*campaign, players, coverURL)
 	actionButtons := commands.CampaignButtons(userID, *campaign, players)

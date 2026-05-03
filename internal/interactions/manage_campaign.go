@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"moontracer/internal/interactions/helpers"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -27,6 +28,7 @@ import (
 
 /*
 manageCampaignMenu provides a model to select options in a menu providing options to manage a Campaign. interaction: `manage_campaign:<id>` [interaction: menu]
+
  1. Authorize: check if invoker is DM or Mod for that Campaign.
  2. Show action buttons: [Edit, Delete, Ban, Announce, Reschedule]
 */
@@ -39,7 +41,7 @@ func (h *manageCampaignMenu) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignMenu) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
@@ -52,7 +54,7 @@ RenderManageCampaignMenu renders the management menu for a campaign.
 Used by the manage_campaign handler and back_manage_campaign handler.
 */
 func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCreate, database *bun.DB, campaignID string) {
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 
 	/*
 		Check campaign exists before auth. Prevents misleading "not authorized"
@@ -60,22 +62,22 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 	*/
 	campaign, err := db.GetByID[models.Campaign](database, campaignID)
 	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
+		helpers.Respond(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 
 	ok, err := auth.Authorize(database, userID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_campaign: auth check failed: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+		helpers.Respond(s, i, messages.ManageNotAuthorized)
 		return
 	}
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
@@ -127,6 +129,11 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
 						},
 						discordgo.Button{
+							Label:    messages.ManageSetSessionLabel,
+							Style:    discordgo.SecondaryButton,
+							CustomID: fmt.Sprintf("%s:%s", messages.ManageSetSessionPrefix, campaignID),
+						},
+						discordgo.Button{
 							Label:    messages.ManageArchiveLabel,
 							Style:    discordgo.DangerButton,
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),
@@ -136,6 +143,10 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 							Style:    discordgo.SecondaryButton,
 							CustomID: fmt.Sprintf("manage_setcover:%s", campaignID),
 						},
+					},
+				},
+				discordgo.ActionsRow{
+					Components: []discordgo.MessageComponent{
 						router.BackButton(messages.BackLabel, router.ViewManage),
 					},
 				},
@@ -160,18 +171,18 @@ func (h *manageCampaignDelete) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
 	campaignID := parts[1]
 
-	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
@@ -213,19 +224,19 @@ func (h *manageDeleteConfirm) CustomIDPrefix() string {
 }
 
 func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 
-	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
@@ -234,18 +245,18 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		Where("campaign_id = ?", campaignID).Exec(ctx)
 	if err != nil {
 		log.Printf("manage_delete_confirm: failed to delete campaign players: %v", err)
-		respondInteraction(s, i, messages.ManageDeleteFailure)
+		helpers.Respond(s, i, messages.ManageDeleteFailure)
 		return
 	}
 
 	if err := db.Delete[models.Campaign](h.db, campaignID); err != nil {
 		log.Printf("manage_delete_confirm: failed to delete campaign: %v", err)
-		respondInteraction(s, i, messages.ManageDeleteFailure)
+		helpers.Respond(s, i, messages.ManageDeleteFailure)
 		return
 	}
 
 	log.Printf("manage_delete_confirm: %s deleted campaign %s (%s)", userID, campaign.Name, campaignID)
-	respondInteraction(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
+	helpers.Respond(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
 }
 
 /*
@@ -290,7 +301,7 @@ func (h *manageCampaignBan) CustomIDPrefix() string {
 }
 
 func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
@@ -300,28 +311,28 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_ban: auth check failed: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+		helpers.Respond(s, i, messages.ManageNotAuthorized)
 		return
 	}
 
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err != nil {
-		respondInteraction(s, i, messages.ManageCampaignNotFound)
+		helpers.Respond(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("manage_ban: failed to load players: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -341,7 +352,7 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 	}
 
 	if len(options) == 0 {
-		respondInteraction(s, i, messages.ManageBanNoMembers)
+		helpers.Respond(s, i, messages.ManageBanNoMembers)
 		return
 	}
 
@@ -395,13 +406,13 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 
 	values := i.MessageComponentData().Values
 	if len(values) == 0 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 
 	parts := strings.SplitN(values[0], ":", 2)
 	if len(parts) < 2 {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 	campaignID := parts[0]
@@ -410,18 +421,18 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 	ok, err := auth.Authorize(h.db, invokerID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_ban_select: auth check failed: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		respondInteraction(s, i, messages.ManageNotAuthorized)
+		helpers.Respond(s, i, messages.ManageNotAuthorized)
 		return
 	}
 
 	err = models.SetCampaignPlayerStatus(h.db, targetID, campaignID, models.StatusBanned)
 	if err != nil {
 		log.Printf("manage_ban_select: failed to set status to banned: %v", err)
-		respondInteraction(s, i, fmt.Sprintf("Could not ban %s from %s.", targetID, campaignID))
+		helpers.Respond(s, i, fmt.Sprintf("Could not ban %s from %s.", targetID, campaignID))
 		return
 	}
 
@@ -434,5 +445,5 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 	}
 
 	log.Printf("manage_ban_select: banned successfully. target: %s, campaign: %s", targetID, campaignID)
-	respondInteraction(s, i, fmt.Sprintf("%s has been banned from Campaign %s.", targetID, campaignID))
+	helpers.Respond(s, i, fmt.Sprintf("%s has been banned from Campaign %s.", targetID, campaignID))
 }

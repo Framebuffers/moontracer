@@ -20,6 +20,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
@@ -38,7 +39,7 @@ func (h *navHandler) CustomIDPrefix() string {
 func (h *navHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	viewID, args, ok := router.ParseCustomID(i.MessageComponentData().CustomID)
 	if !ok {
-		respondInteraction(s, i, messages.InvalidButtonDataMessage)
+		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 	router.Navigate(s, i, viewID, args)

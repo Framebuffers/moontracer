@@ -16,6 +16,7 @@ package interactions
 import (
 	"fmt"
 	"log"
+	"moontracer/internal/interactions/helpers"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -43,7 +44,7 @@ func (h *manageSetRole) CustomIDPrefix() string {
 }
 
 func (h *manageSetRole) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
@@ -84,25 +85,25 @@ func (h *manageSetRoleModal) CustomIDPrefix() string {
 }
 
 func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.ModalSubmitData().CustomID, 2)
 	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 
-	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
 	roleName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 	if roleName == "" {
-		respondInteraction(s, i, messages.ManageSetRoleFailed)
+		helpers.Respond(s, i, messages.ManageSetRoleFailed)
 		return
 	}
 
@@ -111,7 +112,7 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 	roles, err := s.GuildRoles(i.GuildID)
 	if err != nil {
 		log.Printf("manage_role: failed to fetch guild roles: %v", err)
-		respondInteraction(s, i, messages.ManageSetRoleFailed)
+		helpers.Respond(s, i, messages.ManageSetRoleFailed)
 		return
 	}
 
@@ -128,7 +129,7 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 		})
 		if err != nil {
 			log.Printf("manage_role: failed to create role: %v", err)
-			respondInteraction(s, i, messages.ManageSetRoleFailed)
+			helpers.Respond(s, i, messages.ManageSetRoleFailed)
 			return
 		}
 		roleID = role.ID
@@ -137,12 +138,12 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 	campaign.RoleID = roleID
 	if err := db.Update(h.db, campaign); err != nil {
 		log.Printf("manage_role: failed to update campaign: %v", err)
-		respondInteraction(s, i, messages.ManageSetRoleFailed)
+		helpers.Respond(s, i, messages.ManageSetRoleFailed)
 		return
 	}
 
 	log.Printf("manage_role: %s linked role %s (%s) to campaign %s", userID, roleName, roleID, campaign.Name)
-	respondInteraction(s, i, fmt.Sprintf(messages.ManageSetRoleSuccess, roleName, campaign.Name))
+	helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetRoleSuccess, roleName, campaign.Name))
 }
 
 /*
@@ -159,18 +160,18 @@ func (h *manageArchive) CustomIDPrefix() string {
 }
 
 func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
 	campaignID := parts[1]
 
-	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
@@ -190,7 +191,7 @@ func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 						Label:    messages.ManageArchiveCancelLabel,
 						Style:    discordgo.SecondaryButton,
 						CustomID: router.NavCustomID(router.ViewManageCampaign, campaignID),
-					},
+					}, // note for myself: buttons go on different components
 				}},
 			},
 			Flags: discordgo.MessageFlagsEphemeral,
@@ -212,25 +213,25 @@ func (h *manageArchiveConfirm) CustomIDPrefix() string {
 }
 
 func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := splitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
 	}
 	campaignID := parts[1]
-	userID := getUserID(i)
+	userID := helpers.GetUserID(i)
 
-	campaign, ok := loadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
 
-	if !requireMutable(s, i, campaign) {
+	if !helpers.IsCampaignMutable(s, i, campaign) {
 		return
 	}
 
 	if err := commands.ArchiveCampaign(h.db, campaign, messages.AbandonReasonDM); err != nil {
 		log.Printf("manage_archive: failed to archive campaign %s: %v", campaign.ID, err)
-		respondInteraction(s, i, messages.ManageArchiveFailed)
+		helpers.Respond(s, i, messages.ManageArchiveFailed)
 		return
 	}
 
@@ -239,5 +240,5 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 	}
 
 	log.Printf("manage_archive: %s archived campaign %s (%s)", userID, campaign.Name, campaign.ID)
-	respondInteraction(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name))
+	helpers.Respond(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name))
 }
