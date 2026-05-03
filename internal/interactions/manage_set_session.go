@@ -26,6 +26,7 @@ import (
 	"moontracer/internal/db"
 	"moontracer/internal/interactions/helpers"
 	"moontracer/internal/messages"
+	"moontracer/internal/scheduler"
 )
 
 type manageSetSession struct {
@@ -91,7 +92,8 @@ func (h *manageSetSession) HandleComponents(s *discordgo.Session, i *discordgo.I
 }
 
 type manageSetSessionModal struct {
-	db *bun.DB
+	db    *bun.DB
+	sched *scheduler.Scheduler
 }
 
 func (h *manageSetSessionModal) CustomIDPrefix() string {
@@ -153,6 +155,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		helpers.Respond(s, i, messages.ManageSetSessionUpdateFailed)
 		return
 	}
+	h.sched.Schedule(i.GuildID, campaign)
 
 	helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetSessionSuccess, campaign.Name, when.Format(messages.SessionTimeFormat)))
 }
