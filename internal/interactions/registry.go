@@ -121,6 +121,10 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&manageNewCampaignButton{db: db},
 		&manageSetSession{db: db},
 
+		// Session RSVP (buttons on reminder DMs)
+		&rsvpAcceptHandler{db: db, dispatcher: d},
+		&rsvpDeclineHandler{db: db, dispatcher: d},
+
 		// Invitations
 		&manageCampaignInvite{db: db, dispatcher: d},
 		&manageCampaignInviteSelect{db: db, dispatcher: d},

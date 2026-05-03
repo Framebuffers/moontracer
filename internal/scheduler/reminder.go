@@ -5,6 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/bwmarrin/discordgo"
+
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/interactions/helpers"
@@ -75,6 +77,20 @@ func fireReminder(s *Scheduler, guildID, campaignID string) {
 			ID:      fmt.Sprintf("reminder:%s:%s", campaignID, p.PlayerID),
 			Target:  p.PlayerID,
 			Content: content,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    messages.RSVPAcceptLabel,
+						Style:    discordgo.SuccessButton,
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.RSVPAcceptPrefix, guildID, campaignID),
+					},
+					discordgo.Button{
+						Label:    messages.RSVPDeclineLabel,
+						Style:    discordgo.DangerButton,
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.RSVPDeclinePrefix, guildID, campaignID),
+					},
+				}},
+			},
 		})
 		sent++
 	}
