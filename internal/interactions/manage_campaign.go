@@ -86,75 +86,70 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 		sessionLabel = messages.ManageRescheduleSessionLabel
 	}
 
-	row1 := []discordgo.MessageComponent{
-		discordgo.Button{
-			Label:    messages.ManageEditLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: fmt.Sprintf("%s:%s", messages.ManageEditPrefix, campaignID),
-		},
-		discordgo.Button{
-			Label:    messages.ManageDeleteLabel,
-			Style:    discordgo.DangerButton,
-			CustomID: fmt.Sprintf("manage_delete:%s", campaignID),
-		},
+	// Players row
+	rowPlayers := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 		discordgo.Button{
 			Label:    messages.ManageBanLabel,
 			Style:    discordgo.DangerButton,
 			CustomID: fmt.Sprintf("manage_ban:%s", campaignID),
 		},
 		discordgo.Button{
+			Label:    messages.ManageInviteLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
+		},
+	}}
+
+	// Sessions row
+	rowSessions := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+		discordgo.Button{
+			Label:    sessionLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: fmt.Sprintf("%s:%s", messages.ManageSetSessionPrefix, campaignID),
+		},
+		discordgo.Button{
 			Label:    messages.ManageAnnounceLabel,
 			Style:    discordgo.SecondaryButton,
 			CustomID: fmt.Sprintf("manage_announce:%s", campaignID),
 		},
-	}
-	if !campaign.IsWestmarch && campaign.Schedule.Frequency != models.OneShot {
-		row1 = append(row1, discordgo.Button{
-			Label:    messages.ManageRescheduleLabel,
+	}}
+
+	// Edit row
+	rowEdit := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+		discordgo.Button{
+			Label:    messages.ManageEditLabel,
 			Style:    discordgo.SecondaryButton,
-			CustomID: fmt.Sprintf("manage_reschedule:%s", campaignID),
-		})
-	}
+			CustomID: fmt.Sprintf("%s:%s", messages.ManageEditPrefix, campaignID),
+		},
+		discordgo.Button{
+			Label:    messages.SetCoverButtonLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: fmt.Sprintf("manage_setcover:%s", campaignID),
+		},
+		discordgo.Button{
+			Label:    messages.ManageSetRoleLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: fmt.Sprintf("%s:%s", messages.ManageSetRolePrefix, campaignID),
+		},
+		discordgo.Button{
+			Label:    messages.ManageArchiveLabel,
+			Style:    discordgo.DangerButton,
+			CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),
+		},
+		discordgo.Button{
+			Label:    messages.ManageDeleteLabel,
+			Style:    discordgo.DangerButton,
+			CustomID: fmt.Sprintf("manage_delete:%s", campaignID),
+		},
+	}}
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("Managing **%s**:", campaign.Name),
-			Embeds:  []*discordgo.MessageEmbed{},
-			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{Components: row1},
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.Button{
-							Label:    messages.ManageSetRoleLabel,
-							Style:    discordgo.SecondaryButton,
-							CustomID: fmt.Sprintf("%s:%s", messages.ManageSetRolePrefix, campaignID),
-						},
-						discordgo.Button{
-							Label:    messages.ManageInviteLabel,
-							Style:    discordgo.SecondaryButton,
-							CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
-						},
-						discordgo.Button{
-							Label:    sessionLabel,
-							Style:    discordgo.SecondaryButton,
-							CustomID: fmt.Sprintf("%s:%s", messages.ManageSetSessionPrefix, campaignID),
-						},
-						discordgo.Button{
-							Label:    messages.ManageArchiveLabel,
-							Style:    discordgo.DangerButton,
-							CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),
-						},
-						discordgo.Button{
-							Label:    messages.SetCoverButtonLabel,
-							Style:    discordgo.SecondaryButton,
-							CustomID: fmt.Sprintf("manage_setcover:%s", campaignID),
-						},
-					},
-				},
-				helpers.BackRow(router.ViewManage),
-			},
-			Flags: discordgo.MessageFlagsEphemeral,
+			Content:    fmt.Sprintf("Managing **%s**:", campaign.Name),
+			Embeds:     []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{rowPlayers, rowSessions, rowEdit, helpers.BackRow(router.ViewManage)},
+			Flags:      discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
