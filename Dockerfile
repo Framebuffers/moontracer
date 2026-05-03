@@ -3,10 +3,10 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 \
- go build \
- -ldflags "-X 'moontracer/internal/commands.BuildTime=$(date -u +%Y-%m-%dT%H:%M:%SZ)'" \
-  -o /moontracer ./cmd/moontracer
+RUN BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) && \
+    CGO_ENABLED=0 go build \
+    -ldflags "-X moontracer/internal/commands.BuildTime=${BUILD_TIME}" \
+    -o /moontracer ./cmd/moontracer
 
 FROM alpine:3.21
 RUN apk add --no-cache ca-certificates

@@ -137,15 +137,8 @@ func adminHubData() *discordgo.InteractionResponseData {
 	}
 }
 
-/*
-BuildTime is set at compile time via:
-
-	go build -ldflags "-X 'moontracer/internal/commands.BuildTime=<timestamp>'"
-
-Remains "unknown" in development builds (no ldflags).
-
+// BuildTime is set at compile time via -ldflags; remains "unknown" in dev builds.
 var BuildTime = "unknown"
-*/
 
 // RenderAdminDiag renders the diagnostics sub-view as a message update.
 func RenderAdminDiag(s *discordgo.Session, i *discordgo.InteractionCreate, guildDB *bun.DB, guildID string) {
