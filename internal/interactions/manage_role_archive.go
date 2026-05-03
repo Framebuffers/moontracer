@@ -243,5 +243,7 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 	}
 
 	log.Printf("manage_archive: %s archived campaign %s (%s)", userID, campaign.Name, campaign.ID)
-	helpers.Respond(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name))
+	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name), nil, []discordgo.MessageComponent{
+		helpers.BackRow(router.ViewManage),
+	})
 }

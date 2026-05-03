@@ -4,11 +4,11 @@ package interactions
 	Admin Campaigns handler for the /admin hub.
 
 	Flow:
-		1. Staff clicks "Active Campaigns" on the /admin hub.
+		1. Staff clicks "Query Campaigns" on the /admin hub.
 		2. Auth: ScopeMod.
 		3. Load ALL campaigns (approved + unapproved, not archived).
-		4. Render a select menu or paginated list with campaign name, DM, status flags.
-		5. Selecting a campaign could show admin-level detail or actions.
+		4. Render a code block with name, status, open/closed, DM name, next session.
+		5. Selecting a campaign shows admin-level detail + Contact DM button.
 		6. Back button returns to /admin hub.
 */
 
@@ -64,38 +64,51 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 		return
 	}
 
+	resolveName := func(userID string) string {
+		if m, err := s.State.Member(i.GuildID, userID); err == nil && m.User != nil {
+			if m.Nick != "" {
+				return m.Nick
+			}
+			return m.User.Username
+		}
+		if len(userID) >= 5 {
+			return "..." + userID[len(userID)-5:]
+		}
+		return userID
+	}
+
 	const nameW, statusW, dmW = 20, 10, 18
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("%-*s %-*s %-4s %-*s %s\n",
-		nameW, "CAMPAIGN", statusW, "STATUS", "OPEN", dmW, "DM ID", "NEXT SESSION"))
-	sb.WriteString(strings.Repeat("─", nameW+statusW+dmW+30) + "\n")
+	fmt.Fprintf(&sb, "%-*s %-*s %-4s %-*s %s\n",
+		nameW, "CAMPAIGN", statusW, "STATUS", "OPEN", dmW, "DM", "NEXT SESSION")
+	sb.WriteString(strings.Repeat("-", nameW+statusW+dmW+30) + "\n")
 	for _, c := range filtered {
 		name := c.Name
 		if len(name) > nameW {
-			name = name[:nameW-1] + "…"
+			name = name[:nameW-1] + "."
 		}
 		status := messages.BuildFlags(c)
 		if len(status) > statusW {
-			status = status[:statusW-1] + "…"
+			status = status[:statusW-1] + "."
 		}
 		open := "no"
 		if c.IsOpen {
 			open = "yes"
 		}
-		dmTail := c.DungeonMaster
-		if len(dmTail) > dmW {
-			dmTail = "…" + dmTail[len(dmTail)-(dmW-1):]
+		dmName := resolveName(c.DungeonMaster)
+		if len(dmName) > dmW {
+			dmName = dmName[:dmW-1] + "."
 		}
 		next := "(not set)"
 		if !c.Schedule.NextSession.IsZero() {
 			next = c.Schedule.NextSession.Format("2006-01-02")
 		}
-		sb.WriteString(fmt.Sprintf("%-*s %-*s %-4s %-*s %s\n",
-			nameW, name, statusW, status, open, dmW, dmTail, next))
+		fmt.Fprintf(&sb, "%-*s %-*s %-4s %-*s %s\n",
+			nameW, name, statusW, status, open, dmW, dmName, next)
 	}
 	block := "```\n" + sb.String() + "```"
 	if len(block) > 1900 {
-		block = block[:1896] + "…```"
+		block = block[:1896] + "```"
 	}
 
 	var options []discordgo.SelectMenuOption
@@ -103,9 +116,10 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 		if idx >= 25 {
 			break
 		}
+		dmName := resolveName(c.DungeonMaster)
 		options = append(options, discordgo.SelectMenuOption{
 			Label:       c.Name,
-			Description: fmt.Sprintf("DM: %s · %s", c.DungeonMaster, messages.BuildFlags(c)),
+			Description: fmt.Sprintf("DM: %s - %s", dmName, messages.BuildFlags(c)),
 			Value:       c.ID,
 		})
 	}
