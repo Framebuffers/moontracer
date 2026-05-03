@@ -80,60 +80,45 @@ func RenderAdminHubUpdate(s *discordgo.Session, i *discordgo.InteractionCreate) 
 }
 
 func adminHubData() *discordgo.InteractionResponseData {
-	/*
-		Note:
-			Second row is assembled conditionally:
-			Database and Diagnostics are debug-only surfaces gated on guard.DevMode.
-			Settings is always shown.
-	*/
-	secondRow := []discordgo.MessageComponent{}
-	if guard.DevMode {
-		secondRow = append(secondRow, discordgo.Button{
-			Label:    messages.AdminDatabaseLabel,
+	row1 := []discordgo.MessageComponent{
+		discordgo.Button{
+			Label:    messages.AdminCampaignsLabel,
+			Style:    discordgo.PrimaryButton,
+			CustomID: messages.AdminCampaignsPrefix,
+		},
+		discordgo.Button{
+			Label:    messages.AdminBroadcastLabel,
 			Style:    discordgo.SecondaryButton,
-			CustomID: messages.AdminDatabasePrefix,
-		})
-	}
-	secondRow = append(secondRow, discordgo.Button{
-		Label:    messages.AdminSettingsLabel,
-		Style:    discordgo.SecondaryButton,
-		CustomID: messages.AdminSettingsPrefix,
-	})
-	if guard.DevMode {
-		secondRow = append(secondRow, discordgo.Button{
-			Label:    messages.AdminDiagLabel,
+			CustomID: messages.AdminBroadcastPrefix,
+		},
+		discordgo.Button{
+			Label:    messages.AdminSettingsLabel,
 			Style:    discordgo.SecondaryButton,
-			CustomID: messages.AdminDiagPrefix,
-		})
+			CustomID: messages.AdminSettingsPrefix,
+		},
 	}
 
+	components := []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: row1},
+	}
+	if guard.DevMode {
+		components = append(components, discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.AdminDiagLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: messages.AdminDiagPrefix,
+			},
+		}})
+	}
+	components = append(components, discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+		router.BackButton(messages.BackLabel, router.ViewMe),
+	}})
+
 	return &discordgo.InteractionResponseData{
-		Content: messages.AdminHubMessage,
-		Embeds:  []*discordgo.MessageEmbed{},
-		Components: []discordgo.MessageComponent{
-			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    messages.ManageCampaignsCommandDesc,
-					Style:    discordgo.PrimaryButton,
-					CustomID: router.NavCustomID(router.ViewManage),
-				},
-				discordgo.Button{
-					Label:    messages.AdminCampaignsLabel,
-					Style:    discordgo.SecondaryButton,
-					CustomID: messages.AdminCampaignsPrefix,
-				},
-				discordgo.Button{
-					Label:    messages.AdminBroadcastLabel,
-					Style:    discordgo.SecondaryButton,
-					CustomID: messages.AdminBroadcastPrefix,
-				},
-			}},
-			discordgo.ActionsRow{Components: secondRow},
-			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-				router.BackButton(messages.BackLabel, router.ViewMe),
-			}},
-		},
-		Flags: discordgo.MessageFlagsEphemeral,
+		Content:    messages.AdminHubMessage,
+		Embeds:     []*discordgo.MessageEmbed{},
+		Components: components,
+		Flags:      discordgo.MessageFlagsEphemeral,
 	}
 }
 

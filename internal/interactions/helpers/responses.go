@@ -104,11 +104,13 @@ func RespondWithBack(s *discordgo.Session,
 	content string,
 	components []discordgo.MessageComponent,
 	view router.ViewID) {
-	components = append(components, discordgo.ActionsRow{
-		Components: []discordgo.MessageComponent{
-			router.NavButton(messages.BackLabel, discordgo.PrimaryButton, view),
-		},
-	})
+	navRow := []discordgo.MessageComponent{
+		router.BackButton(messages.BackLabel, view),
+	}
+	if view != router.ViewMe {
+		navRow = append(navRow, router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe))
+	}
+	components = append(components, discordgo.ActionsRow{Components: navRow})
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: typ,

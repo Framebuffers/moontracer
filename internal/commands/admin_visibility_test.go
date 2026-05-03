@@ -26,71 +26,52 @@ Note:
 */
 
 /*
-secondRowCustomIDs returns the CustomIDs of every button in the admin hub's
-second action row (the DevMode-gated row).
+allHubCustomIDs returns CustomIDs of every button across all admin hub rows.
 */
-func secondRowCustomIDs(t *testing.T) []string {
+func allHubCustomIDs(t *testing.T) []string {
 	t.Helper()
 	data := adminHubData()
-	if len(data.Components) < 2 {
-		t.Fatalf("adminHubData should have at least 2 component rows, got %d", len(data.Components))
-	}
-	row, ok := data.Components[1].(discordgo.ActionsRow)
-	if !ok {
-		t.Fatalf("second component should be ActionsRow, got %T", data.Components[1])
-	}
-
-	ids := make([]string, 0, len(row.Components))
-	for _, c := range row.Components {
-		btn, ok := c.(discordgo.Button)
+	var ids []string
+	for _, comp := range data.Components {
+		row, ok := comp.(discordgo.ActionsRow)
 		if !ok {
-			t.Fatalf("second-row component should be Button, got %T", c)
+			continue
 		}
-		ids = append(ids, btn.CustomID)
+		for _, c := range row.Components {
+			btn, ok := c.(discordgo.Button)
+			if !ok {
+				continue
+			}
+			ids = append(ids, btn.CustomID)
+		}
 	}
 	return ids
 }
 
 /*
-DevMode on exposes Database + Diagnostics.
+DevMode on exposes the Diagnostics button.
 
-When:
-
-	guard.DevMode == true at hub-render time.
-
-Expected:
-
-	The second row contains Database, Settings, and Diagnostics buttons (in
-	that order). Diag is the trailing button; Settings always sits in middle.
+Layout (DevMode=true): row0=[Query Campaigns, Broadcast, Settings], row1=[Diag], row2=[Back].
 */
 func TestAdminHub_DevModeShowsDebugButtons(t *testing.T) {
 	guard.SetModesForTest(t, true, true)
 
-	ids := secondRowCustomIDs(t)
-	assert.Equal(t, []string{
-		messages.AdminDatabasePrefix,
-		messages.AdminSettingsPrefix,
-		messages.AdminDiagPrefix,
-	}, ids, "DevMode hub should expose Database + Settings + Diagnostics")
+	ids := allHubCustomIDs(t)
+	assert.Contains(t, ids, messages.AdminDiagPrefix, "DevMode hub should expose Diagnostics")
+	assert.Contains(t, ids, messages.AdminSettingsPrefix, "Settings must always be present")
 }
 
 /*
-DevMode off hides Database + Diagnostics.
+DevMode off hides Diagnostics.
 
-When:
-
-	guard.DevMode == false (real production deploy).
-
-Expected:
-
-	The second row contains only Settings. Database and Diag are stripped so
-	no debug surface leaks to real users.
+Layout (DevMode=false): row0=[Query Campaigns, Broadcast, Settings], row1=[Back].
+No debug surfaces exposed to real users.
 */
 func TestAdminHub_NonDevModeHidesDebugButtons(t *testing.T) {
 	guard.SetModesForTest(t, true, false)
 
-	ids := secondRowCustomIDs(t)
-	assert.Equal(t, []string{messages.AdminSettingsPrefix}, ids, "non-DevMode hub should expose Settings only")
+	ids := allHubCustomIDs(t)
+	assert.Contains(t, ids, messages.AdminSettingsPrefix, "Settings must always be present")
 	assert.NotContains(t, ids, messages.AdminDatabasePrefix, "Database button must not leak in production")
 	assert.NotContains(t, ids, messages.AdminDiagPrefix, "Diagnostics button must not leak in production")
 }

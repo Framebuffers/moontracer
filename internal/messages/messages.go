@@ -410,7 +410,7 @@ const (
 	AdminNotStaff        = "Only mods or admins can use this command."
 	DebugSurfaceDisabled = "This surface is disabled in production. Set DEV_MODE=true to re-enable."
 	AdminHubMessage      = "Admin Panel:"
-	AdminCampaignsLabel  = "Active Campaigns"
+	AdminCampaignsLabel  = "Query Campaigns"
 	AdminDMsLabel        = "DMs"
 	AdminBroadcastLabel  = "Broadcast"
 	AdminDatabaseLabel   = "Database"
@@ -420,7 +420,7 @@ const (
 
 // About (/moontracer)
 const (
-	AboutCommandName           = "moontracer"
+	AboutCommandName           = "about"
 	AboutCommandDesc           = "About this bot."
 	AboutCommandGitHubRepoLink = "https://github.com/framebuffers/moontracer"
 	AboutCommandGitHubLabel    = "GitHub"
@@ -437,6 +437,7 @@ const (
 // Navigation buttons
 const (
 	BackLabel = "Back"
+	HomeLabel = "Home"
 )
 
 // Hub button labels
@@ -445,7 +446,7 @@ const (
 	NextSessionsLabel    = "Next Sessions"
 	NotificationsLabel   = "Notifications"
 	BrowseCampaignsLabel = "Browse Campaigns"
-	MyProfileLabel       = "My Profile"
+	MyProfileLabel       = "Home"
 	NewCampaignLabel     = "New Campaign"
 	AdminPanelLabel      = "Admin Panel"
 )
@@ -557,9 +558,11 @@ const (
 
 // Admin hub: Campaign browser (all campaigns)
 const (
-	AdminCampaignsPrefix = "admin_campaigns"
-	AdminCampaignsHeader = "All campaigns:"
-	AdminCampaignsNone   = "No campaigns in the database."
+	AdminCampaignsPrefix          = "admin_campaigns"
+	AdminCampaignsHeader          = "All campaigns:"
+	AdminCampaignsNone            = "No campaigns in the database."
+	AdminCampaignSelectPlaceholder = "Pick a campaign for details..."
+	AdminContactDMLabel           = "Contact DM"
 )
 
 // Admin hub: Broadcast
