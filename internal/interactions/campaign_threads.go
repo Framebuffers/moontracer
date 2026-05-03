@@ -10,11 +10,13 @@ package interactions
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 
 	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
+	"moontracer/internal/messages"
 )
 
 // defaultArchiveDuration is the auto-archive duration for new threads, in minutes (1 week).
@@ -24,24 +26,20 @@ const defaultArchiveDuration = 10080
 var standardThreads = []string{"announcements", "sessions", "general"}
 
 /*
-createCampaignChannels creates a category, text channel, and standard threads for a campaign.
+createCampaignChannels creates a text channel and standard threads for a campaign,
+grouped under a shared "Campaigns" category (found or created).
 
 On success, mutates the campaign in-place with CategoryID, ChannelID, and AnnouncementsThreadID.
 Errors are logged but non-fatal — partial setup is better than none.
 */
 func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Campaign) {
-	// Category.
-	category, err := guard.GuildChannelCreateComplex(s, guildID, discordgo.GuildChannelCreateData{
-		Name: c.Name,
-		Type: discordgo.ChannelTypeGuildCategory,
-	})
+	categoryID, err := findOrCreateCampaignsCategory(s, guildID)
 	if err != nil {
-		log.Printf("campaign_threads: failed to create category for %s: %v", c.ID, err)
+		log.Printf("campaign_threads: failed to resolve campaigns category: %v", err)
 		return
 	}
-	c.CategoryID = category.ID
+	c.CategoryID = categoryID
 
-	// Text channel under category.
 	channelName := c.Tag
 	if channelName == "" {
 		channelName = models.NormalizeTag(c.Name)
@@ -49,7 +47,7 @@ func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Camp
 	ch, err := guard.GuildChannelCreateComplex(s, guildID, discordgo.GuildChannelCreateData{
 		Name:     channelName,
 		Type:     discordgo.ChannelTypeGuildText,
-		ParentID: category.ID,
+		ParentID: categoryID,
 	})
 	if err != nil {
 		log.Printf("campaign_threads: failed to create channel for %s: %v", c.ID, err)
@@ -57,7 +55,6 @@ func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Camp
 	}
 	c.ChannelID = ch.ID
 
-	// Standard threads.
 	for _, name := range standardThreads {
 		threadName := fmt.Sprintf("%s-%s", channelName, name)
 		thread, err := guard.ThreadStart(s, ch.ID, threadName, defaultArchiveDuration)
@@ -69,4 +66,29 @@ func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Camp
 			c.AnnouncementsThreadID = thread.ID
 		}
 	}
+}
+
+/*
+findOrCreateCampaignsCategory returns the ID of the shared "Campaigns" Discord category,
+creating it if it doesn't already exist in the guild.
+*/
+func findOrCreateCampaignsCategory(s *discordgo.Session, guildID string) (string, error) {
+	channels, err := s.GuildChannels(guildID)
+	if err != nil {
+		return "", fmt.Errorf("fetch guild channels: %w", err)
+	}
+	for _, ch := range channels {
+		if ch.Type == discordgo.ChannelTypeGuildCategory &&
+			strings.EqualFold(ch.Name, messages.CampaignsCategoryName) {
+			return ch.ID, nil
+		}
+	}
+	cat, err := guard.GuildChannelCreateComplex(s, guildID, discordgo.GuildChannelCreateData{
+		Name: messages.CampaignsCategoryName,
+		Type: discordgo.ChannelTypeGuildCategory,
+	})
+	if err != nil {
+		return "", fmt.Errorf("create campaigns category: %w", err)
+	}
+	return cat.ID, nil
 }
