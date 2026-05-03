@@ -203,6 +203,9 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		return
 	}
 	h.sched.Schedule(i.GuildID, campaign)
+	if err := models.ResetCampaignRSVPs(h.db, campaign.ID); err != nil {
+		log.Printf("manage_set_session: reset RSVPs for %s: %v", campaign.ID, err)
+	}
 
 	displayTime := helpers.FormatInLocation(when, messages.SessionTimeFormat, loc) + " " + helpers.TZLabel(loc)
 	remaining := helpers.TimeRemaining(when)

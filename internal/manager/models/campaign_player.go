@@ -43,6 +43,16 @@ const (
 	StatusPending   CampaignPlayerStatus = "pending"
 )
 
+// RSVPStatus records a player's attendance response for the current session.
+// Reset to RSVPPending whenever NextSession changes.
+type RSVPStatus string
+
+const (
+	RSVPPending  RSVPStatus = ""
+	RSVPAccepted RSVPStatus = "accepted"
+	RSVPDeclined RSVPStatus = "declined"
+)
+
 // CampaignPlayer is the join table between Player and Campaign.
 // It resolves the three-way Player-Campaign-Token relationship: a token is
 // assigned to a specific player within a specific campaign.
@@ -62,6 +72,7 @@ type CampaignPlayer struct {
 	BanReason             string               `bun:",nullzero" json:"ban_reason,omitempty"`
 	BannedFromCampaign    bool                 `bun:",notnull,default:false" json:"banned_from_campaign"`
 	BanReasonFromCampaign string               `bun:",nullzero" json:"ban_reason_from_campaign,omitempty"`
+	RSVPStatus            RSVPStatus           `bun:",notnull,default:''" json:"rsvp_status"`
 }
 
 // GetCampaignPlayers retrieves all CampaignPlayers belonging to a given Campaign ID
@@ -133,4 +144,14 @@ func BulkSetCampaignPlayerStatus(db *bun.DB, playerID string, campaigns []Campai
 		return updated, skipped, nil
 	}
 	return updated, skipped, errors
+}
+
+// ResetCampaignRSVPs clears the RSVP status for all players in a campaign.
+// Call whenever NextSession is updated so responses from the previous session don't persist.
+func ResetCampaignRSVPs(db *bun.DB, campaignID string) error {
+	_, err := db.NewUpdate().Model((*CampaignPlayer)(nil)).
+		Set("rsvp_status = ?", RSVPPending).
+		Where("campaign_id = ?", campaignID).
+		Exec(context.Background())
+	return err
 }

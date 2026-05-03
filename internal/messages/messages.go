@@ -103,7 +103,7 @@ const (
 
 	// Westmarch session-capacity tripwire (FCFS soft alert).
 	WestmarchOverCapacityDMAlert      = "⚠️ **INFO:** <@%s> just joined westmarch **%s**. Roster is now %d active player(s). Session capacity is %d. They've been admitted; bring an extra seat or trim attendance for the next session."
-	WestmarchOverCapacityPlayerNotice = "You're in **%s**! Heads up: session capacity (%d) is already met, so the DM has been notified."
+	WestmarchOverCapacityPlayerNotice = "You're in **%s**! Warning!: this westmarch's session capacity (%d) is already met, so the DM has been notified. Talk to your DM for more help."
 )
 
 // Campaign leave
@@ -643,6 +643,20 @@ const (
 	InviteDeclinedDMUpdate   = "You declined the invitation to **%s**."
 	InviteAlreadyProcessed   = "This invitation has already been processed."
 	InviteCampaignFull       = "Cannot invite — campaign **%s** is full."
+)
+
+// Session RSVP (buttons on reminder DMs)
+const (
+	RSVPAcceptPrefix     = "rsvp_accept"
+	RSVPDeclinePrefix    = "rsvp_decline"
+	RSVPAcceptLabel      = "✅ I'm Going!"
+	RSVPDeclineLabel     = "❌ I'm Not Going"
+	RSVPAcceptedPlayer   = "✅ Confirmed! The DM has been notified. May the RNG be with you!"
+	RSVPDeclinedPlayer   = "❌ Noted. The DM has been notified. Have a good day!"
+	RSVPDMNotifyAccept   = "✅ <@%s> confirmed assistance at **%s** — %s."
+	RSVPDMNotifyDecline  = "❌ <@%s> won't be coming for **%s** — %s."
+	RSVPAlreadyResponded = "You've already responded for this session. If you changed your mind, talk to your DM"
+	RSVPCampaignGone     = "This campaign is no longer active."
 )
 
 // Timezone preference
