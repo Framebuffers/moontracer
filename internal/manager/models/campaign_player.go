@@ -54,8 +54,7 @@ const (
 )
 
 // CampaignPlayer is the join table between Player and Campaign.
-// It resolves the three-way Player-Campaign-Token relationship: a token is
-// assigned to a specific player within a specific campaign.
+// MediaID optionally links a Media record (player token) to this player's slot in a campaign.
 type CampaignPlayer struct {
 	bun.BaseModel `bun:"table:campaign_players"`
 
@@ -64,8 +63,8 @@ type CampaignPlayer struct {
 	CampaignID            string               `bun:",pk,notnull" json:"campaign_id"`
 	Campaign              *Campaign            `bun:"rel:belongs-to,join:campaign_id=id" json:"campaign,omitempty"`
 	Role                  Role                 `bun:",notnull,default:'player'" json:"role"`
-	TokenID               string               `bun:",nullzero" json:"token_id,omitempty"`
-	Token                 *Token               `bun:"rel:belongs-to,join:token_id=id" json:"token,omitempty"`
+	MediaID               string               `bun:",nullzero" json:"media_id,omitempty"`
+	Media                 *Media               `bun:"rel:belongs-to,join:media_id=id" json:"media,omitempty"`
 	Status                CampaignPlayerStatus `bun:",notnull,default:'active'" json:"status"`
 	SessionsPlayed        int                  `bun:",notnull,default:0" json:"sessions_played"`
 	DiceThrowPicture      string               `bun:",nullzero" json:"dice_throw_picture,omitempty"`

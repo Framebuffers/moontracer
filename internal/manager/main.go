@@ -28,7 +28,7 @@ func populateDB() {
 	ctx := context.Background()
 
 	db.NewCreateTable().Model((*models.Player)(nil)).IfNotExists().Exec(ctx)
-	db.NewCreateTable().Model((*models.Token)(nil)).IfNotExists().Exec(ctx)
+	db.NewCreateTable().Model((*models.Media)(nil)).IfNotExists().Exec(ctx)
 	db.NewCreateTable().Model((*models.Campaign)(nil)).IfNotExists().Exec(ctx)
 	db.NewCreateTable().Model((*models.CampaignPlayer)(nil)).IfNotExists().Exec(ctx)
 }
