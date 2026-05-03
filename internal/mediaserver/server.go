@@ -1,8 +1,10 @@
 package mediaserver
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 /*
@@ -19,9 +21,38 @@ func Serve(dataDir, addr string) {
 	mux.Handle("/api/v1/cdn/", http.StripPrefix("/api/v1/cdn/", fs))
 
 	go func() {
-		log.Printf("mediaserver: listening on %s", addr)
+		log.Printf("mediaserver: listening on %s → /api/v1/cdn/", addr)
 		if err := http.ListenAndServe(addr, mux); err != nil {
 			log.Fatalf("mediaserver: %v", err)
 		}
 	}()
+}
+
+/*
+Probe checks that the local CDN endpoint is reachable after Serve() is called.
+Retries up to 5 times with 100ms gaps to allow the goroutine to bind.
+Logs the result.
+
+	Note:
+		The expected result is a 404.
+		Because the server is not serving any file, it means that it *did*
+		process the request, therefore it's available.
+*/
+func Probe(addr string) {
+	url := fmt.Sprintf("http://localhost%s/api/v1/cdn/", addr)
+	client := &http.Client{Timeout: 2 * time.Second}
+
+	var lastErr error
+	for range 5 {
+		time.Sleep(100 * time.Millisecond)
+		resp, err := client.Get(url)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		resp.Body.Close()
+		log.Printf("mediaserver: reachable (status %d)", resp.StatusCode)
+		return
+	}
+	log.Printf("mediaserver: probe failed — CDN may not be reachable: %v", lastErr)
 }

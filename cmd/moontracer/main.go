@@ -57,6 +57,7 @@ func main() {
 		mediaPort = "8090"
 	}
 	mediaserver.Serve(dbDir, ":"+mediaPort)
+	mediaserver.Probe(":" + mediaPort)
 
 	bot, err := discord.New(token, guildID, adminRole, modRole, guildDBM)
 	if err != nil {
