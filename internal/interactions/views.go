@@ -77,7 +77,7 @@ func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 	})
 
 	router.Register(router.ViewAdminDiag, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
-		commands.RenderAdminDiag(s, i)
+		commands.RenderAdminDiag(s, i, db, i.GuildID)
 	})
 
 	router.Register(router.ViewHelp, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {

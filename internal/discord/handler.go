@@ -13,6 +13,7 @@ import (
 	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
 	"moontracer/internal/interactions"
+	"moontracer/internal/scheduler"
 )
 
 /*
@@ -35,6 +36,7 @@ func NewHandler(
 	guildDBM *db.GuildDBManager,
 	dispatcher *dispatch.Dispatcher,
 	adminRole string,
+	sched *scheduler.Scheduler,
 ) func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -69,8 +71,8 @@ func NewHandler(
 		}
 
 		cmds := commands.All(guildDB, dispatcher)
-		components := interactions.AllComponents(guildDB, dispatcher)
-		modals := interactions.AllModals(guildDB, dispatcher)
+		components := interactions.AllComponents(guildDB, dispatcher, sched)
+		modals := interactions.AllModals(guildDB, dispatcher, sched)
 
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:

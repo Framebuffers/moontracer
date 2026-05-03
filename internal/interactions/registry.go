@@ -4,6 +4,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/dispatch"
+	"moontracer/internal/scheduler"
 )
 
 /*
@@ -58,7 +59,7 @@ At startup the bot calls AllComponents/AllModals once per guild DB; the
 main handler (internal/discord/handler.go) dispatches incoming events to
 the first handler whose prefix matches.
 */
-func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
+func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) []ComponentHandler {
 	RegisterAllViews(db, d)
 
 	return []ComponentHandler{
@@ -78,7 +79,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 		&manageCampaignReschedule{db: db},
 		&manageSetRole{db: db},
 		&manageArchive{db: db},
-		&manageArchiveConfirm{db: db},
+		&manageArchiveConfirm{db: db, sched: sched},
 		&manageSetCover{db: db},
 
 		// Approval (DM flow)
@@ -127,7 +128,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher) []ComponentHandler {
 }
 
 // AllModals returns an array with all the ModalHandlers available to the bot.
-func AllModals(db *bun.DB, d *dispatch.Dispatcher) []ModalHandler {
+func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) []ModalHandler {
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
 		&campaignDenyModal{db: db, dispatcher: d},
@@ -135,7 +136,7 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher) []ModalHandler {
 		&manageCampaignRescheduleModal{db: db},
 		&manageSetRoleModal{db: db},
 		&manageEditModal{db: db},
-		&manageSetSessionModal{db: db},
+		&manageSetSessionModal{db: db, sched: sched},
 		&adminBroadcastModal{db: db, dispatcher: d},
 	}
 }
