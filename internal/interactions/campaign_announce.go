@@ -119,7 +119,11 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	}
 
 	if campaign.AnnouncementsThreadID != "" {
-		content := fmt.Sprintf("**Announcement from <@%s>:**\n\n%s", userID, message)
+		rolePing := ""
+		if campaign.RoleID != "" {
+			rolePing = fmt.Sprintf("<@&%s> ", campaign.RoleID)
+		}
+		content := fmt.Sprintf("%s**Announcement from <@%s>:**\n\n%s", rolePing, userID, message)
 		if _, err := s.ChannelMessageSend(campaign.AnnouncementsThreadID, content); err != nil {
 			log.Printf("campaign_announce: failed to post to thread %s: %v", campaign.AnnouncementsThreadID, err)
 			helpers.Respond(s, i, messages.AnnounceError)
