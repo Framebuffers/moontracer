@@ -645,6 +645,20 @@ const (
 	InviteCampaignFull       = "Cannot invite — campaign **%s** is full."
 )
 
+// Session RSVP (buttons on reminder DMs)
+const (
+	RSVPAcceptPrefix     = "rsvp_accept"
+	RSVPDeclinePrefix    = "rsvp_decline"
+	RSVPAcceptLabel      = "✅ Going"
+	RSVPDeclineLabel     = "❌ Not Going"
+	RSVPAcceptedPlayer   = "✅ Confirmed! The DM has been notified. May the RNG be with you!"
+	RSVPDeclinedPlayer   = "❌ Noted. The DM has been notified. Have a good day!"
+	RSVPDMNotifyAccept   = "✅ <@%s> will be at **%s** — %s."
+	RSVPDMNotifyDecline  = "❌ <@%s> can't make it for **%s** — %s."
+	RSVPAlreadyResponded = "You've already responded for this session. If you changed your mind, talk to your DM"
+	RSVPCampaignGone     = "This campaign is no longer active."
+)
+
 // Timezone preference
 const (
 	TimezoneLabel             = "Timezone"
