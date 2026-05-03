@@ -17,7 +17,7 @@ func Migrate(db *bun.DB) error {
 	tables := []interface{}{
 		(*models.CommandRecord)(nil),
 		(*models.Player)(nil),
-		(*models.Token)(nil),
+		(*models.Media)(nil),
 		(*models.Campaign)(nil),
 		(*models.CampaignPlayer)(nil),
 		(*models.AuditEntry)(nil),
