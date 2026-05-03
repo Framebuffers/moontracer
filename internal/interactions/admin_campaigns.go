@@ -47,8 +47,9 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 
 	campaigns, err := db.GetAll[models.Campaign](h.db)
 	if err != nil {
-		log.Printf("admin_campaigns: failed to laod campaigns: %v", err)
+		log.Printf("admin_campaigns: failed to load campaigns: %v", err)
 		helpers.Respond(s, i, messages.GenericErrorMessage)
+		return
 	}
 
 	var filtered []models.Campaign
@@ -104,6 +105,87 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 						Options:     options,
 					},
 				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					router.BackButton(messages.BackLabel, router.ViewAdmin),
+				}},
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
+/*
+adminCampaignSelectHandler renders an admin-level detail panel when the user
+picks a campaign from the dropdown rendered by adminCampaignsHandler.
+
+CustomID: admin_campaign_select (the value carries the campaign ID).
+*/
+type adminCampaignSelectHandler struct {
+	db *bun.DB
+}
+
+func (h *adminCampaignSelectHandler) CustomIDPrefix() string {
+	return messages.AdminCampaignSelectPrefix
+}
+
+func (h *adminCampaignSelectHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	userID := helpers.GetUserID(i)
+
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
+	if err != nil || !ok {
+		helpers.Respond(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+	campaignID := values[0]
+
+	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	if err != nil {
+		helpers.Respond(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	roleLine := "_no role linked_"
+	if campaign.RoleID != "" {
+		roleLine = fmt.Sprintf("<@&%s>", campaign.RoleID)
+	}
+
+	scheduleLine := fmt.Sprintf("%s %s UTC (%.1fh, %s)",
+		campaign.Schedule.DayName(),
+		campaign.Schedule.StartTime,
+		campaign.Schedule.DurationHours,
+		campaign.Schedule.Frequency)
+
+	body := fmt.Sprintf(
+		"**Tag:** `%s`\n**DM:** <@%s>\n**Status:** %s\n**Slots:** %d\n**Role:** %s\n**Schedule:** %s",
+		campaign.Tag,
+		campaign.DungeonMaster,
+		messages.BuildFlags(*campaign),
+		campaign.Slots,
+		roleLine,
+		scheduleLine,
+	)
+
+	if campaign.Description != "" {
+		body += "\n\n**Description:**\n" + campaign.Description
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title:       campaign.Name,
+		Description: body,
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: "",
+			Embeds:  []*discordgo.MessageEmbed{embed},
+			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					router.BackButton(messages.BackLabel, router.ViewAdmin),
 				}},

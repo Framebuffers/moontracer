@@ -6,20 +6,27 @@ package interactions
 	Flow:
 		1. Staff clicks "Broadcast" on the /admin hub.
 		2. Auth: ScopeMod.
-		3. Open a modal with a text field for the broadcast message.
-		4. On submit, resolve all registered players and send DMs via dispatcher.
-		5. Confirm with count of messages sent.
-
-	Prerequisites:
-		- dispatch.Dispatcher for sending DMs.
+		3. Open a modal with a paragraph text field for the broadcast message.
+		4. On submit, load all registered Players and push a DM via the
+		   dispatcher to every one (excluding the sender unless DEBUG_ADMIN_ID
+		   matches, mirroring the per-campaign announce flow).
+		5. Confirm with the count of dispatched messages.
 */
 
 import (
-	"moontracer/internal/interactions/helpers"
+	"fmt"
+	"log"
+
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/auth"
+	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
+	"moontracer/internal/guard"
+	"moontracer/internal/interactions/helpers"
+	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
 
@@ -33,12 +40,31 @@ func (h *adminBroadcastHandler) CustomIDPrefix() string {
 }
 
 func (h *adminBroadcastHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO: implement — open the broadcast modal
-	// 1. auth.Authorize(h.db, helpers.GetUserID(i), auth.ScopeMod, "")
-	// 2. respond with InteractionResponseModal
-	//    CustomID: messages.AdminBroadcastModalID
-	//    Field: message text
-	helpers.Respond(s, i, "Broadcast is not yet implemented.")
+	userID := helpers.GetUserID(i)
+
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
+	if err != nil || !ok {
+		helpers.Respond(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID: messages.AdminBroadcastModalID,
+			Title:    messages.AdminBroadcastModalTitle,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID: messages.AdminBroadcastFieldID,
+						Label:    messages.AdminBroadcastFieldLabel,
+						Style:    discordgo.TextInputParagraph,
+						Required: true,
+					},
+				}},
+			},
+		},
+	})
 }
 
 type adminBroadcastModal struct {
@@ -51,11 +77,52 @@ func (h *adminBroadcastModal) CustomIDPrefix() string {
 }
 
 func (h *adminBroadcastModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO: implement
-	// 1. auth.Authorize(h.db, helpers.GetUserID(i), auth.ScopeMod, "")
-	// 2. extract message text from modal
-	// 3. db.GetAll[models.Player](h.db) — all registered players
-	// 4. dispatcher.Push for each player
-	// 5. respond with success + count
-	helpers.Respond(s, i, messages.AdminBroadcastFailed)
+	userID := helpers.GetUserID(i)
+
+	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
+	if err != nil || !ok {
+		helpers.Respond(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+
+	var message string
+	for _, row := range i.ModalSubmitData().Components {
+		for _, comp := range row.(*discordgo.ActionsRow).Components {
+			input := comp.(*discordgo.TextInput)
+			if input.CustomID == messages.AdminBroadcastFieldID {
+				message = input.Value
+			}
+		}
+	}
+
+	if message == "" {
+		helpers.Respond(s, i, messages.AdminBroadcastFailed)
+		return
+	}
+
+	players, err := db.GetAll[models.Player](h.db)
+	if err != nil {
+		log.Printf("admin_broadcast: failed to load players: %v", err)
+		helpers.Respond(s, i, messages.AdminBroadcastFailed)
+		return
+	}
+
+	skipSelf := guard.DebugAdminID == "" || guard.DebugAdminID != userID
+
+	msgID := uuid.NewString()
+	sent := 0
+	for _, p := range players {
+		if p.ID == userID && skipSelf {
+			continue
+		}
+		h.dispatcher.Push(dispatch.DirectMessage{
+			ID:      msgID,
+			Sender:  userID,
+			Target:  p.ID,
+			Content: fmt.Sprintf("**Broadcast from <@%s>:**\n\n%s", userID, message),
+		})
+		sent++
+	}
+
+	helpers.Respond(s, i, fmt.Sprintf(messages.AdminBroadcastSent, sent))
 }
