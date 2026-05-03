@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"context"
 	"fmt"
 	"log"
@@ -63,7 +64,7 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		return
 	}
 
-	campaign, ok := loadModCampaign(s, i, c.db, campaignID)
+	campaign, ok := helpers.LoadModCampaign(s, i, c.db, campaignID)
 	if !ok {
 		return
 	}
@@ -71,7 +72,7 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 	campaign.IsApproved = true
 	if err := db.Update(c.db, campaign); err != nil {
 		log.Printf("campaign_approve: failed to approve campaign %s: %v", campaignID, err)
-		respondInteraction(s, i, messages.CampaignApproveError)
+		helpers.Respond(s, i, messages.CampaignApproveError)
 		return
 	}
 
@@ -149,7 +150,7 @@ Custom ID format: prefix:<guildID>:<campaignID>
 Note: In DMs, i.Member is nil. i.User is used instead.
 */
 func parseApprovalInteraction(s *discordgo.Session, i *discordgo.InteractionCreate) (guildID, campaignID, userID string, ok bool) {
-	parts, valid := splitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	parts, valid := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 3)
 	if !valid {
 		return "", "", "", false
 	}
@@ -167,7 +168,7 @@ func parseApprovalInteraction(s *discordgo.Session, i *discordgo.InteractionCrea
 func checkModAuth(database *bun.DB, s *discordgo.Session, i *discordgo.InteractionCreate, userID string) bool {
 	ok, err := auth.Authorize(database, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
-		respondInteraction(s, i, messages.CampaignApproveNotModError)
+		helpers.Respond(s, i, messages.CampaignApproveNotModError)
 		return false
 	}
 	return true
@@ -189,7 +190,7 @@ func (m *campaignDenyModal) CustomIDPrefix() string {
 
 func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	// CustomID format: campaign_deny_modal:<guildID>:<campaignID>
-	parts, ok := splitCustomID(s, i, i.ModalSubmitData().CustomID, 3)
+	parts, ok := helpers.SplitCustomID(s, i, i.ModalSubmitData().CustomID, 3)
 	if !ok {
 		return
 	}
@@ -202,7 +203,7 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 		userID = i.Member.User.ID
 	}
 
-	campaign, ok := loadModCampaign(s, i, m.db, campaignID)
+	campaign, ok := helpers.LoadModCampaign(s, i, m.db, campaignID)
 	if !ok {
 		return
 	}
@@ -221,13 +222,13 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 	if _, err := m.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
 		Where("campaign_id = ?", campaignID).Exec(ctx); err != nil {
 		log.Printf("campaign_deny_modal: failed to delete campaign players for %s: %v", campaignID, err)
-		respondInteraction(s, i, messages.CampaignApproveError)
+		helpers.Respond(s, i, messages.CampaignApproveError)
 		return
 	}
 
 	if err := db.Delete[models.Campaign](m.db, campaignID); err != nil {
 		log.Printf("campaign_deny_modal: failed to delete campaign %s: %v", campaignID, err)
-		respondInteraction(s, i, messages.CampaignApproveError)
+		helpers.Respond(s, i, messages.CampaignApproveError)
 		return
 	}
 
@@ -238,5 +239,5 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 		Content: fmt.Sprintf(messages.CampaignDeniedDMMessage, campaign.Name, reason),
 	})
 
-	respondInteraction(s, i, fmt.Sprintf(messages.CampaignDeniedMessage, campaign.Name))
+	helpers.Respond(s, i, fmt.Sprintf(messages.CampaignDeniedMessage, campaign.Name))
 }

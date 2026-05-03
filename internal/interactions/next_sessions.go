@@ -5,17 +5,27 @@ package interactions
 
 	Flow:
 		1. User clicks "Next Sessions" button on the /me hub.
-		2. Load all campaigns where the user is an active member.
-		3. Filter to campaigns with a NextSession set and in the future.
+		2. Load all CampaignPlayer rows for the user.
+		3. Filter to active memberships in approved campaigns whose NextSession
+		   is set and in the future.
 		4. Sort by NextSession ascending.
-		5. Render a list with campaign name, date, and time.
+		5. Render a list with campaign name, day, and time UTC.
 		6. Back button returns to /me hub.
 */
 
 import (
+	"fmt"
+	"log"
+	"sort"
+	"strings"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/interactions/helpers"
+	"moontracer/internal/interactions/router"
+	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
 
@@ -28,11 +38,54 @@ func (h *nextSessionsHandler) CustomIDPrefix() string {
 }
 
 func (h *nextSessionsHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	// TODO: implement
-	// 1. getUserID(i)
-	// 2. models.GetPlayerCampaigns(h.db, userID)
-	// 3. filter: Campaign.Schedule.NextSession > now, Status == active
-	// 4. sort by NextSession
-	// 5. render list + back button (messages.BackMeID)
-	respondInteraction(s, i, messages.NextSessionsNone)
+	userID := helpers.GetUserID(i)
+
+	entries, err := models.GetPlayerCampaigns(h.db, userID)
+	if err != nil {
+		log.Printf("next_sessions: failed to load campaigns for %s: %v", userID, err)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
+		return
+	}
+
+	now := time.Now().UTC()
+
+	type upcoming struct {
+		Name string
+		When time.Time
+	}
+	var list []upcoming
+	for _, e := range entries {
+		if e.Status != models.StatusActive {
+			continue
+		}
+		if e.Campaign == nil || !e.Campaign.IsApproved {
+			continue
+		}
+		if e.Campaign.Schedule.NextSession.IsZero() || !e.Campaign.Schedule.NextSession.After(now) {
+			continue
+		}
+		list = append(list, upcoming{
+			Name: e.Campaign.Name,
+			When: e.Campaign.Schedule.NextSession.UTC(),
+		})
+	}
+
+	backRow := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+		router.BackButton(messages.BackLabel, router.ViewMe),
+	}}
+
+	if len(list) == 0 {
+		helpers.RespondUpdate(s, i, messages.NextSessionsNone, nil, []discordgo.MessageComponent{backRow})
+		return
+	}
+
+	sort.Slice(list, func(a, b int) bool { return list[a].When.Before(list[b].When) })
+
+	var lines []string
+	for _, e := range list {
+		lines = append(lines, fmt.Sprintf("• **%s** — %s UTC", e.Name, e.When.Format(messages.SessionListFormat)))
+	}
+	content := messages.NextSessionsHeader + "\n" + strings.Join(lines, "\n")
+
+	helpers.RespondUpdate(s, i, content, nil, []discordgo.MessageComponent{backRow})
 }

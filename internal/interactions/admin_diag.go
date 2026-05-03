@@ -11,6 +11,7 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -39,7 +40,7 @@ func (h *adminDiagHandler) HandleComponents(s *discordgo.Session, i *discordgo.I
 			Reject here so production never exposes the raw database view regardless.
 	*/
 	if !guard.DevMode {
-		respondInteraction(s, i, messages.DebugSurfaceDisabled)
+		helpers.Respond(s, i, messages.DebugSurfaceDisabled)
 		return
 	}
 
@@ -48,11 +49,11 @@ func (h *adminDiagHandler) HandleComponents(s *discordgo.Session, i *discordgo.I
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
 	if err != nil {
 		log.Printf("admin_diag: auth check failed: %v", err)
-		respondInteraction(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		respondInteraction(s, i, messages.AdminNotStaff)
+		helpers.Respond(s, i, messages.AdminNotStaff)
 		return
 	}
 

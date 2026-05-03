@@ -16,8 +16,10 @@ package interactions
 */
 
 import (
+	"moontracer/internal/interactions/helpers"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -25,6 +27,7 @@ import (
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
 	"moontracer/internal/guard"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -46,39 +49,40 @@ func (h *adminDatabaseHandler) HandleComponents(s *discordgo.Session, i *discord
 			Reject here so production never exposes the raw database view regardless.
 	*/
 	if !guard.DevMode {
-		respondInteraction(s, i, messages.DebugSurfaceDisabled)
+		helpers.Respond(s, i, messages.DebugSurfaceDisabled)
 		return
 	}
 
-	// TODO: implement
-	// 1. auth.Authorize(h.db, getUserID(i), auth.ScopeMod, "")
-	// 2. db.GetAll[models.Campaign](h.db)
-	// 3. build formatted list (reuse buildFlags pattern from campaign_database.go)
-	// 4. truncate at 1900 chars
-	// 5. respond with list + back button (messages.BackAdminID)
-	userID := i.Member.User.ID
+	userID := helpers.GetUserID(i)
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
+		helpers.Respond(s, i, messages.CampaignDBNotStaff)
 		return
 	}
 
 	campaigns, err := db.GetAll[models.Campaign](h.db)
 	if err != nil {
-		log.Printf("campaign_database: failed to load campaigns: %v", err)
+		log.Printf("admin_database: failed to load campaigns: %v", err)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
 	if len(campaigns) == 0 {
+		helpers.Respond(s, i, messages.CampaignDBEmpty)
 		return
 	}
 
 	var lines []string
 	for _, camp := range campaigns {
 		flags := messages.BuildFlags(camp)
-		lines = append(lines, truncate(fmt.Sprintf("**%s** (`%s`) — DM: <@%s> [%s]",
-			camp.Name, camp.Tag, camp.DungeonMaster, flags), 1900))
+		lines = append(lines, fmt.Sprintf("**%s** (`%s`) — DM: <@%s> [%s]",
+			camp.Name, camp.Tag, camp.DungeonMaster, flags))
 	}
-	_ = lines
 
-	respondInteraction(s, i, "Database view is not yet implemented.")
+	content := "**All campaigns in database:**\n" + strings.Join(lines, "\n")
+	if len(content) > 1900 {
+		content = content[:1900] + "\n... (truncated)"
+	}
+
+	helpers.RespondWithBack(s, i, discordgo.InteractionResponseChannelMessageWithSource, content, nil, router.ViewAdmin)
 }
