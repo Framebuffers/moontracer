@@ -93,6 +93,7 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE campaigns ADD COLUMN session_capacity INTEGER NOT NULL DEFAULT 6",
 		"UPDATE campaigns SET slots = 2147483647 WHERE is_westmarch = 1 AND slots = -1",
 		"ALTER TABLE player_settings ADD COLUMN timezone TEXT NOT NULL DEFAULT 'UTC'",
+		"ALTER TABLE campaign_players ADD COLUMN rsvp_status TEXT NOT NULL DEFAULT ''",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
