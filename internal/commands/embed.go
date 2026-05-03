@@ -17,7 +17,9 @@ coverURL, if non-empty, is rendered as a thumbnail (top-right).
 */
 func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL string) *discordgo.MessageEmbed {
 	status := messages.ClosedStatusLabel
-	if c.IsOpen {
+	if c.IsArchived {
+		status = messages.ArchivedStatusLabel
+	} else if c.IsOpen {
 		status = messages.OpenStatusLabel
 	}
 
