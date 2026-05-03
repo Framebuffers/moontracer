@@ -9,6 +9,7 @@ import (
 
 	"moontracer/internal/db"
 	"moontracer/internal/discord"
+	"moontracer/internal/mediaserver"
 )
 
 /*
@@ -50,6 +51,12 @@ func main() {
 	}
 
 	guildDBM := db.NewGuildDBManager(dbDir)
+
+	mediaPort := os.Getenv("MEDIA_PORT")
+	if mediaPort == "" {
+		mediaPort = "8090"
+	}
+	mediaserver.Serve(dbDir, ":"+mediaPort)
 
 	bot, err := discord.New(token, guildID, adminRole, modRole, guildDBM)
 	if err != nil {

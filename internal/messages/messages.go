@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.9.0"
+	BotVersion               = "v0.9.2"
 )
 
 /*
@@ -560,11 +560,11 @@ const (
 
 // Admin hub: Campaign browser (all campaigns)
 const (
-	AdminCampaignsPrefix          = "admin_campaigns"
-	AdminCampaignsHeader          = "All campaigns:"
-	AdminCampaignsNone            = "No campaigns in the database."
+	AdminCampaignsPrefix           = "admin_campaigns"
+	AdminCampaignsHeader           = "All campaigns:"
+	AdminCampaignsNone             = "No campaigns in the database."
 	AdminCampaignSelectPlaceholder = "Pick a campaign for details..."
-	AdminContactDMLabel           = "Contact DM"
+	AdminContactDMLabel            = "Contact DM"
 )
 
 // Admin hub: Broadcast
