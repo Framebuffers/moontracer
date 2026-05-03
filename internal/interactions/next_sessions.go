@@ -81,9 +81,19 @@ func (h *nextSessionsHandler) HandleComponents(s *discordgo.Session, i *discordg
 
 	sort.Slice(list, func(a, b int) bool { return list[a].When.Before(list[b].When) })
 
+	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
+	if err != nil {
+		log.Printf("next_sessions: load settings for %s: %v", userID, err)
+	}
+	loc := time.UTC
+	if settings != nil {
+		loc = settings.Location()
+	}
+
 	var lines []string
 	for _, e := range list {
-		lines = append(lines, fmt.Sprintf("• **%s** — %s UTC", e.Name, e.When.Format(messages.SessionListFormat)))
+		formatted := helpers.FormatInLocation(e.When, messages.SessionListFormat, loc) + " " + helpers.TZLabel(loc)
+		lines = append(lines, fmt.Sprintf("• **%s** — %s · %s", e.Name, formatted, helpers.TimeRemaining(e.When)))
 	}
 	content := messages.NextSessionsHeader + "\n" + strings.Join(lines, "\n")
 
