@@ -81,41 +81,48 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
+	sessionLabel := messages.ManageSetSessionLabel
+	if !campaign.Schedule.NextSession.IsZero() {
+		sessionLabel = messages.ManageRescheduleSessionLabel
+	}
+
+	row1 := []discordgo.MessageComponent{
+		discordgo.Button{
+			Label:    messages.ManageEditLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: fmt.Sprintf("%s:%s", messages.ManageEditPrefix, campaignID),
+		},
+		discordgo.Button{
+			Label:    messages.ManageDeleteLabel,
+			Style:    discordgo.DangerButton,
+			CustomID: fmt.Sprintf("manage_delete:%s", campaignID),
+		},
+		discordgo.Button{
+			Label:    messages.ManageBanLabel,
+			Style:    discordgo.DangerButton,
+			CustomID: fmt.Sprintf("manage_ban:%s", campaignID),
+		},
+		discordgo.Button{
+			Label:    messages.ManageAnnounceLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: fmt.Sprintf("manage_announce:%s", campaignID),
+		},
+	}
+	if !campaign.IsWestmarch && campaign.Schedule.Frequency != models.OneShot {
+		row1 = append(row1, discordgo.Button{
+			Label:    messages.ManageRescheduleLabel,
+			Style:    discordgo.SecondaryButton,
+			CustomID: fmt.Sprintf("manage_reschedule:%s", campaignID),
+		})
+	}
+
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
 			Content: fmt.Sprintf("Managing **%s**:", campaign.Name),
 			Embeds:  []*discordgo.MessageEmbed{},
 			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{
-					Components: []discordgo.MessageComponent{
-						discordgo.Button{
-							Label:    messages.ManageEditLabel,
-							Style:    discordgo.SecondaryButton,
-							CustomID: fmt.Sprintf("%s:%s", messages.ManageEditPrefix, campaignID),
-						},
-						discordgo.Button{
-							Label:    messages.ManageDeleteLabel,
-							Style:    discordgo.DangerButton,
-							CustomID: fmt.Sprintf("manage_delete:%s", campaignID),
-						},
-						discordgo.Button{
-							Label:    messages.ManageBanLabel,
-							Style:    discordgo.DangerButton,
-							CustomID: fmt.Sprintf("manage_ban:%s", campaignID),
-						},
-						discordgo.Button{
-							Label:    messages.ManageAnnounceLabel,
-							Style:    discordgo.SecondaryButton,
-							CustomID: fmt.Sprintf("manage_announce:%s", campaignID),
-						},
-						discordgo.Button{
-							Label:    messages.ManageRescheduleLabel,
-							Style:    discordgo.SecondaryButton,
-							CustomID: fmt.Sprintf("manage_reschedule:%s", campaignID),
-						},
-					},
-				},
+				discordgo.ActionsRow{Components: row1},
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.Button{
@@ -129,7 +136,7 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
 						},
 						discordgo.Button{
-							Label:    messages.ManageSetSessionLabel,
+							Label:    sessionLabel,
 							Style:    discordgo.SecondaryButton,
 							CustomID: fmt.Sprintf("%s:%s", messages.ManageSetSessionPrefix, campaignID),
 						},
