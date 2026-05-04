@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.10.1"
+	BotVersion               = "v0.10.2"
 )
 
 /*
@@ -230,6 +230,7 @@ const (
 const (
 	ManageCampaignsCommandName = "managecampaigns"
 	ManageCampaignsCommandDesc = "Manage campaigns you run as DM."
+	ManageCampaignsLabel       = "Manage Campaigns"
 	ManageNoDMCampaigns        = "You are not the DM of any campaigns."
 	ManageNotAuthorized        = "You must be the DM of this campaign to manage it."
 	ManageCampaignNotFound     = "Campaign not found."
