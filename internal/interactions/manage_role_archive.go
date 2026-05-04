@@ -104,7 +104,7 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 
 	roleName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
 	if roleName == "" {
-		helpers.Respond(s, i, messages.ManageSetRoleFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 	roles, err := s.GuildRoles(i.GuildID)
 	if err != nil {
 		log.Printf("manage_role: failed to fetch guild roles: %v", err)
-		helpers.Respond(s, i, messages.ManageSetRoleFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
 		return
 	}
 
@@ -130,7 +130,7 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 		})
 		if err != nil {
 			log.Printf("manage_role: failed to create role: %v", err)
-			helpers.Respond(s, i, messages.ManageSetRoleFailed)
+			helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
 			return
 		}
 		roleID = role.ID
@@ -139,12 +139,12 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 	campaign.RoleID = roleID
 	if err := db.Update(h.db, campaign); err != nil {
 		log.Printf("manage_role: failed to update campaign: %v", err)
-		helpers.Respond(s, i, messages.ManageSetRoleFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
 		return
 	}
 
 	log.Printf("manage_role: %s linked role %s (%s) to campaign %s", userID, roleName, roleID, campaign.Name)
-	helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetRoleSuccess, roleName, campaign.Name))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageSetRoleSuccess, roleName, campaign.Name))
 }
 
 /*
@@ -233,7 +233,7 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 
 	if err := commands.ArchiveCampaign(h.db, campaign, messages.AbandonReasonDM); err != nil {
 		log.Printf("manage_archive: failed to archive campaign %s: %v", campaign.ID, err)
-		helpers.Respond(s, i, messages.ManageArchiveFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageArchiveFailed)
 		return
 	}
 	h.sched.Cancel(i.GuildID, campaign.ID)

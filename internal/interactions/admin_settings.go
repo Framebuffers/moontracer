@@ -38,7 +38,7 @@ func (h *adminSettingsHandler) HandleComponents(s *discordgo.Session, i *discord
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeAdmin, "")
 	if err != nil || !ok {
-		helpers.Respond(s, i, messages.CampaignDBNotStaff)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
 		return
 	}
 

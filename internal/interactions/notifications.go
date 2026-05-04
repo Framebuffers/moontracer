@@ -65,7 +65,7 @@ func (h *notifToggleHandler) HandleComponents(s *discordgo.Session, i *discordgo
 	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
 	if err != nil {
 		log.Printf("notif_toggle: load failed for %s: %v", userID, err)
-		helpers.Respond(s, i, messages.NotifLoadFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.NotifLoadFailed)
 		return
 	}
 
@@ -77,13 +77,13 @@ func (h *notifToggleHandler) HandleComponents(s *discordgo.Session, i *discordgo
 	case messages.NotifFieldInvitations:
 		settings.NotifyInvitations = !settings.NotifyInvitations
 	default:
-		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 
 	if _, err := h.db.NewUpdate().Model(settings).WherePK().Exec(context.Background()); err != nil {
 		log.Printf("notif_toggle: update failed for %s: %v", userID, err)
-		helpers.Respond(s, i, messages.NotifUpdateFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.NotifUpdateFailed)
 		return
 	}
 
@@ -95,7 +95,7 @@ func renderNotificationsPanel(s *discordgo.Session, i *discordgo.InteractionCrea
 	settings, err := models.GetOrCreatePlayerSettings(db, userID)
 	if err != nil {
 		log.Printf("notifications: load failed for %s: %v", userID, err)
-		helpers.Respond(s, i, messages.NotifLoadFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.NotifLoadFailed)
 		return
 	}
 

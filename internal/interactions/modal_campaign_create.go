@@ -57,7 +57,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 
 	name = strings.TrimSpace(name)
 	if name == "" {
-		helpers.Respond(s, i, messages.CampaignCreationFailureErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignCreationFailureErrorMessage)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	if slotsStr != "" {
 		parsed, err := strconv.Atoi(slotsStr)
 		if err != nil || parsed < 1 {
-			helpers.Respond(s, i, messages.SlotCountMismatchErrorMessage)
+			helpers.RespondUpdateTerminal(s, i, messages.SlotCountMismatchErrorMessage)
 			return
 		}
 		slots = parsed
@@ -76,7 +76,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	tag, err := uniqueTag(m.db, models.NormalizeTag(name))
 	if err != nil {
 		log.Printf("modal_campaign_create: tag dedup failed: %v", err)
-		helpers.Respond(s, i, messages.CampaignCreationFailureErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignCreationFailureErrorMessage)
 		return
 	}
 
@@ -106,11 +106,11 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	)
 	if err != nil {
 		log.Printf("modal_campaign_create: %s: %v", messages.CampaignCreationFailureErrorMessage, err)
-		helpers.Respond(s, i, messages.CampaignAndRegistrationFailureErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignAndRegistrationFailureErrorMessage)
 		return
 	}
 
-	helpers.Respond(s, i, fmt.Sprintf(messages.NewCampaignConfigMessage, created.Name))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.NewCampaignConfigMessage, created.Name))
 	_, err = s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
 		Content:    fmt.Sprintf(messages.NewCampaignConfigHeader, created.Name),
 		Components: newCampaignConfigComponents(created.ID),

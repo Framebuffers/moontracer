@@ -43,25 +43,25 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 
 	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
-		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	ok, err = auth.Authorize(h.db, userID, auth.ScopeDM, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_toggle: auth check failed: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		helpers.Respond(s, i, messages.MasterCanToggleStatusErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.MasterCanToggleStatusErrorMessage)
 		return
 	}
 
 	campaign.IsOpen = !campaign.IsOpen
 	if err := db.Update(h.db, campaign); err != nil {
 		log.Printf("campaign_toggle: %s: %v", messages.CampaignUpdateErrorMessage, err)
-		helpers.Respond(s, i, messages.CampaignUpdateErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignUpdateErrorMessage)
 		return
 	}
 
@@ -69,5 +69,5 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 	if campaign.IsOpen {
 		status = "open"
 	}
-	helpers.Respond(s, i, fmt.Sprintf("%s **%s** is now **%s**.", messages.CampaignStatusMessage, campaign.Name, status))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.CampaignStatusMessage, campaign.Name, status))
 }

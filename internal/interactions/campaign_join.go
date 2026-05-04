@@ -50,23 +50,23 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	ok, err := auth.Authorize(h.db, userID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("campaign_join: auth check failed: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		helpers.Respond(s, i, messages.NotRegisteredMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.NotRegisteredMessage)
 		return
 	}
 
 	// does the campaign exist and is it active?
 	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
-		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	if !campaign.IsApproved {
-		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
@@ -87,7 +87,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 
 	// Campaign must be open OR the player must have the linked role.
 	if !campaign.IsOpen && !hasLinkedRole {
-		helpers.Respond(s, i, messages.CampaignClosedMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignClosedMessage)
 		return
 	}
 
@@ -95,16 +95,16 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_join: %s: %v", messages.PlayerFetchErrorMessage, err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	for _, p := range players {
 		if p.PlayerID == userID {
 			if p.Status == models.StatusBanned {
-				helpers.Respond(s, i, messages.PlayerBannedMessage)
+				helpers.RespondUpdateTerminal(s, i, messages.PlayerBannedMessage)
 				return
 			}
-			helpers.Respond(s, i, messages.PlayerAlreadyOnCampaignMessage)
+			helpers.RespondUpdateTerminal(s, i, messages.PlayerAlreadyOnCampaignMessage)
 			return
 		}
 	}
@@ -122,7 +122,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		}
 	}
 	if !campaign.IsWestmarch && campaign.Slots > 0 && activePlayerCount >= campaign.Slots {
-		helpers.Respond(s, i, messages.CampaignFullMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignFullMessage)
 		return
 	}
 
@@ -134,7 +134,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	}
 	if err := db.Insert(h.db, cp); err != nil {
 		log.Printf("campaign_join: %s: %v", messages.InsertPlayerErrorMessage, err)
-		helpers.Respond(s, i, messages.PlayerFailedToJoinMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.PlayerFailedToJoinMessage)
 		return
 	}
 	newActiveCount := activePlayerCount + 1
@@ -155,10 +155,10 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 			Content: fmt.Sprintf(messages.WestmarchOverCapacityDMAlert,
 				userID, campaign.Name, newActiveCount, campaign.SessionCapacity),
 		})
-		helpers.Respond(s, i, fmt.Sprintf(messages.WestmarchOverCapacityPlayerNotice,
+		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.WestmarchOverCapacityPlayerNotice,
 			campaign.Name, campaign.SessionCapacity))
 		return
 	}
 
-	helpers.Respond(s, i, fmt.Sprintf("%s **%s**!", messages.PlayerJoinedCampaignMessage, campaign.Name))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.PlayerJoinedCampaignMessage, campaign.Name))
 }

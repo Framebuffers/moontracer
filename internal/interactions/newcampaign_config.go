@@ -115,7 +115,7 @@ func (h *newCampaignBookHandler) CustomIDPrefix() string { return messages.NewCa
 func (h *newCampaignBookHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	campaignID, ok := parseConfigCustomID(i.MessageComponentData().CustomID)
 	if !ok {
-		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 	values := i.MessageComponentData().Values
@@ -125,14 +125,14 @@ func (h *newCampaignBookHandler) HandleComponents(s *discordgo.Session, i *disco
 
 	c, err := loadCampaignForConfig(h.db, campaignID, helpers.GetUserID(i))
 	if err != nil {
-		helpers.Respond(s, i, messages.ManageCampaignNotFound)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 
 	c.Game.Edition = values[0]
 	if err := db.Update(h.db, c); err != nil {
 		log.Printf("newcampaign_book: update failed: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -152,7 +152,7 @@ func (h *newCampaignFormatHandler) CustomIDPrefix() string { return messages.New
 func (h *newCampaignFormatHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	campaignID, ok := parseConfigCustomID(i.MessageComponentData().CustomID)
 	if !ok {
-		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 	values := i.MessageComponentData().Values
@@ -162,7 +162,7 @@ func (h *newCampaignFormatHandler) HandleComponents(s *discordgo.Session, i *dis
 
 	c, err := loadCampaignForConfig(h.db, campaignID, helpers.GetUserID(i))
 	if err != nil {
-		helpers.Respond(s, i, messages.ManageCampaignNotFound)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 
@@ -184,7 +184,7 @@ func (h *newCampaignFormatHandler) HandleComponents(s *discordgo.Session, i *dis
 
 	if err := db.Update(h.db, c); err != nil {
 		log.Printf("newcampaign_format: update failed: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -205,21 +205,21 @@ func (h *newCampaignSubmitHandler) CustomIDPrefix() string { return messages.New
 func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	campaignID, ok := parseConfigCustomID(i.MessageComponentData().CustomID)
 	if !ok {
-		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 
 	userID := helpers.GetUserID(i)
 	c, err := loadCampaignForConfig(h.db, campaignID, userID)
 	if err != nil {
-		helpers.Respond(s, i, messages.ManageCampaignNotFound)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 
 	staffMembers, err := db.GetStaff(h.db)
 	if err != nil {
 		log.Printf("newcampaign_submit: failed to get staff: %v", err)
-		helpers.Respond(s, i, messages.CampaignStaffNotifyFailureMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignStaffNotifyFailureMessage)
 		return
 	}
 
@@ -270,13 +270,13 @@ func (h *newCampaignCancelHandler) CustomIDPrefix() string { return messages.New
 func (h *newCampaignCancelHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	campaignID, ok := parseConfigCustomID(i.MessageComponentData().CustomID)
 	if !ok {
-		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 
 	c, err := loadCampaignForConfig(h.db, campaignID, helpers.GetUserID(i))
 	if err != nil {
-		helpers.Respond(s, i, messages.ManageCampaignNotFound)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 
@@ -284,12 +284,12 @@ func (h *newCampaignCancelHandler) HandleComponents(s *discordgo.Session, i *dis
 	if _, err := h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
 		Where("campaign_id = ?", c.ID).Exec(ctx); err != nil {
 		log.Printf("newcampaign_cancel: failed to delete campaign players: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if err := db.Delete[models.Campaign](h.db, c.ID); err != nil {
 		log.Printf("newcampaign_cancel: failed to delete campaign: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 

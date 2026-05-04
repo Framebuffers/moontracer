@@ -63,7 +63,7 @@ func (h *manageCampaignInvite) HandleComponents(s *discordgo.Session, i *discord
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("Select a player to invite to **%s**:", campaign.Name),
+			Content: fmt.Sprintf(messages.ManageInviteSelectPrompt, campaign.Name),
 			Embeds:  []*discordgo.MessageEmbed{},
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
@@ -105,7 +105,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 
 	values := i.MessageComponentData().Values
 	if len(values) == 0 {
-		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 	targetID := values[0]
@@ -119,7 +119,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 			1. Target must be registered.
 	*/
 	if _, err := db.GetByID[models.Player](h.db, targetID); err != nil {
-		helpers.Respond(s, i, messages.AddPlayerTargetNotRegistered)
+		helpers.RespondUpdateTerminal(s, i, messages.AddPlayerTargetNotRegistered)
 		return
 	}
 
@@ -127,14 +127,14 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("campaign_invite_select: failed to load players: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
 	activeCount := 0
 	for _, p := range players {
 		if p.PlayerID == targetID {
-			helpers.Respond(s, i, messages.AddPlayerAlreadyInCampaign)
+			helpers.RespondUpdateTerminal(s, i, messages.AddPlayerAlreadyInCampaign)
 			return
 		}
 		if p.Status == models.StatusActive {
@@ -144,7 +144,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 
 	// 		3. Campaign must not be full.
 	if campaign.Slots > 0 && activeCount >= campaign.Slots && !campaign.CanOverflow {
-		helpers.Respond(s, i, fmt.Sprintf(messages.InviteCampaignFull, campaign.Name))
+		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.InviteCampaignFull, campaign.Name))
 		return
 	}
 
@@ -157,7 +157,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 	}
 	if err := db.Insert(h.db, cp); err != nil {
 		log.Printf("campaign_invite_select: failed to insert campaign player: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -223,7 +223,7 @@ func (h *campaignInviteAccept) HandleComponents(s *discordgo.Session, i *discord
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("campaign_invite_accept: failed to load players: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -248,7 +248,7 @@ func (h *campaignInviteAccept) HandleComponents(s *discordgo.Session, i *discord
 	// 		2. Activate membership.
 	if err := models.SetCampaignPlayerStatus(h.db, userID, campaignID, models.StatusActive); err != nil {
 		log.Printf("campaign_invite_accept: failed to set status: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -306,7 +306,7 @@ func (h *campaignInviteDecline) HandleComponents(s *discordgo.Session, i *discor
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("campaign_invite_decline: failed to load players: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -331,7 +331,7 @@ func (h *campaignInviteDecline) HandleComponents(s *discordgo.Session, i *discor
 	// 		2. Remove the pending membership.
 	if err := models.RemoveCampaignPlayer(h.db, userID, campaignID); err != nil {
 		log.Printf("campaign_invite_decline: failed to remove player: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
