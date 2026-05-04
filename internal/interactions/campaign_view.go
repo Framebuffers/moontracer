@@ -1,8 +1,6 @@
 package interactions
 
 import (
-	"moontracer/internal/interactions/helpers"
-	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -11,7 +9,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/db"
-	"moontracer/internal/interactions/cdn"
+	"moontracer/internal/interactions/helpers"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -68,7 +66,7 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
-	coverURL := cdn.ResolveCoverURL(context.Background(), h.db, campaign)
+	coverURL := models.CoverURLForCampaign(h.db, campaign.ID)
 	embed := buildCampaignEmbed(*campaign, players, coverURL)
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{

@@ -22,6 +22,7 @@ Media is the single record for any externally-stored asset:
 cover art, player/NPC tokens, VTT links, etc.
 
 Path holds a local disk path (for files) or a raw URL (for links).
+URL holds the public CDN URL served to Discord (empty for non-file assets).
 */
 type Media struct {
 	bun.BaseModel `bun:"table:media"`
@@ -30,6 +31,7 @@ type Media struct {
 	OwnerID    string    `bun:",notnull"     json:"owner_id"`
 	CampaignID string    `bun:",nullzero"    json:"campaign_id,omitempty"`
 	Path       string    `bun:",notnull"     json:"path"`
+	URL        string    `bun:",nullzero"    json:"url,omitempty"`
 	Kind       MediaKind `bun:",notnull"     json:"kind"`
 	Name       string    `bun:",notnull"     json:"name"`
 	MimeType   string    `bun:",nullzero"    json:"mime_type,omitempty"`
@@ -62,4 +64,16 @@ func MediaByPath(db *bun.DB, path string) (*Media, error) {
 	var out Media
 	err := db.NewSelect().Model(&out).Where("path = ?", path).Limit(1).Scan(context.Background())
 	return &out, err
+}
+
+/*
+CoverURLForCampaign returns the public CDN URL for the most-recent cover art
+uploaded for the campaign, or an empty string if none exists.
+*/
+func CoverURLForCampaign(db *bun.DB, campaignID string) string {
+	media, err := MediaByCampaign(db, campaignID, KindCoverArt)
+	if err != nil || len(media) == 0 {
+		return ""
+	}
+	return media[0].URL
 }

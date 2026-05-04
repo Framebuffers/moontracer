@@ -138,6 +138,7 @@ func (c *campaignUploadCommand) Execute(s *discordgo.Session, i *discordgo.Inter
 		OwnerID:    userID,
 		CampaignID: campaignID,
 		Path:       diskPath,
+		URL:        publicURL,
 		Kind:       models.KindCoverArt,
 		Name:       att.Filename,
 		MimeType:   mimeType,
