@@ -62,18 +62,18 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 	*/
 	campaign, err := db.GetByID[models.Campaign](database, campaignID)
 	if err != nil {
-		helpers.Respond(s, i, messages.ManageCampaignNotFound)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 
 	ok, err := auth.Authorize(database, userID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_campaign: auth check failed: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		helpers.Respond(s, i, messages.ManageNotAuthorized)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageNotAuthorized)
 		return
 	}
 
@@ -146,7 +146,7 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Content:    fmt.Sprintf("Managing **%s**:", campaign.Name),
+			Content:    fmt.Sprintf(messages.ManageCampaignHeader, campaign.Name),
 			Embeds:     []*discordgo.MessageEmbed{},
 			Components: []discordgo.MessageComponent{rowPlayers, rowSessions, rowEdit, helpers.BackRow(router.ViewManage)},
 			Flags:      discordgo.MessageFlagsEphemeral,
@@ -243,18 +243,18 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		Where("campaign_id = ?", campaignID).Exec(ctx)
 	if err != nil {
 		log.Printf("manage_delete_confirm: failed to delete campaign players: %v", err)
-		helpers.Respond(s, i, messages.ManageDeleteFailure)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageDeleteFailure)
 		return
 	}
 
 	if err := db.Delete[models.Campaign](h.db, campaignID); err != nil {
 		log.Printf("manage_delete_confirm: failed to delete campaign: %v", err)
-		helpers.Respond(s, i, messages.ManageDeleteFailure)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageDeleteFailure)
 		return
 	}
 
 	log.Printf("manage_delete_confirm: %s deleted campaign %s (%s)", userID, campaign.Name, campaignID)
-	helpers.Respond(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
 }
 
 /*
@@ -309,17 +309,17 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_ban: auth check failed: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		helpers.Respond(s, i, messages.ManageNotAuthorized)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageNotAuthorized)
 		return
 	}
 
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err != nil {
-		helpers.Respond(s, i, messages.ManageCampaignNotFound)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 
@@ -330,7 +330,7 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("manage_ban: failed to load players: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -350,20 +350,21 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 	}
 
 	if len(options) == 0 {
-		helpers.Respond(s, i, messages.ManageBanNoMembers)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageBanNoMembers)
 		return
 	}
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
 			Content: fmt.Sprintf(messages.ManageSelectMember, campaign.Name),
+			Embeds:  []*discordgo.MessageEmbed{},
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{
 					Components: []discordgo.MessageComponent{
 						discordgo.SelectMenu{
 							CustomID:    "manage_ban_select",
-							Placeholder: "Select a member...",
+							Placeholder: messages.ManageBanSelectPlaceholder,
 							Options:     options,
 						},
 					},
@@ -404,13 +405,13 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 
 	values := i.MessageComponentData().Values
 	if len(values) == 0 {
-		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 
 	parts := strings.SplitN(values[0], ":", 2)
 	if len(parts) < 2 {
-		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 	campaignID := parts[0]
@@ -419,18 +420,18 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 	ok, err := auth.Authorize(h.db, invokerID, auth.ScopeDM, campaignID)
 	if err != nil {
 		log.Printf("manage_ban_select: auth check failed: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		helpers.Respond(s, i, messages.ManageNotAuthorized)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageNotAuthorized)
 		return
 	}
 
 	err = models.SetCampaignPlayerStatus(h.db, targetID, campaignID, models.StatusBanned)
 	if err != nil {
 		log.Printf("manage_ban_select: failed to set status to banned: %v", err)
-		helpers.Respond(s, i, fmt.Sprintf("Could not ban %s from %s.", targetID, campaignID))
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignBanFailure)
 		return
 	}
 
@@ -443,5 +444,5 @@ func (h *manageCampaignBanSelect) HandleComponents(s *discordgo.Session, i *disc
 	}
 
 	log.Printf("manage_ban_select: banned successfully. target: %s, campaign: %s", targetID, campaignID)
-	helpers.Respond(s, i, fmt.Sprintf("%s has been banned from Campaign %s.", targetID, campaignID))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageCampaignBanSuccess, targetID, campaignID))
 }

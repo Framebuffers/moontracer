@@ -50,7 +50,7 @@ func (h *manageCampaignReschedule) HandleComponents(s *discordgo.Session, i *dis
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
 	if err != nil || !ok {
-		helpers.Respond(s, i, messages.ManageNotAuthorized)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageNotAuthorized)
 		return
 	}
 
@@ -148,24 +148,24 @@ func (h *manageCampaignRescheduleModal) HandleModal(s *discordgo.Session, i *dis
 
 	day, ok := parseDayOfWeek(dayStr)
 	if !ok {
-		helpers.Respond(s, i, messages.RescheduleInvalidDay)
+		helpers.RespondUpdateTerminal(s, i, messages.RescheduleInvalidDay)
 		return
 	}
 
 	if !isValidTime(timeStr) {
-		helpers.Respond(s, i, messages.RescheduleInvalidTime)
+		helpers.RespondUpdateTerminal(s, i, messages.RescheduleInvalidTime)
 		return
 	}
 
 	duration, err := strconv.ParseFloat(durStr, 64)
 	if err != nil || duration <= 0 {
-		helpers.Respond(s, i, messages.RescheduleInvalidDuration)
+		helpers.RespondUpdateTerminal(s, i, messages.RescheduleInvalidDuration)
 		return
 	}
 
 	freq := models.CampaignFrequency(freqStr)
 	if !isValidFrequency(freq) {
-		helpers.Respond(s, i, messages.RescheduleInvalidFrequency)
+		helpers.RespondUpdateTerminal(s, i, messages.RescheduleInvalidFrequency)
 		return
 	}
 
@@ -176,12 +176,12 @@ func (h *manageCampaignRescheduleModal) HandleModal(s *discordgo.Session, i *dis
 
 	if err := db.Update(h.db, campaign); err != nil {
 		log.Printf("campaign_reschedule: failed to update schedule: %v", err)
-		helpers.Respond(s, i, messages.RescheduleError)
+		helpers.RespondUpdateTerminal(s, i, messages.RescheduleError)
 		return
 	}
 
 	dayName := campaign.Schedule.DayName()
-	helpers.Respond(s, i, fmt.Sprintf(messages.RescheduleSuccess, campaign.Name, dayName, timeStr, durStr, freqStr))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.RescheduleSuccess, campaign.Name, dayName, timeStr, durStr, freqStr))
 }
 
 func isValidTime(t string) bool {

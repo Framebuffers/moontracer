@@ -10,6 +10,7 @@ import (
 
 	"moontracer/internal/db"
 	"moontracer/internal/interactions/helpers"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -50,19 +51,19 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 
 	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
-		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	if !campaign.IsApproved {
-		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_view: %s: %v", messages.PlayerFetchErrorMessage, err)
-		helpers.Respond(s, i, messages.CampaignLoadFailureErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignLoadFailureErrorMessage)
 		return
 	}
 
@@ -70,10 +71,12 @@ func (h *campaignView) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	embed := buildCampaignEmbed(*campaign, players, coverURL)
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Embeds: []*discordgo.MessageEmbed{embed},
-			Flags:  discordgo.MessageFlagsEphemeral,
+			Content:    "",
+			Embeds:     []*discordgo.MessageEmbed{embed},
+			Components: []discordgo.MessageComponent{helpers.BackRow(router.ViewMyCampaigns)},
+			Flags:      discordgo.MessageFlagsEphemeral,
 		},
 	})
 }

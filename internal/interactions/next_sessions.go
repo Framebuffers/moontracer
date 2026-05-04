@@ -43,7 +43,7 @@ func (h *nextSessionsHandler) HandleComponents(s *discordgo.Session, i *discordg
 	entries, err := models.GetPlayerCampaigns(h.db, userID)
 	if err != nil {
 		log.Printf("next_sessions: failed to load campaigns for %s: %v", userID, err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 

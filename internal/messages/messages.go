@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.9.2"
+	BotVersion               = "v0.10.1"
 )
 
 /*
@@ -100,7 +100,7 @@ const (
 	CampaignFullMessage            = "This campaign is full."
 	PlayerFailedToJoinMessage      = "Failed to join campaign."
 	InsertPlayerErrorMessage       = "db.Insert(): Error inserting Campaign Player: "
-	PlayerJoinedCampaignMessage    = "You have joined campaign: "
+	PlayerJoinedCampaignMessage    = "You have joined **%s**!"
 
 	// Westmarch session-capacity tripwire (FCFS soft alert).
 	WestmarchOverCapacityDMAlert      = "⚠️ **INFO:** <@%s> just joined westmarch **%s**. Roster is now %d active player(s). Session capacity is %d. They've been admitted; bring an extra seat or trim attendance for the next session."
@@ -112,14 +112,14 @@ const (
 	MasterIsLeavingCampaignErrorMessage = "You are the DM — you cannot leave your own campaign."
 	LeavingCampaignErrorMessage         = "models.RemoveCampaignPlayer(): error removing player: "
 	FailedToLeaveCampaignErrorMessage   = "Failed to leave campaign."
-	PlayerLeftCampaignMessage           = "You have left campaign "
+	PlayerLeftCampaignMessage           = "You have left **%s**."
 )
 
 // Campaign toggle
 const (
 	MasterCanToggleStatusErrorMessage = "Only the DM can toggle campaign status."
 	CampaignUpdateErrorMessage        = "db.Update(): error updating campaign: "
-	CampaignStatusMessage             = "The current status for campaign"
+	CampaignStatusMessage             = "**%s** is now **%s**."
 )
 
 // My campaigns
@@ -239,6 +239,11 @@ const (
 	ManageCampaignBanSuccess   = "Banned <@%s> from **%s**."
 	ManageCampaignBanFailure   = "Failed to ban player from campaign."
 	ManageSelectMember         = "Select a member to ban from **%s**:"
+	ManageBanSelectPlaceholder = "Select a member..."
+	ManageCampaignHeader       = "Managing **%s**:"
+	ManageInviteSelectPrompt   = "Select a player to invite to **%s**:"
+	MyCampaignListLine         = "**%s** — %s (%s)"
+	ManageCampaignListLine     = "**%s** — %s"
 )
 
 // Campaign cover / upload
@@ -257,8 +262,8 @@ const (
 	CampaignUploadNotImage      = "That file doesn't look like an image. Try JPEG, PNG, or WebP."
 	CampaignUploadTooLarge      = "Image is too large. Max 8 MiB."
 	CampaignUploadMissingAttach = "No image attached. Attach a file to the `image` option."
-	CampaignUploadFailure = "Failed to save cover. Please try again."
-	CampaignUploadSuccess = "Cover set for **%s**.\n%s"
+	CampaignUploadFailure       = "Failed to save cover. Please try again."
+	CampaignUploadSuccess       = "Cover set for **%s**.\n%s"
 
 	SetCoverButtonLabel  = "Set Cover"
 	SetCoverInstructions = "Use `/campaignupload kind:Cover campaign:<name> image:<file>` to set a cover for this campaign."
@@ -321,6 +326,8 @@ const (
 	AnnounceNoMembers        = "This campaign has no members to announce to."
 	AnnounceError            = "Failed to send announcement."
 	AnnouncePostedToThread   = "Announcement posted to the **%s** announcements thread."
+	AnnounceThreadContent    = "%s**Announcement from <@%s>:**\n\n%s"
+	AnnounceDMContent        = "**[%s]** Announcement from <@%s>:\n\n%s"
 )
 
 // CampaignsCategoryName is the shared Discord category all campaign channels are grouped under.
@@ -577,11 +584,13 @@ const (
 	AdminBroadcastSuccess    = "Broadcast sent."
 	AdminBroadcastSent       = "Broadcast sent to %d players."
 	AdminBroadcastFailed     = "Failed to send broadcast."
+	AdminBroadcastDMContent  = "**Broadcast from <@%s>:**\n\n%s"
 )
 
 // Admin hub: Database viewer
 const (
-	AdminDatabasePrefix = "admin_database"
+	AdminDatabasePrefix   = "admin_database"
+	AdminDBCampaignLine   = "**%s** (`%s`) — DM: <@%s> [%s]"
 )
 
 // Admin hub: Settings
@@ -597,9 +606,11 @@ const (
 
 // Manage campaign: Edit
 const (
-	ManageEditPrefix     = "manage_edit"
-	ManageEditModalID    = "modal_manage_edit"
-	ManageEditModalTitle = "Edit Campaign"
+	ManageEditPrefix        = "manage_edit"
+	ManageEditModalID       = "modal_manage_edit"
+	ManageEditModalTitle    = "Edit Campaign"
+	ManageEditNotImplemented = "Edit is not yet implemented."
+	ManageEditSuccess       = "**%s** has been updated."
 )
 
 // Manage campaign: New Campaign from button (modal-from-component)
