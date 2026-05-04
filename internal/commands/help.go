@@ -60,7 +60,7 @@ func RenderHelp(s *discordgo.Session, i *discordgo.InteractionCreate, db *bun.DB
 }
 
 func helpResponseData(db *bun.DB, d *dispatch.Dispatcher) *discordgo.InteractionResponseData {
-	commands := All(db, d)
+	commands := All(db, d, "", "")
 
 	var helpText strings.Builder
 	helpText.WriteString("**Available Commands: **\n")

@@ -23,23 +23,33 @@ Bot wraps a discordgo session and manages its lifecycle.
 Note: guildID is optional: if it is set, commands register to that guild only (dev mode)
 */
 type Bot struct {
-	session    *discordgo.Session
-	guildID    string
-	guildDBM   *db.GuildDBManager
-	adminRole  string
-	modRole    string
-	registered []*discordgo.ApplicationCommand
-	dispatcher *dispatch.Dispatcher
-	scheduler  *scheduler.Scheduler
+	session      *discordgo.Session
+	guildID      string
+	guildDBM     *db.GuildDBManager
+	adminRole    string
+	modRole      string
+	registered   []*discordgo.ApplicationCommand
+	dispatcher   *dispatch.Dispatcher
+	scheduler    *scheduler.Scheduler
+	dataDir      string
+	mediaBaseURL string
 }
 
 // New creates a Bot with the given token, guild ID, role names, and guild DB manager.
-func New(token, guildID, adminRole, modRole string, guildDBM *db.GuildDBManager) (*Bot, error) {
+func New(token, guildID, adminRole, modRole, dataDir, mediaBaseURL string, guildDBM *db.GuildDBManager) (*Bot, error) {
 	s, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, err
 	}
-	return &Bot{session: s, guildID: guildID, guildDBM: guildDBM, adminRole: adminRole, modRole: modRole}, nil
+	return &Bot{
+		session:      s,
+		guildID:      guildID,
+		guildDBM:     guildDBM,
+		adminRole:    adminRole,
+		modRole:      modRole,
+		dataDir:      dataDir,
+		mediaBaseURL: mediaBaseURL,
+	}, nil
 }
 
 /*
@@ -70,7 +80,7 @@ func (b *Bot) Run() error {
 		discordgo.IntentsGuildMessages |
 		discordgo.IntentsDirectMessages
 
-	b.session.AddHandler(NewHandler(b.guildDBM, b.dispatcher, b.adminRole, b.scheduler))
+	b.session.AddHandler(NewHandler(b.guildDBM, b.dispatcher, b.adminRole, b.scheduler, b.dataDir, b.mediaBaseURL))
 
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildMemberUpdate) {
 		guildDB, err := b.guildDBM.GetOrCreate(e.GuildID)
@@ -222,7 +232,7 @@ func (b *Bot) registerCommands(appID string) error {
 		}
 	}
 
-	for _, cmd := range commands.All(bunDB, b.dispatcher) {
+	for _, cmd := range commands.All(bunDB, b.dispatcher, b.dataDir, b.mediaBaseURL) {
 		created, err := b.session.ApplicationCommandCreate(appID, b.guildID, cmd.Data())
 		if err != nil {
 			return err

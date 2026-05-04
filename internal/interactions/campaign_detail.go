@@ -1,8 +1,6 @@
 package interactions
 
 import (
-	"moontracer/internal/interactions/helpers"
-	"context"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -10,7 +8,7 @@ import (
 
 	"moontracer/internal/commands"
 	"moontracer/internal/db"
-	"moontracer/internal/interactions/cdn"
+	"moontracer/internal/interactions/helpers"
 	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
@@ -42,7 +40,7 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	}
 
 	userID := helpers.GetUserID(i)
-	coverURL := cdn.ResolveCoverURL(context.Background(), database, campaign)
+	coverURL := models.CoverURLForCampaign(database, campaign.ID)
 	embed := commands.CampaignEmbed(*campaign, players, coverURL)
 	if campaign.IsArchived {
 		embed.Footer = &discordgo.MessageEmbedFooter{Text: messages.CampaignArchivedFooter}
