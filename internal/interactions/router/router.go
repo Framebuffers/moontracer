@@ -50,6 +50,8 @@ const NavPrefix = "nav"
 // View identifiers. Keep stable: they appear in persisted CustomIDs on live messages.
 const (
 	ViewMe              ViewID = "me"
+	ViewMeCampaigns     ViewID = "me_campaigns"
+	ViewMeConfig        ViewID = "me_config"
 	ViewMyCampaigns     ViewID = "mycampaigns"
 	ViewManage          ViewID = "manage"
 	ViewManageCampaign  ViewID = "manage_campaign"

@@ -9,7 +9,6 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/interactions/router"
-	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
 
@@ -76,7 +75,7 @@ func (m *meCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Content:    fmt.Sprintf(messages.MeHubMessage, userID),
-			Components: buildMeHubComponents(m.db, userID),
+			Components: buildMeHubComponents(),
 			Flags:      discordgo.MessageFlagsEphemeral,
 		},
 	})
@@ -89,79 +88,28 @@ func RenderMeHub(s *discordgo.Session, i *discordgo.InteractionCreate, db *bun.D
 		Data: &discordgo.InteractionResponseData{
 			Content:    fmt.Sprintf(messages.MeHubMessage, userID),
 			Embeds:     []*discordgo.MessageEmbed{},
-			Components: buildMeHubComponents(db, userID),
+			Components: buildMeHubComponents(),
 			Flags:      discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
 
 /*
-buildMeHubComponents assembles the /me button layout based on the caller's scope.
+buildMeHubComponents returns the three-button /me hub row.
 
-Layout:
-  - Row 1 (Campaigns): My Campaigns | New Campaign | Browse
-  - Row 2 (Activity):  Next Sessions | Notifications
-  - Row 3 (Options):   Timezone [| Manage Campaigns (DM only)] [| Admin Panel (mod only)]
-
-Failures on scope probes downgrade gracefully: the button is omitted
-rather than blocking the whole hub.
+All hub buttons are blurple (Primary). Sub-views handle scoped content.
 */
-func buildMeHubComponents(db *bun.DB, userID string) []discordgo.MessageComponent {
-	rowCampaigns := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		router.NavButton(messages.MyCampaignsLabel, discordgo.PrimaryButton, router.ViewMyCampaigns),
-		discordgo.Button{
-			Label:    messages.NewCampaignLabel,
-			Style:    discordgo.PrimaryButton,
-			CustomID: messages.ManageNewCampaignPrefix,
-		},
-		router.NavButton(messages.BrowseCampaignsLabel, discordgo.SecondaryButton, router.ViewCampaignsBrowse, "all"),
-	}}
-
-	rowActivity := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		discordgo.Button{
-			Label:    messages.NextSessionsLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: messages.NextSessionsPrefix,
-		},
-		discordgo.Button{
-			Label:    messages.NotificationsLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: messages.NotificationsPrefix,
-		},
-	}}
-
-	rowOptions := []discordgo.MessageComponent{
-		discordgo.Button{
-			Label:    messages.TimezoneLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: messages.TimezonePrefix,
-		},
-	}
-	if isDMOfAnyCampaign(db, userID) {
-		rowOptions = append(rowOptions, router.NavButton(messages.ManageCampaignsLabel, discordgo.PrimaryButton, router.ViewManage))
-	}
-	if isMod, err := auth.Authorize(db, userID, auth.ScopeMod, ""); err == nil && isMod {
-		rowOptions = append(rowOptions, router.NavButton(messages.AdminPanelLabel, discordgo.DangerButton, router.ViewAdmin))
-	}
-
+func buildMeHubComponents() []discordgo.MessageComponent {
 	return []discordgo.MessageComponent{
-		rowCampaigns,
-		rowActivity,
-		discordgo.ActionsRow{Components: rowOptions},
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			router.NavButton(messages.MeCampaignsLabel, discordgo.PrimaryButton, router.ViewMeCampaigns),
+			discordgo.Button{
+				Label:    messages.NextSessionsLabel,
+				Style:    discordgo.PrimaryButton,
+				CustomID: messages.NextSessionsPrefix,
+			},
+			router.NavButton(messages.MeConfigLabel, discordgo.PrimaryButton, router.ViewMeConfig),
+		}},
 	}
 }
 
-// isDMOfAnyCampaign returns true if the user has at least one campaign membership with RoleDM.
-func isDMOfAnyCampaign(db *bun.DB, userID string) bool {
-	entries, err := models.GetPlayerCampaigns(db, userID)
-	if err != nil {
-		log.Printf("me: failed to probe DM status for %s: %v", userID, err)
-		return false
-	}
-	for _, e := range entries {
-		if e.Role == models.RoleDM {
-			return true
-		}
-	}
-	return false
-}
