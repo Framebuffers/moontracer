@@ -36,19 +36,15 @@ import (
 		   in place, no new ephemeral).
 
 	Flow (buildMeHubComponents scope composition):
-		1. Start with a fixed row1: My Campaigns, New Campaign, Browse,
-		   Next Sessions, Notifications. These are available to every
-		   registered player.
-		2. Probe isDMOfAnyCampaign(db, userID): loads the user's
-		   CampaignPlayer rows and checks for any Role == DM. If true,
-		   append a "Manage Campaigns" button to row2.
-		3. Probe auth.Authorize(ScopeMod). If true, append an "Admin Panel"
-		   button to row2. ScopeAdmin is a superset of ScopeMod so this
-		   check covers both.
+		1. Row 1 (Campaigns) is fixed: My Campaigns, New Campaign, Browse.
+		2. Row 2 (Activity) is fixed: Next Sessions, Notifications.
+		3. Row 3 (Options) starts with Timezone (always shown).
+		   - Probe isDMOfAnyCampaign: if true, add Manage Campaigns.
+		   - Probe auth.Authorize(ScopeMod): if true, add Admin Panel.
+		     ScopeAdmin is a superset of ScopeMod so this covers both.
 		4. On probe failure (DB error), the button is silently omitted
 		   rather than blocking the whole hub — /me must always render
 		   something for a registered user.
-		5. Return [row1] if row2 is empty, else [row1, row2].
 */
 
 type meCommand struct {
@@ -102,26 +98,26 @@ func RenderMeHub(s *discordgo.Session, i *discordgo.InteractionCreate, db *bun.D
 /*
 buildMeHubComponents assembles the /me button layout based on the caller's scope.
 
+Layout:
+  - Row 1 (Campaigns): My Campaigns | New Campaign | Browse
+  - Row 2 (Activity):  Next Sessions | Notifications
+  - Row 3 (Options):   Timezone [| Manage Campaigns (DM only)] [| Admin Panel (mod only)]
+
 Failures on scope probes downgrade gracefully: the button is omitted
 rather than blocking the whole hub.
 */
 func buildMeHubComponents(db *bun.DB, userID string) []discordgo.MessageComponent {
-	row1 := []discordgo.MessageComponent{
-		discordgo.Button{
-			Label:    messages.MyCampaignsLabel,
-			Style:    discordgo.PrimaryButton,
-			CustomID: router.NavCustomID(router.ViewMyCampaigns),
-		},
+	rowCampaigns := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+		router.NavButton(messages.MyCampaignsLabel, discordgo.PrimaryButton, router.ViewMyCampaigns),
 		discordgo.Button{
 			Label:    messages.NewCampaignLabel,
 			Style:    discordgo.PrimaryButton,
 			CustomID: messages.ManageNewCampaignPrefix,
 		},
-		discordgo.Button{
-			Label:    messages.BrowseCampaignsLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: router.NavCustomID(router.ViewCampaignsBrowse, "all"),
-		},
+		router.NavButton(messages.BrowseCampaignsLabel, discordgo.SecondaryButton, router.ViewCampaignsBrowse, "all"),
+	}}
+
+	rowActivity := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 		discordgo.Button{
 			Label:    messages.NextSessionsLabel,
 			Style:    discordgo.SecondaryButton,
@@ -132,9 +128,9 @@ func buildMeHubComponents(db *bun.DB, userID string) []discordgo.MessageComponen
 			Style:    discordgo.SecondaryButton,
 			CustomID: messages.NotificationsPrefix,
 		},
-	}
+	}}
 
-	row2 := []discordgo.MessageComponent{
+	rowOptions := []discordgo.MessageComponent{
 		discordgo.Button{
 			Label:    messages.TimezoneLabel,
 			Style:    discordgo.SecondaryButton,
@@ -142,27 +138,17 @@ func buildMeHubComponents(db *bun.DB, userID string) []discordgo.MessageComponen
 		},
 	}
 	if isDMOfAnyCampaign(db, userID) {
-		row2 = append(row2, discordgo.Button{
-			Label:    messages.ManageCampaignsCommandDesc,
-			Style:    discordgo.PrimaryButton,
-			CustomID: router.NavCustomID(router.ViewManage),
-		})
+		rowOptions = append(rowOptions, router.NavButton(messages.ManageCampaignsLabel, discordgo.PrimaryButton, router.ViewManage))
 	}
 	if isMod, err := auth.Authorize(db, userID, auth.ScopeMod, ""); err == nil && isMod {
-		row2 = append(row2, discordgo.Button{
-			Label:    messages.AdminPanelLabel,
-			Style:    discordgo.DangerButton,
-			CustomID: router.NavCustomID(router.ViewAdmin),
-		})
+		rowOptions = append(rowOptions, router.NavButton(messages.AdminPanelLabel, discordgo.DangerButton, router.ViewAdmin))
 	}
 
-	components := []discordgo.MessageComponent{
-		discordgo.ActionsRow{Components: row1},
+	return []discordgo.MessageComponent{
+		rowCampaigns,
+		rowActivity,
+		discordgo.ActionsRow{Components: rowOptions},
 	}
-	if len(row2) > 0 {
-		components = append(components, discordgo.ActionsRow{Components: row2})
-	}
-	return components
 }
 
 // isDMOfAnyCampaign returns true if the user has at least one campaign membership with RoleDM.
