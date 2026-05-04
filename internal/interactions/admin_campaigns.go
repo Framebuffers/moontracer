@@ -41,14 +41,14 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
-		helpers.Respond(s, i, messages.CampaignDBNotStaff)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
 		return
 	}
 
 	campaigns, err := db.GetAll[models.Campaign](h.db)
 	if err != nil {
 		log.Printf("admin_campaigns: failed to load campaigns: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -60,7 +60,7 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 	}
 
 	if len(filtered) == 0 {
-		helpers.Respond(s, i, messages.AdminCampaignsNone)
+		helpers.RespondUpdateTerminal(s, i, messages.AdminCampaignsNone)
 		return
 	}
 
@@ -164,20 +164,20 @@ func (h *adminCampaignSelectHandler) HandleComponents(s *discordgo.Session, i *d
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
-		helpers.Respond(s, i, messages.CampaignDBNotStaff)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
 		return
 	}
 
 	values := i.MessageComponentData().Values
 	if len(values) == 0 {
-		helpers.Respond(s, i, messages.InvalidButtonDataMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
 		return
 	}
 	campaignID := values[0]
 
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err != nil {
-		helpers.Respond(s, i, messages.ManageCampaignNotFound)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
 		return
 	}
 

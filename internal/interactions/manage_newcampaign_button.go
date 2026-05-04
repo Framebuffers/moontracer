@@ -35,11 +35,11 @@ func (h *manageNewCampaignButton) HandleComponents(s *discordgo.Session, i *disc
 	ok, err := auth.Authorize(h.db, userID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("manage_newcampaign: auth check failed: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		helpers.Respond(s, i, messages.NotRegisteredMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.NotRegisteredMessage)
 		return
 	}
 

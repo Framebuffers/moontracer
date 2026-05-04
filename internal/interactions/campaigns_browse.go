@@ -17,7 +17,7 @@ func RenderCampaignsBrowse(s *discordgo.Session, i *discordgo.InteractionCreate,
 	campaigns, err := db.GetAll[models.Campaign](database)
 	if err != nil {
 		log.Printf("campaigns_browse: failed to load campaigns: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 

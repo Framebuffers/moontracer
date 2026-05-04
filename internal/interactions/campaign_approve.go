@@ -72,7 +72,7 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 	campaign.IsApproved = true
 	if err := db.Update(c.db, campaign); err != nil {
 		log.Printf("campaign_approve: failed to approve campaign %s: %v", campaignID, err)
-		helpers.Respond(s, i, messages.CampaignApproveError)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignApproveError)
 		return
 	}
 
@@ -168,7 +168,7 @@ func parseApprovalInteraction(s *discordgo.Session, i *discordgo.InteractionCrea
 func checkModAuth(database *bun.DB, s *discordgo.Session, i *discordgo.InteractionCreate, userID string) bool {
 	ok, err := auth.Authorize(database, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
-		helpers.Respond(s, i, messages.CampaignApproveNotModError)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignApproveNotModError)
 		return false
 	}
 	return true
@@ -222,13 +222,13 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 	if _, err := m.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
 		Where("campaign_id = ?", campaignID).Exec(ctx); err != nil {
 		log.Printf("campaign_deny_modal: failed to delete campaign players for %s: %v", campaignID, err)
-		helpers.Respond(s, i, messages.CampaignApproveError)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignApproveError)
 		return
 	}
 
 	if err := db.Delete[models.Campaign](m.db, campaignID); err != nil {
 		log.Printf("campaign_deny_modal: failed to delete campaign %s: %v", campaignID, err)
-		helpers.Respond(s, i, messages.CampaignApproveError)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignApproveError)
 		return
 	}
 
@@ -239,5 +239,5 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 		Content: fmt.Sprintf(messages.CampaignDeniedDMMessage, campaign.Name, reason),
 	})
 
-	helpers.Respond(s, i, fmt.Sprintf(messages.CampaignDeniedMessage, campaign.Name))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.CampaignDeniedMessage, campaign.Name))
 }

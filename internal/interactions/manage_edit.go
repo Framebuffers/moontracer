@@ -46,7 +46,7 @@ func (h *manageEditHandler) HandleComponents(s *discordgo.Session, i *discordgo.
 	//    - Extra Info (TextInputParagraph, pre-filled)
 	//    - VTT Link (TextInputShort, pre-filled)
 
-	helpers.Respond(s, i, "Edit is not yet implemented.")
+	helpers.RespondUpdateTerminal(s, i, messages.ManageEditNotImplemented)
 }
 
 type manageEditModal struct {
@@ -71,5 +71,5 @@ func (h *manageEditModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	// 4. update campaign fields
 	// 5. db.Update(h.db, campaign)
 	// 6. respond with confirmation
-	helpers.Respond(s, i, fmt.Sprintf("Campaign %s updated.", campaignID))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageEditSuccess, campaignID))
 }
