@@ -386,9 +386,14 @@ const (
 
 // Player hub (/me)
 const (
-	MeCommandName = "me"
-	MeCommandDesc = "Your player profile and quick actions."
-	MeHubMessage  = "Hey, <@%s>! What would you like to do?"
+	MeCommandName     = "me"
+	MeCommandDesc     = "Your player profile and quick actions."
+	MeHubMessage      = "Hey, <@%s>! What would you like to do?"
+	MeCampaignsLabel  = "Campaigns"
+	MeConfigLabel     = "Configuration"
+	MeCampaignsHeader = "Campaigns"
+	MeConfigHeader    = "Configuration"
+	ControlPanelLabel = "Control Panel"
 )
 
 // Browse campaigns (/campaigns)
