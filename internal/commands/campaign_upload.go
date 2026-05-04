@@ -4,15 +4,18 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
-	"moontracer/internal/interactions/cdn"
 	"moontracer/internal/manager/models"
+	"moontracer/internal/mediaserver"
 	"moontracer/internal/messages"
 )
 
@@ -21,13 +24,16 @@ campaignUploadCommand implements /campaignupload.
 
 Flow:
 
-	1. User runs `/campaignupload kind:Cover campaign:<id> image:<file>`.
-	2. Autocomplete on `campaign` surfaces campaigns the user DMs.
-	3. Execute authorizes the caller as DM, validates the attachment,
-	   stores the Discord CDN reference on the campaign, nulls the cache.
+ 1. User runs `/campaignupload kind:Cover campaign:<id> image:<file>`.
+ 2. Autocomplete on `campaign` surfaces campaigns the user DMs.
+ 3. Execute authorizes the caller as DM, validates the attachment,
+    downloads the file to disk, creates a Media record, and responds
+    with the public CDN URL.
 */
 type campaignUploadCommand struct {
-	db *bun.DB
+	db           *bun.DB
+	dataDir      string
+	mediaBaseURL string
 }
 
 const maxCoverBytes = 8 * 1024 * 1024
@@ -114,13 +120,38 @@ func (c *campaignUploadCommand) Execute(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
-	if err := cdn.SetCover(context.Background(), c.db, campaign, att.URL); err != nil {
-		log.Printf("campaignupload: failed to save cover for %s: %v", campaign.ID, err)
+	ext := filepath.Ext(att.Filename)
+	if ext == "" {
+		ext = ".png"
+	}
+	diskPath, publicURL := mediaserver.CoverPath(c.dataDir, c.mediaBaseURL, i.GuildID, campaignID, ext)
+
+	mimeType, err := mediaserver.Download(att.URL, diskPath)
+	if err != nil {
+		log.Printf("campaignupload: download failed for campaign %s: %v", campaignID, err)
 		respond(s, i, messages.CampaignUploadFailure)
 		return
 	}
 
-	respond(s, i, fmt.Sprintf(messages.CampaignUploadSuccess, campaign.Name))
+	media := &models.Media{
+		ID:         uuid.NewString(),
+		OwnerID:    userID,
+		CampaignID: campaignID,
+		Path:       diskPath,
+		URL:        publicURL,
+		Kind:       models.KindCoverArt,
+		Name:       att.Filename,
+		MimeType:   mimeType,
+		CreatedAt:  time.Now(),
+	}
+	if _, err := c.db.NewInsert().Model(media).Exec(context.Background()); err != nil {
+		log.Printf("campaignupload: failed to insert media record for campaign %s: %v", campaignID, err)
+		respond(s, i, messages.CampaignUploadFailure)
+		return
+	}
+
+	log.Printf("campaignupload: %s uploaded cover for campaign %s -> %s", userID, campaignID, diskPath)
+	respond(s, i, fmt.Sprintf(messages.CampaignUploadSuccess, campaign.Name, publicURL))
 }
 
 func (c *campaignUploadCommand) Autocomplete(s *discordgo.Session, i *discordgo.InteractionCreate) {

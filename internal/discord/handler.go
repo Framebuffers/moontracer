@@ -37,6 +37,7 @@ func NewHandler(
 	dispatcher *dispatch.Dispatcher,
 	adminRole string,
 	sched *scheduler.Scheduler,
+	dataDir, mediaBaseURL string,
 ) func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -70,7 +71,7 @@ func NewHandler(
 			return
 		}
 
-		cmds := commands.All(guildDB, dispatcher)
+		cmds := commands.All(guildDB, dispatcher, dataDir, mediaBaseURL)
 		components := interactions.AllComponents(guildDB, dispatcher, sched)
 		modals := interactions.AllModals(guildDB, dispatcher, sched)
 

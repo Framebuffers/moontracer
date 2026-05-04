@@ -49,7 +49,7 @@ Note:
 	Debug-only commands are gated on guard.DevMode so production deployments
 	don't expose them in Discord's command picker.
 */
-func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
+func All(db *bun.DB, d *dispatch.Dispatcher, dataDir, mediaBaseURL string) []Command {
 	cmds := []Command{
 		&pingCommand{},
 		&awooCommand{db: db},
@@ -64,7 +64,7 @@ func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
 		&adminCommand{db: db},
 		&aboutCommand{db: db},
 		&waosCommand{db: db},
-		&campaignUploadCommand{db: db},
+		&campaignUploadCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 	}
 
 	return cmds
@@ -73,7 +73,7 @@ func All(db *bun.DB, d *dispatch.Dispatcher) []Command {
 // RegisterCommands populates the commands table with metadata from all registered commands.
 func RegisterCommands(db *bun.DB, d *dispatch.Dispatcher) error {
 	ctx := context.Background()
-	commands := All(db, d)
+	commands := All(db, d, "", "")
 
 	for _, cmd := range commands {
 		data := cmd.Data()

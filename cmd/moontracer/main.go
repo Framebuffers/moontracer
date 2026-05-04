@@ -9,6 +9,7 @@ import (
 
 	"moontracer/internal/db"
 	"moontracer/internal/discord"
+	"moontracer/internal/mediaserver"
 )
 
 /*
@@ -51,7 +52,19 @@ func main() {
 
 	guildDBM := db.NewGuildDBManager(dbDir)
 
-	bot, err := discord.New(token, guildID, adminRole, modRole, guildDBM)
+	mediaPort := os.Getenv("MEDIA_PORT")
+	if mediaPort == "" {
+		mediaPort = "8090"
+	}
+	mediaBaseURL := os.Getenv("MEDIA_BASE_URL")
+	if mediaBaseURL == "" {
+		mediaBaseURL = "http://localhost:" + mediaPort + "/api/v1/cdn"
+	}
+
+	mediaserver.Serve(dbDir, ":"+mediaPort)
+	mediaserver.Probe(":" + mediaPort)
+
+	bot, err := discord.New(token, guildID, adminRole, modRole, dbDir, mediaBaseURL, guildDBM)
 	if err != nil {
 		log.Fatalf("failed to create bot: %v", err)
 	}
