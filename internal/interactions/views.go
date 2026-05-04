@@ -42,6 +42,14 @@ func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 		commands.RenderMeHub(s, i, db, helpers.GetUserID(i))
 	})
 
+	router.Register(router.ViewMeCampaigns, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		RenderMeCampaigns(s, i, db, helpers.GetUserID(i))
+	})
+
+	router.Register(router.ViewMeConfig, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		RenderMeConfig(s, i, db, helpers.GetUserID(i))
+	})
+
 	router.Register(router.ViewMyCampaigns, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
 		RenderMyCampaignsList(s, i, db, helpers.GetUserID(i))
 	})
