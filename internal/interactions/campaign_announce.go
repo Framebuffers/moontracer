@@ -50,7 +50,7 @@ func (h *manageCampaignAnnounce) HandleComponents(s *discordgo.Session, i *disco
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
 	if err != nil || !ok {
-		helpers.Respond(s, i, messages.ManageNotAuthorized)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageNotAuthorized)
 		return
 	}
 
@@ -123,20 +123,20 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 		if campaign.RoleID != "" {
 			rolePing = fmt.Sprintf("<@&%s> ", campaign.RoleID)
 		}
-		content := fmt.Sprintf("%s**Announcement from <@%s>:**\n\n%s", rolePing, userID, message)
+		content := fmt.Sprintf(messages.AnnounceThreadContent, rolePing, userID, message)
 		if _, err := guard.ChannelMessageSend(s, campaign.AnnouncementsThreadID, content); err != nil {
 			log.Printf("campaign_announce: failed to post to thread %s: %v", campaign.AnnouncementsThreadID, err)
-			helpers.Respond(s, i, messages.AnnounceError)
+			helpers.RespondUpdateTerminal(s, i, messages.AnnounceError)
 			return
 		}
-		helpers.Respond(s, i, fmt.Sprintf(messages.AnnouncePostedToThread, campaign.Name))
+		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.AnnouncePostedToThread, campaign.Name))
 		return
 	}
 
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("campaign_announce: failed to load players: %v", err)
-		helpers.Respond(s, i, messages.AnnounceError)
+		helpers.RespondUpdateTerminal(s, i, messages.AnnounceError)
 		return
 	}
 
@@ -159,15 +159,15 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 			ID:      msgID,
 			Sender:  userID,
 			Target:  p.PlayerID,
-			Content: fmt.Sprintf("**[%s]** Announcement from <@%s>:\n\n%s", campaign.Name, userID, message),
+			Content: fmt.Sprintf(messages.AnnounceDMContent, campaign.Name, userID, message),
 		})
 		sent++
 	}
 
 	if sent == 0 {
-		helpers.Respond(s, i, messages.AnnounceNoMembers)
+		helpers.RespondUpdateTerminal(s, i, messages.AnnounceNoMembers)
 		return
 	}
 
-	helpers.Respond(s, i, fmt.Sprintf(messages.AnnounceSentMessage, sent, campaign.Name))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.AnnounceSentMessage, sent, campaign.Name))
 }

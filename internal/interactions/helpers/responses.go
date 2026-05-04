@@ -90,6 +90,19 @@ func RespondUpdate(s *discordgo.Session, i *discordgo.InteractionCreate, content
 }
 
 /*
+RespondUpdateTerminal updates the current message with a terminal text response
+and a Home button. Use in component handlers for final success and error states
+that end the current flow.
+*/
+func RespondUpdateTerminal(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {
+	RespondUpdate(s, i, content, []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
+		}},
+	})
+}
+
+/*
 BackRow builds an ActionsRow with a back button pointing at target.
 When target is not ViewMe, a secondary Home button (-> ViewMe) is appended so
 users can always return to the player hub from any depth.

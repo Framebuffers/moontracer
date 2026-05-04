@@ -23,19 +23,19 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	campaign, err := db.GetByID[models.Campaign](database, campaignID)
 	if err != nil {
 		log.Printf("campaign_detail: campaign %s not found: %v", campaignID, err)
-		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	if !campaign.IsApproved && !campaign.IsArchived {
-		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	players, err := models.GetCampaignPlayers(database, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_detail: failed to load players for %s: %v", campaignID, err)
-		helpers.Respond(s, i, messages.CampaignPlayersLoadError)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignPlayersLoadError)
 		return
 	}
 

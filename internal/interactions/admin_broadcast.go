@@ -44,7 +44,7 @@ func (h *adminBroadcastHandler) HandleComponents(s *discordgo.Session, i *discor
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
-		helpers.Respond(s, i, messages.CampaignDBNotStaff)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
 		return
 	}
 
@@ -81,7 +81,7 @@ func (h *adminBroadcastModal) HandleModal(s *discordgo.Session, i *discordgo.Int
 
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
-		helpers.Respond(s, i, messages.CampaignDBNotStaff)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
 		return
 	}
 
@@ -96,14 +96,14 @@ func (h *adminBroadcastModal) HandleModal(s *discordgo.Session, i *discordgo.Int
 	}
 
 	if message == "" {
-		helpers.Respond(s, i, messages.AdminBroadcastFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.AdminBroadcastFailed)
 		return
 	}
 
 	players, err := db.GetAll[models.Player](h.db)
 	if err != nil {
 		log.Printf("admin_broadcast: failed to load players: %v", err)
-		helpers.Respond(s, i, messages.AdminBroadcastFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.AdminBroadcastFailed)
 		return
 	}
 
@@ -119,10 +119,10 @@ func (h *adminBroadcastModal) HandleModal(s *discordgo.Session, i *discordgo.Int
 			ID:      msgID,
 			Sender:  userID,
 			Target:  p.ID,
-			Content: fmt.Sprintf("**Broadcast from <@%s>:**\n\n%s", userID, message),
+			Content: fmt.Sprintf(messages.AdminBroadcastDMContent, userID, message),
 		})
 		sent++
 	}
 
-	helpers.Respond(s, i, fmt.Sprintf(messages.AdminBroadcastSent, sent))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.AdminBroadcastSent, sent))
 }

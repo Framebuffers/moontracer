@@ -23,9 +23,10 @@ func (h *manageSetCover) CustomIDPrefix() string {
 
 func (h *manageSetCover) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
 			Content: messages.SetCoverInstructions,
+			Embeds:  []*discordgo.MessageEmbed{},
 			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})

@@ -50,7 +50,7 @@ import (
 func RenderMyCampaignsList(s *discordgo.Session, i *discordgo.InteractionCreate, db *bun.DB, userID string) {
 	entries, err := models.GetPlayerCampaigns(db, userID)
 	if err != nil {
-		helpers.Respond(s, i, messages.MyCampaignsLoadError)
+		helpers.RespondUpdateTerminal(s, i, messages.MyCampaignsLoadError)
 		return
 	}
 
@@ -68,7 +68,7 @@ func RenderMyCampaignsList(s *discordgo.Session, i *discordgo.InteractionCreate,
 	var lines []string
 	for _, e := range entries {
 		if e.Campaign != nil && e.Campaign.IsApproved {
-			lines = append(lines, fmt.Sprintf("**%s** — %s (%s)", e.Campaign.Name, e.Role, e.Status))
+			lines = append(lines, fmt.Sprintf(messages.MyCampaignListLine, e.Campaign.Name, e.Role, e.Status))
 		}
 	}
 	content := messages.MyCampaignsListHeader + strings.Join(lines, "\n")
@@ -85,7 +85,7 @@ func RenderMyCampaignsList(s *discordgo.Session, i *discordgo.InteractionCreate,
 func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *bun.DB, userID string) {
 	entries, err := models.GetPlayerCampaigns(db, userID)
 	if err != nil {
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -110,7 +110,7 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 	var lines []string
 	for _, e := range dmEntries {
 		if e.Campaign != nil {
-			lines = append(lines, fmt.Sprintf("**%s** — %s", e.Campaign.Name, e.Status))
+			lines = append(lines, fmt.Sprintf(messages.ManageCampaignListLine, e.Campaign.Name, e.Status))
 		}
 	}
 	content := messages.ManageCampaignsListHeader + strings.Join(lines, "\n")

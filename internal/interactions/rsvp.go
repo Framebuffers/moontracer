@@ -76,7 +76,7 @@ func handleRSVP(s *discordgo.Session, i *discordgo.InteractionCreate, guildDB *b
 
 	campaign, err := db.GetByID[models.Campaign](guildDB, campaignID)
 	if err != nil || campaign.IsArchived {
-		helpers.Respond(s, i, messages.RSVPCampaignGone)
+		helpers.RespondUpdateTerminal(s, i, messages.RSVPCampaignGone)
 		return
 	}
 
@@ -86,19 +86,19 @@ func handleRSVP(s *discordgo.Session, i *discordgo.InteractionCreate, guildDB *b
 		Scan(context.Background())
 	if err != nil {
 		log.Printf("rsvp: load campaign player %s/%s: %v", playerID, campaignID, err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
 	if cp.RSVPStatus != models.RSVPPending {
-		helpers.Respond(s, i, messages.RSVPAlreadyResponded)
+		helpers.RespondUpdateTerminal(s, i, messages.RSVPAlreadyResponded)
 		return
 	}
 
 	cp.RSVPStatus = status
 	if _, err := guildDB.NewUpdate().Model(&cp).Column("rsvp_status").WherePK().Exec(context.Background()); err != nil {
 		log.Printf("rsvp: save status for %s/%s: %v", playerID, campaignID, err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 

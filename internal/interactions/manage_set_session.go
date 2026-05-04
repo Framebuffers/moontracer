@@ -60,7 +60,7 @@ func (h *manageSetSession) HandleComponents(s *discordgo.Session, i *discordgo.I
 	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
 	if err != nil {
 		log.Printf("manage_set_session: load settings for %s: %v", userID, err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	loc := settings.Location()
@@ -153,7 +153,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
 	if err != nil {
 		log.Printf("manage_set_session: load settings for %s: %v", userID, err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	loc := settings.Location()
@@ -176,22 +176,22 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 	}
 
 	if _, err := time.Parse(messages.DateInputFormat, dateStr); err != nil {
-		helpers.Respond(s, i, messages.ManageSetSessionInvalidDate)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetSessionInvalidDate)
 		return
 	}
 	if !isValidTime(timeStr) {
-		helpers.Respond(s, i, messages.ManageSetSessionInvalidTime)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetSessionInvalidTime)
 		return
 	}
 
 	when, err := time.ParseInLocation(messages.DateTimeInputFormat, dateStr+" "+timeStr, loc)
 	if err != nil {
-		helpers.Respond(s, i, messages.ManageSetSessionInvalidTime)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetSessionInvalidTime)
 		return
 	}
 
 	if !when.After(time.Now().UTC()) {
-		helpers.Respond(s, i, messages.ManageSetSessionInPast)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetSessionInPast)
 		return
 	}
 
@@ -199,7 +199,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 	campaign.Schedule.AlertSent = false
 	if err := db.Update(h.db, campaign); err != nil {
 		log.Printf("manage_set_session: failed to update campaign %s: %v", campaign.ID, err)
-		helpers.Respond(s, i, messages.ManageSetSessionUpdateFailed)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetSessionUpdateFailed)
 		return
 	}
 	h.sched.Schedule(i.GuildID, campaign)
@@ -220,9 +220,9 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		if err := models.InsertAuditEntry(h.db, userID, userID, models.AuditSessionReschedule, reason); err != nil {
 			log.Printf("manage_set_session: audit entry for campaign %s: %v", campaign.ID, err)
 		}
-		helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetSessionRescheduleSuccess, campaign.Name, displayTime, remaining))
+		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageSetSessionRescheduleSuccess, campaign.Name, displayTime, remaining))
 		return
 	}
 
-	helpers.Respond(s, i, fmt.Sprintf(messages.ManageSetSessionSuccess, campaign.Name, displayTime, remaining))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageSetSessionSuccess, campaign.Name, displayTime, remaining))
 }

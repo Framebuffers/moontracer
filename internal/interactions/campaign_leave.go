@@ -43,12 +43,12 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 
 	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
 	if err != nil {
-		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
 	if !campaign.IsApproved {
-		helpers.Respond(s, i, messages.CampaignNotFoundMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
 	}
 
@@ -56,17 +56,17 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	isDM, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_leave: auth check failed: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if isDM {
-		helpers.Respond(s, i, messages.MasterIsLeavingCampaignErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.MasterIsLeavingCampaignErrorMessage)
 		return
 	}
 
 	if err := models.RemoveCampaignPlayer(h.db, userID, campaign.ID); err != nil {
 		log.Printf("campaign_leave: %s: %v", messages.LeavingCampaignErrorMessage, err)
-		helpers.Respond(s, i, messages.FailedToLeaveCampaignErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.FailedToLeaveCampaignErrorMessage)
 		return
 	}
 
@@ -77,5 +77,5 @@ func (h *campaignLeave) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 		}
 	}
 
-	helpers.Respond(s, i, fmt.Sprintf("%s **%s**.", messages.PlayerLeftCampaignMessage, campaign.Name))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.PlayerLeftCampaignMessage, campaign.Name))
 }

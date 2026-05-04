@@ -67,7 +67,7 @@ func (h *timezoneButtonHandler) HandleComponents(s *discordgo.Session, i *discor
 	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
 	if err != nil {
 		log.Printf("timezone: load settings for %s: %v", userID, err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -110,7 +110,7 @@ func (h *timezoneSelectHandler) HandleComponents(s *discordgo.Session, i *discor
 	userID := helpers.GetUserID(i)
 	values := i.MessageComponentData().Values
 	if len(values) == 0 {
-		helpers.Respond(s, i, messages.TimezoneInvalid)
+		helpers.RespondUpdateTerminal(s, i, messages.TimezoneInvalid)
 		return
 	}
 	tz := values[0]
@@ -118,16 +118,16 @@ func (h *timezoneSelectHandler) HandleComponents(s *discordgo.Session, i *discor
 	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
 	if err != nil {
 		log.Printf("timezone: load settings for %s: %v", userID, err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
 	settings.Timezone = tz
 	if _, err := h.db.NewUpdate().Model(settings).WherePK().Exec(context.Background()); err != nil {
 		log.Printf("timezone: save for %s: %v", userID, err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
-	helpers.Respond(s, i, fmt.Sprintf(messages.TimezoneSuccess, tz))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TimezoneSuccess, tz))
 }

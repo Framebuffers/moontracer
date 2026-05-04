@@ -49,33 +49,33 @@ func (h *adminDatabaseHandler) HandleComponents(s *discordgo.Session, i *discord
 			Reject here so production never exposes the raw database view regardless.
 	*/
 	if !guard.DevMode {
-		helpers.Respond(s, i, messages.DebugSurfaceDisabled)
+		helpers.RespondUpdateTerminal(s, i, messages.DebugSurfaceDisabled)
 		return
 	}
 
 	userID := helpers.GetUserID(i)
 	ok, err := auth.Authorize(h.db, userID, auth.ScopeMod, "")
 	if err != nil || !ok {
-		helpers.Respond(s, i, messages.CampaignDBNotStaff)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
 		return
 	}
 
 	campaigns, err := db.GetAll[models.Campaign](h.db)
 	if err != nil {
 		log.Printf("admin_database: failed to load campaigns: %v", err)
-		helpers.Respond(s, i, messages.GenericErrorMessage)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
 
 	if len(campaigns) == 0 {
-		helpers.Respond(s, i, messages.CampaignDBEmpty)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBEmpty)
 		return
 	}
 
 	var lines []string
 	for _, camp := range campaigns {
 		flags := messages.BuildFlags(camp)
-		lines = append(lines, fmt.Sprintf("**%s** (`%s`) — DM: <@%s> [%s]",
+		lines = append(lines, fmt.Sprintf(messages.AdminDBCampaignLine,
 			camp.Name, camp.Tag, camp.DungeonMaster, flags))
 	}
 
@@ -84,5 +84,5 @@ func (h *adminDatabaseHandler) HandleComponents(s *discordgo.Session, i *discord
 		content = content[:1900] + "\n... (truncated)"
 	}
 
-	helpers.RespondWithBack(s, i, discordgo.InteractionResponseChannelMessageWithSource, content, nil, router.ViewAdmin)
+	helpers.RespondWithBack(s, i, discordgo.InteractionResponseUpdateMessage, content, nil, router.ViewAdmin)
 }
