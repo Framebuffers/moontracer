@@ -441,7 +441,7 @@ const (
 	AboutCommandGitHubLabel    = "GitHub"
 	HelpLabel                  = "Help"
 	AboutCommandWebsite        = "https://framebuffer.cl/moontracer"
-	AboutCommandBotDesc        = "Moontracer: a D&D campaign manager for players, DM and spectators!"
+	AboutCommandBotDesc        = "Moontracer\n_a D&D campaign manager for players, DM and spectators!_"
 	AboutCommandCopyright      = "(C) 2026 Framebuffer"
 	AboutCommandLicense        = "AGPL-v3.0"
 	AboutCommandHelp           = "Type `/help` for a list of commands."
@@ -595,8 +595,8 @@ const (
 
 // Admin hub: Database viewer
 const (
-	AdminDatabasePrefix   = "admin_database"
-	AdminDBCampaignLine   = "**%s** (`%s`) — DM: <@%s> [%s]"
+	AdminDatabasePrefix = "admin_database"
+	AdminDBCampaignLine = "**%s** (`%s`) — DM: <@%s> [%s]"
 )
 
 // Admin hub: Settings
@@ -612,11 +612,11 @@ const (
 
 // Manage campaign: Edit
 const (
-	ManageEditPrefix        = "manage_edit"
-	ManageEditModalID       = "modal_manage_edit"
-	ManageEditModalTitle    = "Edit Campaign"
+	ManageEditPrefix         = "manage_edit"
+	ManageEditModalID        = "modal_manage_edit"
+	ManageEditModalTitle     = "Edit Campaign"
 	ManageEditNotImplemented = "Edit is not yet implemented."
-	ManageEditSuccess       = "**%s** has been updated."
+	ManageEditSuccess        = "**%s** has been updated."
 )
 
 // Manage campaign: New Campaign from button (modal-from-component)
