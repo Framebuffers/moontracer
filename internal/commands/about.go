@@ -65,29 +65,26 @@ func (a *aboutCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 }
 
 var ascii = fmt.Sprintf(`
-*				  *	  *				*			*					*			*
-		*		*   	*				*				*	*				*			*
-███╗   ███╗ ██████╗  ██████╗ ███╗   ██╗████████╗██████╗  █████╗  ██████╗███████╗██████╗ 
-████╗ ████║██╔═══██╗██╔═══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██╔════╝██╔══██╗
-██╔████╔██║██║   ██║██║   ██║██╔██╗ ██║   ██║   ██████╔╝███████║██║     █████╗  ██████╔╝
-██║╚██╔╝██║██║   ██║██║   ██║██║╚██╗██║   ██║   ██╔══██╗██╔══██║██║     ██╔══╝  ██╔══██╗
-██║ ╚═╝ ██║╚██████╔╝╚██████╔╝██║ ╚████║   ██║   ██║  ██║██║  ██║╚██████╗███████╗██║  ██║
-╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝  ╚═╝                                                                                       
-*				  *	  *				*			*					*			*
-		*		*   	*				*				*	*				*			*
-"%s Copyright %s. Released under the %s license."
--# Made with <3 by Framebuffer
+┏┏ ┏━┃┏━┃┏━ ━┏┛┏━┃┏━┃┏━┛┏━┛┏━┃
+┃┃┃┃ ┃┃ ┃┃ ┃ ┃ ┏┏┛┏━┃┃  ┏━┛┏┏┛
+┛┛┛━━┛━━┛┛ ┛ ┛ ┛ ┛┛ ┛━━┛━━┛┛ ┛
+**%s**
+
+Copyright %s.
+-# Released under the %s license."
+
+Made with **<3** by **Framebuffer**
 -# v.%s
 
 ## %s
--# %s
 
--# 🐺 %s 🌕
+-# %s! 🐺 version %s 🌕
 `,
 	messages.AboutCommandBotDesc,
 	messages.AboutCommandCopyright,
 	messages.AboutCommandLicense,
+	messages.BotVersion,
 	messages.AboutCommandAttributions,
 	messages.AboutCommandHelp,
 	messages.AboutCommandAwoo,
-	messages.BotVersion)
+)
