@@ -65,32 +65,36 @@ func (a *aboutCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 }
 
 var ascii2 = "```" + `
+*		*	*  * 		*	*
+	*	  *		*   *     *
 ┏┏ ┏━┃┏━┃┏━ ━┏┛┏━┃┏━┃┏━┛┏━┛┏━┃
 ┃┃┃┃ ┃┃ ┃┃ ┃ ┃ ┏┏┛┏━┃┃  ┏━┛┏┏┛
 ┛┛┛━━┛━━┛┛ ┛ ┛ ┛ ┛┛ ┛━━┛━━┛┛ ┛
+*		*	*	*      *
+	*     *			*    *  *
 ` + "```"
 
 var ascii = fmt.Sprintf(`
 %s
-**%s**
+-# %s
 
 Copyright %s.
 -# Released under the %s license.
 -# v.%s
 
 Made with **<3** by **Framebuffer**
----
--# %s
----
--# %s! 
--# 🐺 version %s 🌕
+
+## %s
+
+%s 
+-# 🐺 %s 🌕
 `,
 	ascii2,
 	messages.AboutCommandBotDesc,
 	messages.AboutCommandCopyright,
 	messages.AboutCommandLicense,
 	messages.BotVersion,
-	messages.AboutCommandAttributions,
 	messages.AboutCommandHelp,
+	messages.AboutCommandAttributions,
 	messages.AboutCommandAwoo,
 )
