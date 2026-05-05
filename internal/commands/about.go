@@ -64,22 +64,28 @@ func (a *aboutCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 	})
 }
 
-var ascii = fmt.Sprintf(`
+var ascii2 = "```" + `
 ┏┏ ┏━┃┏━┃┏━ ━┏┛┏━┃┏━┃┏━┛┏━┛┏━┃
 ┃┃┃┃ ┃┃ ┃┃ ┃ ┃ ┏┏┛┏━┃┃  ┏━┛┏┏┛
 ┛┛┛━━┛━━┛┛ ┛ ┛ ┛ ┛┛ ┛━━┛━━┛┛ ┛
+` + "```"
+
+var ascii = fmt.Sprintf(`
+%s
 **%s**
 
 Copyright %s.
--# Released under the %s license."
-
-Made with **<3** by **Framebuffer**
+-# Released under the %s license.
 -# v.%s
 
-## %s
-
--# %s! 🐺 version %s 🌕
+Made with **<3** by **Framebuffer**
+---
+-# %s
+---
+-# %s! 
+-# 🐺 version %s 🌕
 `,
+	ascii2,
 	messages.AboutCommandBotDesc,
 	messages.AboutCommandCopyright,
 	messages.AboutCommandLicense,
