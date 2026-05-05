@@ -39,15 +39,16 @@ func (a *aboutCommand) Data() *discordgo.ApplicationCommand {
 
 // Execute is the logic that runs when the user invokes that command.
 func (a *aboutCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	textCopyright := fmt.Sprintf("%s\nCopyright %s. Released under the %s license.\n", messages.AboutCommandBotDesc, messages.AboutCommandCopyright, messages.AboutCommandLicense)
-	textAttributions := fmt.Sprintf("**%s**", messages.AboutCommandAttributions)
-	textFooter := fmt.Sprintf("%s\n%s", messages.AboutCommandHelp, messages.AboutCommandAwoo)
+	// textCopyright := fmt.Sprintf("%s\nCopyright %s. Released under the %s license.\n", messages.AboutCommandBotDesc, messages.AboutCommandCopyright, messages.AboutCommandLicense)
+	// textAttributions := fmt.Sprintf("**%s**", messages.AboutCommandAttributions)
+	// textFooter := fmt.Sprintf("%s\n%s", messages.AboutCommandHelp, messages.AboutCommandAwoo)
 
-	text := fmt.Sprintf("%s\n%s\n%s", textCopyright, textAttributions, textFooter)
+	// text := fmt.Sprintf("%s\n%s\n%s", textCopyright, textAttributions, textFooter)
+
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: text,
+			Content: ascii,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					router.NavButton(messages.MyProfileLabel, discordgo.PrimaryButton, router.ViewMe),
@@ -62,3 +63,31 @@ func (a *aboutCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 		},
 	})
 }
+
+var ascii = fmt.Sprintf(`
+*				  *	  *				*			*					*			*
+		*		*   	*				*				*	*				*			*
+███╗   ███╗ ██████╗  ██████╗ ███╗   ██╗████████╗██████╗  █████╗  ██████╗███████╗██████╗ 
+████╗ ████║██╔═══██╗██╔═══██╗████╗  ██║╚══██╔══╝██╔══██╗██╔══██╗██╔════╝██╔════╝██╔══██╗
+██╔████╔██║██║   ██║██║   ██║██╔██╗ ██║   ██║   ██████╔╝███████║██║     █████╗  ██████╔╝
+██║╚██╔╝██║██║   ██║██║   ██║██║╚██╗██║   ██║   ██╔══██╗██╔══██║██║     ██╔══╝  ██╔══██╗
+██║ ╚═╝ ██║╚██████╔╝╚██████╔╝██║ ╚████║   ██║   ██║  ██║██║  ██║╚██████╗███████╗██║  ██║
+╚═╝     ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚══════╝╚═╝  ╚═╝                                                                                       
+*				  *	  *				*			*					*			*
+		*		*   	*				*				*	*				*			*
+"%s Copyright %s. Released under the %s license."
+-# Made with <3 by Framebuffer
+-# v.%s
+
+## %s
+-# %s
+
+-# 🐺 %s 🌕
+`,
+	messages.AboutCommandBotDesc,
+	messages.AboutCommandCopyright,
+	messages.AboutCommandLicense,
+	messages.AboutCommandAttributions,
+	messages.AboutCommandHelp,
+	messages.AboutCommandAwoo,
+	messages.BotVersion)
