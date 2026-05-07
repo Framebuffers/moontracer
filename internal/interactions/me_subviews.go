@@ -26,12 +26,12 @@ func RenderMeCampaigns(s *discordgo.Session, i *discordgo.InteractionCreate, db 
 			Embeds:  []*discordgo.MessageEmbed{},
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					router.NavButton(messages.MyCampaignsLabel, discordgo.SecondaryButton, router.ViewMyCampaigns),
 					discordgo.Button{
 						Label:    messages.NewCampaignLabel,
 						Style:    discordgo.SuccessButton,
 						CustomID: messages.ManageNewCampaignPrefix,
 					},
+					router.NavButton(messages.MyCampaignsLabel, discordgo.SecondaryButton, router.ViewMyCampaigns),
 					router.NavButton(messages.BrowseCampaignsLabel, discordgo.SecondaryButton, router.ViewCampaignsBrowse, "all"),
 				}},
 				helpers.BackRow(router.ViewMe),

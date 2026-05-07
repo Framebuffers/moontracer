@@ -8,6 +8,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"moontracer/internal/db"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -67,6 +68,10 @@ func (c *campaignsCommand) Execute(s *discordgo.Session, i *discordgo.Interactio
 	} else {
 		content = messages.CampaignsNoneAvailable
 	}
+
+	components = append(components, discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+		router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
+	}})
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
