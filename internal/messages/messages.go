@@ -451,7 +451,7 @@ const (
 
 // Navigation buttons
 const (
-	BackLabel = "⬅️"
+	BackLabel = ""
 	HomeLabel = "🏠"
 )
 
@@ -461,7 +461,7 @@ const (
 	NextSessionsLabel    = "Next Sessions"
 	NotificationsLabel   = "Notifications"
 	BrowseCampaignsLabel = "Browse Campaigns"
-	MyProfileLabel       = "Home"
+	MyProfileLabel       = HomeLabel
 	NewCampaignLabel     = "New Campaign"
 	AdminPanelLabel      = "Admin Panel"
 )
