@@ -442,7 +442,7 @@ const (
 	HelpLabel                  = "Help"
 	AboutCommandWebsite        = "https://framebuffer.cl/moontracer"
 	AboutCommandBotDesc        = "Moontracer\n_a D&D campaign manager for players, DM and spectators!_"
-	AboutCommandCopyright      = "(C) 2026 Framebuffer"
+	AboutCommandCopyright      = "(C) 2026 **Framebuffer**"
 	AboutCommandLicense        = "AGPL-v3.0"
 	AboutCommandHelp           = "Type `/help` for a list of commands."
 	AboutCommandAwoo           = "awoo!"
@@ -451,8 +451,8 @@ const (
 
 // Navigation buttons
 const (
-	BackLabel = "Back"
-	HomeLabel = "Home"
+	BackLabel = "⬅️"
+	HomeLabel = "🏠"
 )
 
 // Hub button labels
