@@ -117,7 +117,6 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 				Style:    discordgo.SuccessButton,
 				CustomID: messages.ManageNewCampaignPrefix,
 			},
-			router.BackButton(messages.BackLabel, router.ViewMe),
 			router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
 		}},
 	})
