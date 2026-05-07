@@ -80,7 +80,7 @@ var ascii = fmt.Sprintf(`
 
 Copyright %s.
 -# Released under the %s license.
--# v.%s
+-# %s
 
 Made with **<3** by **Framebuffer**
 
