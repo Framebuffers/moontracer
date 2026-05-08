@@ -159,18 +159,17 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 
 	if err := db.Update(h.db, campaign); err != nil {
 		log.Printf("campaign_announce: failed to save links for campaign %s: %v", campaignID, err)
-		/*
-			NOTE:
-				Error is non-fatal: continue with the announcement even if link save fails.
-		*/
+		// Non-fatal: continue with the announcement even if link save fails.
 	}
+
+	linkBlock := buildAnnounceLinkBlock(campaign)
 
 	if campaign.AnnouncementsThreadID != "" {
 		rolePing := ""
 		if campaign.RoleID != "" {
 			rolePing = fmt.Sprintf("<@&%s> ", campaign.RoleID)
 		}
-		content := fmt.Sprintf(messages.AnnounceThreadContent, rolePing, userID, message)
+		content := fmt.Sprintf(messages.AnnounceThreadContent, rolePing, userID, message) + linkBlock
 		if _, err := guard.ChannelMessageSend(s, campaign.AnnouncementsThreadID, content); err != nil {
 			log.Printf("campaign_announce: failed to post to thread %s: %v", campaign.AnnouncementsThreadID, err)
 			helpers.RespondUpdateTerminal(s, i, messages.AnnounceError)
@@ -206,7 +205,7 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 			ID:      msgID,
 			Sender:  userID,
 			Target:  p.PlayerID,
-			Content: fmt.Sprintf(messages.AnnounceDMContent, campaign.Name, userID, message),
+			Content: fmt.Sprintf(messages.AnnounceDMContent, campaign.Name, userID, message) + linkBlock,
 		})
 		sent++
 	}
@@ -217,4 +216,22 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	}
 
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.AnnounceSentMessage, sent, campaign.Name))
+}
+
+func buildAnnounceLinkBlock(campaign *models.Campaign) string {
+	if campaign.VTTLink == "" && campaign.PlayerSheetURL == "" && len(campaign.Links) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString(messages.ManageReminderLinks)
+	if campaign.VTTLink != "" {
+		b.WriteString(fmt.Sprintf(messages.ManageReminderVTT, campaign.VTTLink))
+	}
+	if campaign.PlayerSheetURL != "" {
+		b.WriteString(fmt.Sprintf(messages.ManageReminderSheets, campaign.PlayerSheetURL))
+	}
+	for _, r := range campaign.Links {
+		b.WriteString(fmt.Sprintf(messages.ManageReminderResource, r))
+	}
+	return b.String()
 }
