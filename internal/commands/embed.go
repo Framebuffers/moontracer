@@ -77,6 +77,10 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL 
 		&discordgo.MessageEmbedField{Name: fmt.Sprintf("Players (%d)", len(players)), Value: playersValue, Inline: false},
 	)
 
+	if links := formatEmbedLinks(c); links != "" {
+		fields = append(fields, &discordgo.MessageEmbedField{Name: messages.ManageLinksEmbedTitle, Value: links, Inline: false})
+	}
+
 	embed := &discordgo.MessageEmbed{
 		Title:       fmt.Sprintf("%s — %s", campaignType, c.Name),
 		Description: c.Description,
@@ -129,6 +133,20 @@ func CampaignButtons(callerID string, c models.Campaign, players []models.Campai
 	}
 
 	return buttons
+}
+
+func formatEmbedLinks(c models.Campaign) string {
+	var parts []string
+	if c.VTTLink != "" {
+		parts = append(parts, fmt.Sprintf("**VTT:** %s", c.VTTLink))
+	}
+	if c.PlayerSheetURL != "" {
+		parts = append(parts, fmt.Sprintf("**Sheets:** %s", c.PlayerSheetURL))
+	}
+	for _, r := range c.Links {
+		parts = append(parts, fmt.Sprintf("• %s", r))
+	}
+	return strings.Join(parts, "\n")
 }
 
 // FormatSchedule builds a human-readable schedule string for the campaign embed.

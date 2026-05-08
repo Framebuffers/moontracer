@@ -247,6 +247,27 @@ const (
 	ManageCampaignListLine     = "**%s** — %s"
 )
 
+// Token upload
+const (
+	TokenUploadCommandName    = "uploadtoken"
+	TokenUploadCommandDesc    = "Upload a player token (source photo + frame), this will merge them together."
+	TokenUploadSourceOptName  = "source"
+	TokenUploadSourceOptDesc  = "Your photo (JPG/PNG)."
+	TokenUploadFrameOptName   = "frame"
+	TokenUploadFrameOptDesc   = "Frame/border image (PNG with transparency)."
+	TokenUploadNotImage       = "Both files must be images (JPEG or PNG)."
+	TokenUploadTooLarge       = "Each file must be under 8 MiB."
+	TokenUploadProcessFailed  = "Failed to process your token. Please try again."
+	TokenUploadPreviewContent = "Here's a preview of your token. Apply it to your profile or discard."
+	TokenApplyLabel           = "✅ Apply"
+	TokenDiscardLabel         = "❌ Discard"
+	TokenApplyPrefix          = "token_apply"
+	TokenDiscardPrefix        = "token_discard"
+	TokenApplySuccess         = "Token applied to your profile!"
+	TokenDiscardSuccess       = "Token discarded."
+	TokenApplyFailed          = "Failed to save token. Please try again."
+)
+
 // Campaign cover / upload
 const (
 	CampaignUploadCommandName     = "campaignupload"
@@ -472,6 +493,26 @@ const (
 	ManageSessionsLabel = "Sessions"
 	ManageSettingsLabel = "Settings"
 	ManageDangerLabel   = "⚠️ Spicy Zone"
+)
+
+// Manage campaign: Links
+const (
+	ManageLinksLabel                = "Links"
+	ManageLinksPrefix               = "manage_links"
+	ManageLinksModalID              = "modal_manage_links"
+	ManageLinksModalTitle           = "Campaign Links"
+	ManageLinksVTTLabel             = "VTT Link"
+	ManageLinksVTTPlaceholder       = "https://app.roll20.net/... or https://foundryvtt.com/..."
+	ManageLinksSheetsLabel          = "Player Sheet URL"
+	ManageLinksSheetsPlaceholder    = "https://www.dndbeyond.com/campaigns/..."
+	ManageLinksResourcesLabel       = "Session Resources (one URL per line)"
+	ManageLinksResourcesPlaceholder = "https://drive.google.com/...\nhttps://example.com/map"
+	ManageLinksSuccess              = "Links updated for **%s**."
+	ManageLinksEmbedTitle           = "🔗 Links"
+	ManageReminderLinks             = "\n\n🔗 **Links for tonight:**"
+	ManageReminderVTT               = "\nVTT: %s"
+	ManageReminderSheets            = "\nSheets: %s"
+	ManageReminderResource          = "\n• %s"
 )
 
 // Manage campaign: additional buttons
