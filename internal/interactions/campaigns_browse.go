@@ -2,6 +2,7 @@ package interactions
 
 import (
 	"moontracer/internal/interactions/helpers"
+	"moontracer/internal/interactions/router"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -65,6 +66,8 @@ func RenderCampaignsBrowse(s *discordgo.Session, i *discordgo.InteractionCreate,
 	} else {
 		content = messages.CampaignsNoneAvailable
 	}
+
+	components = append(components, helpers.BackRow(router.ViewMeCampaigns))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,

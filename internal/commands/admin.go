@@ -24,6 +24,7 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/guard"
+	"moontracer/internal/interactions/helpers"
 	"moontracer/internal/interactions/router"
 	"moontracer/internal/messages"
 )
@@ -110,9 +111,7 @@ func adminHubData() *discordgo.InteractionResponseData {
 			},
 		}})
 	}
-	components = append(components, discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		router.BackButton(messages.BackLabel, router.ViewMe),
-	}})
+	components = append(components, helpers.BackRow(router.ViewMe))
 
 	return &discordgo.InteractionResponseData{
 		Content:    messages.AdminHubMessage,

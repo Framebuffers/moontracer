@@ -21,7 +21,7 @@ func CoverPath(dataDir, baseURL, guildID, campaignID, ext string) (diskPath, pub
 	filename := uuid.NewString() + ext
 	rel := filepath.Join(guildID, "assets", "campaigns", campaignID, "cover", filename)
 	diskPath = filepath.Join(dataDir, rel)
-	publicURL = fmt.Sprintf("%s/%s/%s/assets/campaigns/%s/cover/%s", baseURL, guildID, guildID, campaignID, filename)
+	publicURL = fmt.Sprintf("%s/%s/assets/campaigns/%s/cover/%s", baseURL, guildID, campaignID, filename)
 	return
 }
 
