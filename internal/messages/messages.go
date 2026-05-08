@@ -438,6 +438,7 @@ const (
 	AboutCommandDesc           = "About this bot."
 	AboutCommandGitHubRepoLink = "https://github.com/framebuffers/moontracer"
 	AboutCommandGitHubLabel    = "GitHub"
+	AboutLabel                 = "About"
 	HelpLabel                  = "Help"
 	AboutCommandWebsite        = "https://framebuffer.cl/moontracer"
 	AboutCommandBotDesc        = "Moontracer\n_a D&D campaign manager for players, DM and spectators!_"

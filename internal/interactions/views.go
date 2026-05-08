@@ -119,4 +119,8 @@ func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 	router.Register(router.ViewHelp, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
 		commands.RenderHelp(s, i, db, d)
 	})
+
+	router.Register(router.ViewAbout, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		commands.RenderAboutUpdate(s, i)
+	})
 }

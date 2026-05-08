@@ -109,6 +109,7 @@ func buildMeHubComponents() []discordgo.MessageComponent {
 				CustomID: messages.NextSessionsPrefix,
 			},
 			router.NavButton(messages.MeConfigLabel, discordgo.PrimaryButton, router.ViewMeConfig),
+			router.NavButton(messages.AboutLabel, discordgo.SecondaryButton, router.ViewAbout),
 		}},
 	}
 }
