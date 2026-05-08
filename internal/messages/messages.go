@@ -470,6 +470,7 @@ const (
 	ManagePlayersLabel  = "Players"
 	ManageSessionsLabel = "Sessions"
 	ManageSettingsLabel = "Settings"
+	ManageDangerLabel   = "⚠️ Spicy Zone"
 )
 
 // Manage campaign: additional buttons

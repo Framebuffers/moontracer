@@ -86,6 +86,13 @@ func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 		RenderManageSettingsMenu(s, i, db, args[0])
 	})
 
+	router.Register(router.ViewManageDanger, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		if len(args) < 1 {
+			return
+		}
+		RenderManageDangerMenu(s, i, db, args[0])
+	})
+
 	router.Register(router.ViewCampaignsBrowse, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
 		filter := "all"
 		if len(args) > 0 && args[0] != "" {

@@ -144,7 +144,7 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 					discordgo.Button{
 						Label:    messages.ManageDeleteCancelLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: router.NavCustomID(router.ViewManageSettings, campaignID),
+						CustomID: router.NavCustomID(router.ViewManageDanger, campaignID),
 					},
 				}},
 			},

@@ -58,6 +58,7 @@ const (
 	ViewManagePlayers   ViewID = "manage_players"
 	ViewManageSessions  ViewID = "manage_sessions"
 	ViewManageSettings  ViewID = "manage_settings"
+	ViewManageDanger    ViewID = "manage_danger"
 	ViewCampaignsBrowse ViewID = "campaigns_browse"
 	ViewCampaignDetail  ViewID = "campaign_detail"
 	ViewAdmin           ViewID = "admin"
