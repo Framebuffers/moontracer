@@ -81,75 +81,20 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
-	sessionLabel := messages.ManageSetSessionLabel
-	if !campaign.Schedule.NextSession.IsZero() {
-		sessionLabel = messages.ManageRescheduleSessionLabel
-	}
-
-	// Players row
-	rowPlayers := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		discordgo.Button{
-			Label:    messages.ManageBanLabel,
-			Style:    discordgo.DangerButton,
-			CustomID: fmt.Sprintf("manage_ban:%s", campaignID),
-		},
-		discordgo.Button{
-			Label:    messages.ManageInviteLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
-		},
-	}}
-
-	// Sessions row
-	rowSessions := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		discordgo.Button{
-			Label:    sessionLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: fmt.Sprintf("%s:%s", messages.ManageSetSessionPrefix, campaignID),
-		},
-		discordgo.Button{
-			Label:    messages.ManageAnnounceLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: fmt.Sprintf("manage_announce:%s", campaignID),
-		},
-	}}
-
-	// Edit row
-	rowEdit := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		discordgo.Button{
-			Label:    messages.ManageEditLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: fmt.Sprintf("%s:%s", messages.ManageEditPrefix, campaignID),
-		},
-		discordgo.Button{
-			Label:    messages.SetCoverButtonLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: fmt.Sprintf("manage_setcover:%s", campaignID),
-		},
-		discordgo.Button{
-			Label:    messages.ManageSetRoleLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: fmt.Sprintf("%s:%s", messages.ManageSetRolePrefix, campaignID),
-		},
-		discordgo.Button{
-			Label:    messages.ManageArchiveLabel,
-			Style:    discordgo.DangerButton,
-			CustomID: fmt.Sprintf("%s:%s", messages.ManageArchivePrefix, campaignID),
-		},
-		discordgo.Button{
-			Label:    messages.ManageDeleteLabel,
-			Style:    discordgo.DangerButton,
-			CustomID: fmt.Sprintf("manage_delete:%s", campaignID),
-		},
-	}}
-
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Content:    fmt.Sprintf(messages.ManageCampaignHeader, campaign.Name),
-			Embeds:     []*discordgo.MessageEmbed{},
-			Components: []discordgo.MessageComponent{rowPlayers, rowSessions, rowEdit, helpers.BackRow(router.ViewManage)},
-			Flags:      discordgo.MessageFlagsEphemeral,
+			Content: fmt.Sprintf(messages.ManageCampaignHeader, campaign.Name),
+			Embeds:  []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					router.NavButton(messages.ManagePlayersLabel, discordgo.PrimaryButton, router.ViewManagePlayers, campaignID),
+					router.NavButton(messages.ManageSessionsLabel, discordgo.PrimaryButton, router.ViewManageSessions, campaignID),
+					router.NavButton(messages.ManageSettingsLabel, discordgo.PrimaryButton, router.ViewManageSettings, campaignID),
+				}},
+				helpers.BackRow(router.ViewManage),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
@@ -199,7 +144,7 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 					discordgo.Button{
 						Label:    messages.ManageDeleteCancelLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: router.NavCustomID(router.ViewManageCampaign, campaignID),
+						CustomID: router.NavCustomID(router.ViewManageSettings, campaignID),
 					},
 				}},
 			},

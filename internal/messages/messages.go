@@ -264,7 +264,7 @@ const (
 	CampaignUploadTooLarge      = "Image is too large. Max 8 MiB."
 	CampaignUploadMissingAttach = "No image attached. Attach a file to the `image` option."
 	CampaignUploadFailure       = "Failed to save cover. Please try again."
-	CampaignUploadSuccess       = "Cover set for **%s**.\n%s"
+	CampaignUploadSuccess       = "Cover set for **%s**. [View](%s)"
 
 	SetCoverButtonLabel  = "Set Cover"
 	SetCoverInstructions = "Use `/campaignupload kind:Cover campaign:<name> image:<file>` to set a cover for this campaign."
@@ -272,7 +272,6 @@ const (
 
 // Manage campaigns — button labels
 const (
-	ManageEditLabel           = "Edit"
 	ManageDeleteLabel         = "Delete"
 	ManageBanLabel            = "Ban Member"
 	ManageAnnounceLabel       = "Announce"
@@ -466,6 +465,13 @@ const (
 	AdminPanelLabel      = "Admin Panel"
 )
 
+// Manage campaign hub labels
+const (
+	ManagePlayersLabel  = "Players"
+	ManageSessionsLabel = "Sessions"
+	ManageSettingsLabel = "Settings"
+)
+
 // Manage campaign: additional buttons
 const (
 	ManageSetRoleLabel  = "Set Role"
@@ -608,15 +614,6 @@ const (
 // Admin hub: Diagnostics
 const (
 	AdminDiagPrefix = "admin_diag"
-)
-
-// Manage campaign: Edit
-const (
-	ManageEditPrefix         = "manage_edit"
-	ManageEditModalID        = "modal_manage_edit"
-	ManageEditModalTitle     = "Edit Campaign"
-	ManageEditNotImplemented = "Edit is not yet implemented."
-	ManageEditSuccess        = "**%s** has been updated."
 )
 
 // Manage campaign: New Campaign from button (modal-from-component)

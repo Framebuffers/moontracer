@@ -116,8 +116,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&adminSettingsHandler{db: db},
 		&adminDiagHandler{db: db},
 
-		// Manage: edit + new campaign from button
-		&manageEditHandler{db: db},
+		// Manage: new campaign from button
 		&manageNewCampaignButton{db: db},
 		&manageSetSession{db: db},
 
@@ -141,7 +140,6 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) [
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},
 		&manageSetRoleModal{db: db},
-		&manageEditModal{db: db},
 		&manageSetSessionModal{db: db, sched: sched},
 		&adminBroadcastModal{db: db, dispatcher: d},
 	}
