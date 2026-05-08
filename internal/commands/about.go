@@ -64,6 +64,29 @@ func (a *aboutCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 	})
 }
 
+// RenderAboutUpdate renders the about page as a message update (used by the router from /me).
+func RenderAboutUpdate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: ascii,
+			Embeds:  []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					router.NavButton(messages.MyProfileLabel, discordgo.PrimaryButton, router.ViewMe),
+					router.NavButton(messages.HelpLabel, discordgo.SecondaryButton, router.ViewHelp),
+					discordgo.Button{
+						Label: messages.AboutCommandGitHubLabel,
+						Style: discordgo.LinkButton,
+						URL:   messages.AboutCommandGitHubRepoLink,
+					},
+				}},
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
 var ascii2 = "```" + `
 *		*	*  * 		*	*
 	*	  *		*   *     *
