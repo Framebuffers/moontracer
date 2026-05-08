@@ -88,7 +88,7 @@ func RenderManageSessionsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 	})
 }
 
-// RenderManageSettingsMenu renders the Settings sub-menu (Set Cover, Set Role, Archive, Delete).
+// RenderManageSettingsMenu renders the Settings sub-menu (Set Cover, Set Role, Spicy Zone).
 func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCreate, database *bun.DB, campaignID string) {
 	campaign, ok := renderManageSubAuth(s, i, database, campaignID)
 	if !ok {
@@ -108,6 +108,20 @@ func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 			},
 		}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			router.NavButton(messages.ManageDangerLabel, discordgo.DangerButton, router.ViewManageDanger, campaignID),
+		}},
+		helpers.BackRow(router.ViewManageCampaign, campaignID),
+	})
+}
+
+// RenderManageDangerMenu renders the Spicy Zone sub-menu (Archive, Delete).
+func RenderManageDangerMenu(s *discordgo.Session, i *discordgo.InteractionCreate, database *bun.DB, campaignID string) {
+	campaign, ok := renderManageSubAuth(s, i, database, campaignID)
+	if !ok {
+		return
+	}
+	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageCampaignHeader, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
 				Label:    messages.ManageArchiveLabel,
 				Style:    discordgo.DangerButton,
@@ -119,6 +133,6 @@ func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 				CustomID: fmt.Sprintf("manage_delete:%s", campaignID),
 			},
 		}},
-		helpers.BackRow(router.ViewManageCampaign, campaignID),
+		helpers.BackRow(router.ViewManageSettings, campaignID),
 	})
 }

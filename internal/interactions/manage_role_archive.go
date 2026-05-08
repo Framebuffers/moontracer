@@ -191,7 +191,7 @@ func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 					discordgo.Button{
 						Label:    messages.ManageArchiveCancelLabel,
 						Style:    discordgo.SecondaryButton,
-						CustomID: router.NavCustomID(router.ViewManageSettings, campaignID),
+						CustomID: router.NavCustomID(router.ViewManageDanger, campaignID),
 					},
 				}},
 			},
