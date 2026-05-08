@@ -1,15 +1,16 @@
 package interactions
 
 import (
-	"moontracer/internal/interactions/helpers"
 	"fmt"
 	"log"
+	"moontracer/internal/interactions/helpers"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
+	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
 	"moontracer/internal/manager/models"
@@ -46,11 +47,9 @@ func (h *manageCampaignAnnounce) HandleComponents(s *discordgo.Session, i *disco
 		return
 	}
 	campaignID := parts[1]
-	userID := i.Member.User.ID
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID)
-	if err != nil || !ok {
-		helpers.RespondUpdateTerminal(s, i, messages.ManageNotAuthorized)
+	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	if !ok {
 		return
 	}
 
@@ -67,6 +66,39 @@ func (h *manageCampaignAnnounce) HandleComponents(s *discordgo.Session, i *disco
 						Style:       discordgo.TextInputParagraph,
 						Required:    true,
 						Placeholder: messages.AnnounceFieldPlaceholder,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    "vtt_link",
+						Label:       messages.ManageLinksVTTLabel,
+						Style:       discordgo.TextInputShort,
+						Placeholder: messages.ManageLinksVTTPlaceholder,
+						Value:       campaign.VTTLink,
+						Required:    false,
+						MaxLength:   500,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    "player_sheet_url",
+						Label:       messages.ManageLinksSheetsLabel,
+						Style:       discordgo.TextInputShort,
+						Placeholder: messages.ManageLinksSheetsPlaceholder,
+						Value:       campaign.PlayerSheetURL,
+						Required:    false,
+						MaxLength:   500,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    "resources",
+						Label:       messages.ManageLinksResourcesLabel,
+						Style:       discordgo.TextInputParagraph,
+						Placeholder: messages.ManageLinksResourcesPlaceholder,
+						Value:       strings.Join(campaign.Links, "\n"),
+						Required:    false,
+						MaxLength:   1000,
 					},
 				}},
 			},
@@ -112,10 +144,25 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	for _, row := range i.ModalSubmitData().Components {
 		for _, comp := range row.(*discordgo.ActionsRow).Components {
 			input := comp.(*discordgo.TextInput)
-			if input.CustomID == messages.AnnounceFieldID {
+			switch input.CustomID {
+			case messages.AnnounceFieldID:
 				message = input.Value
+			case "vtt_link":
+				campaign.VTTLink = strings.TrimSpace(input.Value)
+			case "player_sheet_url":
+				campaign.PlayerSheetURL = strings.TrimSpace(input.Value)
+			case "resources":
+				campaign.Links = parseLinks(input.Value)
 			}
 		}
+	}
+
+	if err := db.Update(h.db, campaign); err != nil {
+		log.Printf("campaign_announce: failed to save links for campaign %s: %v", campaignID, err)
+		/*
+			NOTE:
+				Error is non-fatal: continue with the announcement even if link save fails.
+		*/
 	}
 
 	if campaign.AnnouncementsThreadID != "" {
