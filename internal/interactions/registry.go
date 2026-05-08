@@ -59,7 +59,7 @@ At startup the bot calls AllComponents/AllModals once per guild DB; the
 main handler (internal/discord/handler.go) dispatches incoming events to
 the first handler whose prefix matches.
 */
-func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) []ComponentHandler {
+func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, dataDir, mediaBaseURL string) []ComponentHandler {
 	RegisterAllViews(db, d)
 
 	return []ComponentHandler{
@@ -116,8 +116,13 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&adminSettingsHandler{db: db},
 		&adminDiagHandler{db: db},
 
-		// Manage: new campaign from button
+		// Manage: new campaign from button, links
 		&manageNewCampaignButton{db: db},
+		&manageLinksHandler{db: db},
+
+		// Token generator confirm/discard
+		&tokenApplyHandler{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
+		&tokenDiscardHandler{dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&manageSetSession{db: db},
 
 		// Session RSVP (buttons on reminder DMs)
@@ -140,6 +145,7 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) [
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},
 		&manageSetRoleModal{db: db},
+		&manageLinksModal{db: db},
 		&manageSetSessionModal{db: db, sched: sched},
 		&adminBroadcastModal{db: db, dispatcher: d},
 	}

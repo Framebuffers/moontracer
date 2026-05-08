@@ -77,3 +77,21 @@ func CoverURLForCampaign(db *bun.DB, campaignID string) string {
 	}
 	return media[0].URL
 }
+
+/*
+TokenURLForPlayer returns the public CDN URL for the most-recent player token
+stored for the given player, or an empty string if none exists.
+*/
+func TokenURLForPlayer(db *bun.DB, playerID string) string {
+	var out []*Media
+	err := db.NewSelect().Model(&out).
+		Where("owner_id = ?", playerID).
+		Where("kind = ?", KindTokenPlayer).
+		OrderExpr("created_at DESC").
+		Limit(1).
+		Scan(context.Background())
+	if err != nil || len(out) == 0 {
+		return ""
+	}
+	return out[0].URL
+}
