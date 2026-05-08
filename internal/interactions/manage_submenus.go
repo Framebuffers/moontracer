@@ -80,7 +80,7 @@ func RenderManageSessionsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 			},
 			discordgo.Button{
 				Label:    messages.ManageAnnounceLabel,
-				Style:    discordgo.SecondaryButton,
+				Style:    discordgo.SuccessButton,
 				CustomID: fmt.Sprintf("manage_announce:%s", campaignID),
 			},
 		}},
