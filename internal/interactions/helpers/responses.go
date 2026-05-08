@@ -108,13 +108,16 @@ When target is not ViewMe, a secondary Home button (-> ViewMe) is appended so
 users can always return to the player hub from any depth.
 */
 func BackRow(target router.ViewID, args ...string) discordgo.ActionsRow {
-	row := []discordgo.MessageComponent{
+	if target == router.ViewMe {
+		// Back and Home are the same destination here; one button avoids a duplicate CustomID.
+		return discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
+		}}
+	}
+	return discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 		router.BackButton(messages.BackLabel, target, args...),
-	}
-	if target != router.ViewMe {
-		row = append(row, router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe))
-	}
-	return discordgo.ActionsRow{Components: row}
+		router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
+	}}
 }
 
 /*

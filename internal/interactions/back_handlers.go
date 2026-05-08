@@ -56,9 +56,7 @@ func RenderMyCampaignsList(s *discordgo.Session, i *discordgo.InteractionCreate,
 
 	if len(entries) == 0 {
 		helpers.RespondUpdate(s, i, messages.NoCampaignsMessage, nil, []discordgo.MessageComponent{
-			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-				router.BackButton(messages.BackLabel, router.ViewMe),
-			}},
+			helpers.BackRow(router.ViewMe),
 		})
 		return
 	}
@@ -75,9 +73,7 @@ func RenderMyCampaignsList(s *discordgo.Session, i *discordgo.InteractionCreate,
 
 	helpers.RespondUpdate(s, i, content, nil, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{selectMenu}},
-		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			router.BackButton(messages.BackLabel, router.ViewMe),
-		}},
+		helpers.BackRow(router.ViewMe),
 	})
 }
 
@@ -98,9 +94,7 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 
 	if len(dmEntries) == 0 {
 		helpers.RespondUpdate(s, i, messages.ManageNoDMCampaigns, nil, []discordgo.MessageComponent{
-			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-				router.BackButton(messages.BackLabel, router.ViewMe),
-			}},
+			helpers.BackRow(router.ViewMe),
 		})
 		return
 	}
@@ -118,12 +112,12 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 	helpers.RespondUpdate(s, i, content, nil, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{selectMenu}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			router.BackButton(messages.BackLabel, router.ViewMe),
 			discordgo.Button{
 				Label:    messages.NewCampaignLabel,
 				Style:    discordgo.SuccessButton,
 				CustomID: messages.ManageNewCampaignPrefix,
 			},
+			router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
 		}},
 	})
 }

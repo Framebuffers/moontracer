@@ -40,8 +40,10 @@ GetOrCreate returns the *bun.DB for the given guild, creating and migrating the 
 Uses double-checked locking so the hot path (DB already cached) takes only a shared read lock.
 */
 func (m *GuildDBManager) GetOrCreate(guildID string) (*bun.DB, error) {
-	// Hot path:
-	// 	read lock only.
+	/*
+		Hot path:
+		read lock only.
+	*/
 	m.mu.RLock()
 	if db, ok := m.dbs[guildID]; ok {
 		m.mu.RUnlock()
@@ -49,8 +51,10 @@ func (m *GuildDBManager) GetOrCreate(guildID string) (*bun.DB, error) {
 	}
 	m.mu.RUnlock()
 
-	// Cold path:
-	// 	write lock, double-check.
+	/*
+		Cold path:
+		write lock, double-check.
+	*/
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -109,8 +113,8 @@ func (m *GuildDBManager) openAndMigrate(guildID string) (*bun.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("open guild DB %s: %w", guildID, err)
 	}
-	sqldb.SetMaxOpenConns(1) // SQLite best practice: serialize writes
-
+	// SQLite best practice: serialize writes
+	sqldb.SetMaxOpenConns(1)
 	if err := sqldb.PingContext(context.Background()); err != nil {
 		sqldb.Close()
 		return nil, fmt.Errorf("ping guild DB %s: %w", guildID, err)

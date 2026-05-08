@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.10.1"
+	BotVersion               = "v0.10.2"
 )
 
 /*
@@ -230,6 +230,7 @@ const (
 const (
 	ManageCampaignsCommandName = "managecampaigns"
 	ManageCampaignsCommandDesc = "Manage campaigns you run as DM."
+	ManageCampaignsLabel       = "Manage Campaigns"
 	ManageNoDMCampaigns        = "You are not the DM of any campaigns."
 	ManageNotAuthorized        = "You must be the DM of this campaign to manage it."
 	ManageCampaignNotFound     = "Campaign not found."
@@ -263,7 +264,7 @@ const (
 	CampaignUploadTooLarge      = "Image is too large. Max 8 MiB."
 	CampaignUploadMissingAttach = "No image attached. Attach a file to the `image` option."
 	CampaignUploadFailure       = "Failed to save cover. Please try again."
-	CampaignUploadSuccess       = "Cover set for **%s**.\n%s"
+	CampaignUploadSuccess       = "Cover set for **%s**. [View](%s)"
 
 	SetCoverButtonLabel  = "Set Cover"
 	SetCoverInstructions = "Use `/campaignupload kind:Cover campaign:<name> image:<file>` to set a cover for this campaign."
@@ -271,7 +272,6 @@ const (
 
 // Manage campaigns — button labels
 const (
-	ManageEditLabel           = "Edit"
 	ManageDeleteLabel         = "Delete"
 	ManageBanLabel            = "Ban Member"
 	ManageAnnounceLabel       = "Announce"
@@ -385,9 +385,14 @@ const (
 
 // Player hub (/me)
 const (
-	MeCommandName = "me"
-	MeCommandDesc = "Your player profile and quick actions."
-	MeHubMessage  = "Hey, <@%s>! What would you like to do?"
+	MeCommandName     = "me"
+	MeCommandDesc     = "Your player profile and quick actions."
+	MeHubMessage      = "Hey, <@%s>! What would you like to do?"
+	MeCampaignsLabel  = "Campaigns"
+	MeConfigLabel     = "Configuration"
+	MeCampaignsHeader = "Campaigns"
+	MeConfigHeader    = "Configuration"
+	ControlPanelLabel = "Control Panel"
 )
 
 // Browse campaigns (/campaigns)
@@ -433,10 +438,11 @@ const (
 	AboutCommandDesc           = "About this bot."
 	AboutCommandGitHubRepoLink = "https://github.com/framebuffers/moontracer"
 	AboutCommandGitHubLabel    = "GitHub"
+	AboutLabel                 = "About"
 	HelpLabel                  = "Help"
 	AboutCommandWebsite        = "https://framebuffer.cl/moontracer"
-	AboutCommandBotDesc        = "Moontracer: a D&D campaign manager for players, DM and spectators!"
-	AboutCommandCopyright      = "(C) 2026 Framebuffer"
+	AboutCommandBotDesc        = "Moontracer\n_a D&D campaign manager for players, DM and spectators!_"
+	AboutCommandCopyright      = "(C) 2026 **Framebuffer**"
 	AboutCommandLicense        = "AGPL-v3.0"
 	AboutCommandHelp           = "Type `/help` for a list of commands."
 	AboutCommandAwoo           = "awoo!"
@@ -445,8 +451,8 @@ const (
 
 // Navigation buttons
 const (
-	BackLabel = "Back"
-	HomeLabel = "Home"
+	BackLabel = ""
+	HomeLabel = "🏠"
 )
 
 // Hub button labels
@@ -455,9 +461,17 @@ const (
 	NextSessionsLabel    = "Next Sessions"
 	NotificationsLabel   = "Notifications"
 	BrowseCampaignsLabel = "Browse Campaigns"
-	MyProfileLabel       = "Home"
+	MyProfileLabel       = HomeLabel
 	NewCampaignLabel     = "New Campaign"
 	AdminPanelLabel      = "Admin Panel"
+)
+
+// Manage campaign hub labels
+const (
+	ManagePlayersLabel  = "Players"
+	ManageSessionsLabel = "Sessions"
+	ManageSettingsLabel = "Settings"
+	ManageDangerLabel   = "⚠️ Spicy Zone"
 )
 
 // Manage campaign: additional buttons
@@ -589,8 +603,8 @@ const (
 
 // Admin hub: Database viewer
 const (
-	AdminDatabasePrefix   = "admin_database"
-	AdminDBCampaignLine   = "**%s** (`%s`) — DM: <@%s> [%s]"
+	AdminDatabasePrefix = "admin_database"
+	AdminDBCampaignLine = "**%s** (`%s`) — DM: <@%s> [%s]"
 )
 
 // Admin hub: Settings
@@ -602,15 +616,6 @@ const (
 // Admin hub: Diagnostics
 const (
 	AdminDiagPrefix = "admin_diag"
-)
-
-// Manage campaign: Edit
-const (
-	ManageEditPrefix        = "manage_edit"
-	ManageEditModalID       = "modal_manage_edit"
-	ManageEditModalTitle    = "Edit Campaign"
-	ManageEditNotImplemented = "Edit is not yet implemented."
-	ManageEditSuccess       = "**%s** has been updated."
 )
 
 // Manage campaign: New Campaign from button (modal-from-component)

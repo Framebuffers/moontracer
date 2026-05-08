@@ -42,6 +42,14 @@ func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 		commands.RenderMeHub(s, i, db, helpers.GetUserID(i))
 	})
 
+	router.Register(router.ViewMeCampaigns, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		RenderMeCampaigns(s, i, db, helpers.GetUserID(i))
+	})
+
+	router.Register(router.ViewMeConfig, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		RenderMeConfig(s, i, db, helpers.GetUserID(i))
+	})
+
 	router.Register(router.ViewMyCampaigns, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
 		RenderMyCampaignsList(s, i, db, helpers.GetUserID(i))
 	})
@@ -55,6 +63,34 @@ func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 			return
 		}
 		RenderManageCampaignMenu(s, i, db, args[0])
+	})
+
+	router.Register(router.ViewManagePlayers, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		if len(args) < 1 {
+			return
+		}
+		RenderManagePlayersMenu(s, i, db, args[0])
+	})
+
+	router.Register(router.ViewManageSessions, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		if len(args) < 1 {
+			return
+		}
+		RenderManageSessionsMenu(s, i, db, args[0])
+	})
+
+	router.Register(router.ViewManageSettings, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		if len(args) < 1 {
+			return
+		}
+		RenderManageSettingsMenu(s, i, db, args[0])
+	})
+
+	router.Register(router.ViewManageDanger, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		if len(args) < 1 {
+			return
+		}
+		RenderManageDangerMenu(s, i, db, args[0])
 	})
 
 	router.Register(router.ViewCampaignsBrowse, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
@@ -82,5 +118,9 @@ func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 
 	router.Register(router.ViewHelp, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
 		commands.RenderHelp(s, i, db, d)
+	})
+
+	router.Register(router.ViewAbout, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		commands.RenderAboutUpdate(s, i)
 	})
 }
