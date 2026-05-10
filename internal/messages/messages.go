@@ -733,6 +733,7 @@ const (
 	PlayerSetSheetSuccess           = "Character sheet updated for **%s**."
 	PlayerSetSheetFailed            = "Failed to save character sheet."
 	PlayerSetSheetLabel             = "Set Sheet"
+	PlayerOpenSheetLabel            = "Open Sheet"
 	PlayerSetTokenPrefix            = "player_set_token"
 	PlayerSetTokenLabel             = "Set Token"
 	PlayerTokenSelectPrefix         = "player_token_select"

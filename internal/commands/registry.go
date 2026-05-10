@@ -63,6 +63,7 @@ func All(db *bun.DB, d *dispatch.Dispatcher, dataDir, mediaBaseURL string) []Com
 		&adminCommand{db: db},
 		&aboutCommand{db: db},
 		&waosCommand{db: db},
+		&newCampaignCommand{db: db},
 		&campaignUploadCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&uploadTokenCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 	}

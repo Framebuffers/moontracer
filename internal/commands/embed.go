@@ -13,9 +13,12 @@ import (
 /*
 CampaignEmbed builds a rich embed for displaying campaign details.
 
-coverURL, if non-empty, is rendered as a thumbnail (top-right).
+coverURL is shown as the main image. viewerTokenURL, if set, is shown as a
+thumbnail (top-right).
+
+This is used to display the viewing player's character token.
 */
-func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL string) *discordgo.MessageEmbed {
+func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL, viewerTokenURL string) *discordgo.MessageEmbed {
 	status := messages.ClosedStatusLabel
 	if c.IsArchived {
 		status = messages.ArchivedStatusLabel
@@ -88,15 +91,23 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL 
 	if coverURL != "" {
 		embed.Image = &discordgo.MessageEmbedImage{URL: coverURL}
 	}
+	if viewerTokenURL != "" {
+		embed.Thumbnail = &discordgo.MessageEmbedThumbnail{URL: viewerTokenURL}
+	}
 	return embed
 }
 
 /*
 CampaignButtons builds context-aware action rows for a campaign view.
 
+viewerSheetURL is the viewing player's own sheet URL; when set, an "Open Sheet"
+link button is prepended to their action row.
+
+Pass "" for non-members.
+
 Returns complete ActionsRows ready to append directly to a component list.
 */
-func CampaignButtons(callerID string, c models.Campaign, players []models.CampaignPlayer) []discordgo.MessageComponent {
+func CampaignButtons(callerID string, c models.Campaign, players []models.CampaignPlayer, viewerSheetURL string) []discordgo.MessageComponent {
 	if c.IsArchived {
 		return nil
 	}
@@ -122,24 +133,34 @@ func CampaignButtons(callerID string, c models.Campaign, players []models.Campai
 	}
 
 	if isCallerMember {
+		row1 := []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.PlayerSetSheetLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.PlayerSetSheetPrefix, c.ID),
+			},
+			discordgo.Button{
+				Label:    messages.PlayerSetTokenLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.PlayerSetTokenPrefix, c.ID),
+			},
+			discordgo.Button{
+				Label:    messages.PlayerContactDMLabel,
+				Style:    discordgo.SuccessButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.PlayerContactDMPrefix, c.ID),
+			},
+		}
+		if viewerSheetURL != "" {
+			row1 = append([]discordgo.MessageComponent{
+				discordgo.Button{
+					Label: messages.PlayerOpenSheetLabel,
+					Style: discordgo.LinkButton,
+					URL:   viewerSheetURL,
+				},
+			}, row1...)
+		}
 		return []discordgo.MessageComponent{
-			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    messages.PlayerSetSheetLabel,
-					Style:    discordgo.SecondaryButton,
-					CustomID: fmt.Sprintf("%s:%s", messages.PlayerSetSheetPrefix, c.ID),
-				},
-				discordgo.Button{
-					Label:    messages.PlayerSetTokenLabel,
-					Style:    discordgo.SecondaryButton,
-					CustomID: fmt.Sprintf("%s:%s", messages.PlayerSetTokenPrefix, c.ID),
-				},
-				discordgo.Button{
-					Label:    messages.PlayerContactDMLabel,
-					Style:    discordgo.SuccessButton,
-					CustomID: fmt.Sprintf("%s:%s", messages.PlayerContactDMPrefix, c.ID),
-				},
-			}},
+			discordgo.ActionsRow{Components: row1},
 			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 				discordgo.Button{
 					Label:    messages.LeaveCampaignLabel,
