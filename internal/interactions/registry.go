@@ -135,6 +135,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&playerLeaveConfirmPromptHandler{db: db},
 		&playerLeaveDoHandler{db: db},
 		&playerContactDMHandler{db: db},
+		&playerDownloadTokensHandler{db: db},
+		&playerDownloadSelectHandler{},
 
 		// Session RSVP (buttons on reminder DMs)
 		&rsvpAcceptHandler{db: db, dispatcher: d},

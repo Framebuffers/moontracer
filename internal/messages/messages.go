@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.11.15"
+	BotVersion               = "v0.11.16"
 )
 
 /*
@@ -769,6 +769,16 @@ const (
 	PlayerContactDMLabel            = "Contact DM"
 	PlayerContactDMSuccess          = "Your message has been sent to the DM."
 	PlayerContactDMReceived         = "**Message from <@%s>** regarding **%s**:\n\n%s"
+
+	// Token download (UI wired; download logic deferred)
+	PlayerDownloadTokensPrefix      = "player_download_tokens"
+	PlayerDownloadTokensLabel       = "⬇️ Download Tokens"
+	PlayerDownloadSelectPrefix      = "player_download_select"
+	PlayerDownloadSelectPlaceholder = "Select a campaign..."
+	PlayerDownloadAllLabel          = "All campaigns"
+	PlayerDownloadAllValue          = "all"
+	PlayerDownloadNoTokens          = "You haven't assigned tokens to any campaigns yet. Open a campaign card and use **Set Token** to assign one."
+	PlayerDownloadSoon              = "Download support is coming soon. *Your tokens are stored safely.**"
 )
 
 // Timezone preference
