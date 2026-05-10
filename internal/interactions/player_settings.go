@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -555,16 +556,101 @@ func (h *playerDownloadTokensHandler) HandleComponents(s *discordgo.Session, i *
 }
 
 /*
-playerDownloadSelectHandler is a placeholder until download logic is implemented.
+playerDownloadSelectHandler sends the player's token file(s) as ephemeral attachments.
+
+Selected value is either messages.PlayerDownloadAllValue ("all") or a campaignID.
 
 CustomID: player_download_select
 */
-type playerDownloadSelectHandler struct{}
+type playerDownloadSelectHandler struct {
+	db *bun.DB
+}
 
 func (h *playerDownloadSelectHandler) CustomIDPrefix() string {
 	return messages.PlayerDownloadSelectPrefix
 }
 
 func (h *playerDownloadSelectHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	helpers.RespondUpdateTerminal(s, i, messages.PlayerDownloadSoon)
+	userID := helpers.GetUserID(i)
+
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	selected := values[0]
+
+	var mediaRecords []*models.Media
+
+	if selected == messages.PlayerDownloadAllValue {
+		if err := h.db.NewSelect().Model(&mediaRecords).
+			Where("owner_id = ? AND kind = ?", userID, models.KindTokenPlayer).
+			OrderExpr("created_at DESC").
+			Limit(10).
+			Scan(context.Background()); err != nil {
+			helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+			return
+		}
+	} else {
+		cp, err := models.GetCampaignPlayer(h.db, userID, selected)
+		if err != nil || cp.MediaID == "" {
+			helpers.RespondUpdateTerminal(s, i, messages.PlayerDownloadNoTokens)
+			return
+		}
+		media, err := db.GetByID[models.Media](h.db, cp.MediaID)
+		if err != nil {
+			helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+			return
+		}
+		mediaRecords = []*models.Media{media}
+	}
+
+	if len(mediaRecords) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.PlayerDownloadNoTokens)
+		return
+	}
+
+	/*
+		Open files and build attachment list.
+		Keep handles open until after respond.
+	*/
+	var handles []*os.File
+	defer func() {
+		for _, f := range handles {
+			f.Close()
+		}
+	}()
+
+	var files []*discordgo.File
+	for _, m := range mediaRecords {
+		f, err := os.Open(m.Path)
+		if err != nil {
+			log.Printf("player_download_select: open %s: %v", m.Path, err)
+			continue
+		}
+		handles = append(handles, f)
+		name := m.Name
+		if name == "" {
+			name = m.ID[:8]
+		}
+		files = append(files, &discordgo.File{
+			Name:        name + ".png",
+			ContentType: "image/png",
+			Reader:      f,
+		})
+	}
+
+	if len(files) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.PlayerDownloadNoTokens)
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf(messages.PlayerDownloadContent, len(files)),
+			Files:   files,
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
+	})
 }
