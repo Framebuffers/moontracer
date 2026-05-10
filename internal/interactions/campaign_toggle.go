@@ -1,7 +1,6 @@
 package interactions
 
 import (
-	"moontracer/internal/interactions/helpers"
 	"fmt"
 	"log"
 
@@ -10,6 +9,7 @@ import (
 
 	"moontracer/internal/auth"
 	"moontracer/internal/db"
+	"moontracer/internal/interactions/helpers"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -38,10 +38,10 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 	if !ok {
 		return
 	}
-	tag := parts[1]
-	userID := i.Member.User.ID
+	campaignID := parts[1]
+	userID := helpers.GetUserID(i)
 
-	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
+	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err != nil {
 		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
 		return
