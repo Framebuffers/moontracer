@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,8 +20,7 @@ import (
 )
 
 /*
-tokenApplyHandler saves the processed token as a permanent Media record and
-removes all three temp files (source, frame, out).
+tokenApplyHandler opens a naming modal before saving the token.
 
 CustomID: token_apply:{guildID}:{playerID}:{token-uuid}
 */
@@ -39,7 +39,62 @@ func (h *tokenApplyHandler) HandleComponents(s *discordgo.Session, i *discordgo.
 	if !ok {
 		return
 	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID: fmt.Sprintf("%s:%s:%s:%s", messages.TokenApplyModalPrefix, parts[1], parts[2], parts[3]),
+			Title:    messages.TokenNameModalTitle,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.TokenNameFieldID,
+						Label:       messages.TokenNameFieldLabel,
+						Style:       discordgo.TextInputShort,
+						Placeholder: messages.TokenNameFieldPlaceholder,
+						Required:    true,
+						MaxLength:   100,
+					},
+				}},
+			},
+		},
+	})
+}
+
+/*
+tokenApplyModal saves the processed token as a permanent Media record using the
+player-provided character name, then removes the src and frm temp files.
+
+CustomID: token_apply_modal:{guildID}:{playerID}:{token-uuid}
+*/
+type tokenApplyModal struct {
+	db           *bun.DB
+	dataDir      string
+	mediaBaseURL string
+}
+
+func (h *tokenApplyModal) CustomIDPrefix() string {
+	return messages.TokenApplyModalPrefix
+}
+
+func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.ModalSubmitData().CustomID, 4)
+	if !ok {
+		return
+	}
 	guildID, playerID, token := parts[1], parts[2], parts[3]
+
+	var name string
+	for _, row := range i.ModalSubmitData().Components {
+		for _, comp := range row.(*discordgo.ActionsRow).Components {
+			if ti, ok := comp.(*discordgo.TextInput); ok && ti.CustomID == messages.TokenNameFieldID {
+				name = strings.TrimSpace(ti.Value)
+			}
+		}
+	}
+	if name == "" {
+		name = "token"
+	}
 
 	outDisk, outURL := mediaserver.TokenPath(h.dataDir, h.mediaBaseURL, guildID, playerID, "out_"+token, ".png")
 
@@ -49,12 +104,12 @@ func (h *tokenApplyHandler) HandleComponents(s *discordgo.Session, i *discordgo.
 		Path:      outDisk,
 		URL:       outURL,
 		Kind:      models.KindTokenPlayer,
-		Name:      "token.png",
+		Name:      name,
 		MimeType:  "image/png",
 		CreatedAt: time.Now(),
 	}
 	if _, err := h.db.NewInsert().Model(media).Exec(context.Background()); err != nil {
-		log.Printf("token_apply: insert failed for player %s: %v", playerID, err)
+		log.Printf("token_apply_modal: insert failed for player %s: %v", playerID, err)
 		helpers.RespondUpdateTerminal(s, i, messages.TokenApplyFailed)
 		return
 	}
@@ -66,8 +121,8 @@ func (h *tokenApplyHandler) HandleComponents(s *discordgo.Session, i *discordgo.
 		}
 	}
 
-	log.Printf("token_apply: token saved for player %s, media %s", playerID, media.ID)
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenApplySuccess))
+	log.Printf("token_apply_modal: token %q saved for player %s, media %s", name, playerID, media.ID)
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenApplySuccess, name))
 }
 
 /*

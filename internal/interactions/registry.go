@@ -147,7 +147,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 }
 
 // AllModals returns an array with all the ModalHandlers available to the bot.
-func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) []ModalHandler {
+func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, dataDir, mediaBaseURL string) []ModalHandler {
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
 		&campaignDenyModal{db: db, dispatcher: d},
@@ -159,5 +159,6 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) [
 		&adminBroadcastModal{db: db, dispatcher: d},
 		&playerSetSheetModal{db: db},
 		&playerContactDMModal{db: db, dispatcher: d},
+		&tokenApplyModal{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 	}
 }

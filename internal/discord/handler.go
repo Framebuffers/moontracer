@@ -73,7 +73,7 @@ func NewHandler(
 
 		cmds := commands.All(guildDB, dispatcher, dataDir, mediaBaseURL)
 		components := interactions.AllComponents(guildDB, dispatcher, sched, dataDir, mediaBaseURL)
-		modals := interactions.AllModals(guildDB, dispatcher, sched)
+		modals := interactions.AllModals(guildDB, dispatcher, sched, dataDir, mediaBaseURL)
 
 		switch i.Type {
 		case discordgo.InteractionApplicationCommand:
