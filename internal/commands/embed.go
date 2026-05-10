@@ -36,6 +36,9 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL,
 
 	var playerLines []string
 	for _, p := range players {
+		if p.Status == models.StatusBanned {
+			continue
+		}
 		playerLines = append(playerLines, fmt.Sprintf("<@%s> — %s (%s, %d sessions)",
 			p.PlayerID, p.Role, p.Status, p.SessionsPlayed))
 	}
@@ -76,7 +79,7 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL,
 		&discordgo.MessageEmbedField{Name: "Synopsis", Value: synopsis, Inline: false},
 		&discordgo.MessageEmbedField{Name: "Schedule", Value: FormatSchedule(c), Inline: false},
 		&discordgo.MessageEmbedField{Name: "Warnings", Value: warnings, Inline: false},
-		&discordgo.MessageEmbedField{Name: fmt.Sprintf("Players (%d)", len(players)), Value: playersValue, Inline: false},
+		&discordgo.MessageEmbedField{Name: fmt.Sprintf("Players (%d)", len(playerLines)), Value: playersValue, Inline: false},
 	)
 
 	if links := formatEmbedLinks(c); links != "" {
