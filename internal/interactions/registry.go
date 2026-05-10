@@ -116,9 +116,10 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&adminSettingsHandler{db: db},
 		&adminDiagHandler{db: db},
 
-		// Manage: new campaign from button, links
+		// Manage: new campaign from button, links, player tokens
 		&manageNewCampaignButton{db: db},
 		&manageLinksHandler{db: db},
+		&manageDownloadTokensHandler{db: db},
 
 		// Token generator confirm/discard/assign
 		&tokenApplyHandler{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
@@ -143,7 +144,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&playerLeaveDoHandler{db: db},
 		&playerContactDMHandler{db: db},
 		&playerDownloadTokensHandler{db: db},
-		&playerDownloadSelectHandler{},
+		&playerDownloadSelectHandler{db: db},
 
 		// Session RSVP (buttons on reminder DMs)
 		&rsvpAcceptHandler{db: db, dispatcher: d},

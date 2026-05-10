@@ -404,11 +404,14 @@ const (
 
 // Manage campaigns: button labels (all user-facing)
 const (
-	ManageDeleteLabel         = "Delete"
-	ManageBanLabel            = "Ban Member"
-	ManageAnnounceLabel       = "New Session"
-	ManageRescheduleLabel     = "Configure Schedule"
-	ManageCampaignButtonLabel = "Manage"
+	ManageDeleteLabel              = "Delete"
+	ManageBanLabel                 = "Ban Member"
+	ManageAnnounceLabel            = "New Session"
+	ManageRescheduleLabel          = "Configure Schedule"
+	ManageCampaignButtonLabel      = "Manage"
+	ManageDownloadTokensLabel      = "⬇️ Player Tokens"
+	ManageDownloadTokensNone       = "No players in this campaign have tokens assigned."
+	ManageDownloadTokensContent    = "Tokens for **%s** (%d player(s)):"
 )
 
 // Set campaign role
@@ -678,8 +681,9 @@ const (
 // Manage campaign: additional buttons
 const (
 	// identifiers
-	ManageSetRolePrefix    = "manage_role"
-	ManageArchivePrefix    = "manage_archive"
+	ManageSetRolePrefix          = "manage_role"
+	ManageArchivePrefix          = "manage_archive"
+	ManageDownloadTokensPrefix   = "manage_download_tokens"
 	ManageSetRoleModalID   = "modal_manage_role"
 	ManageDeleteConfirmID  = "manage_delete_confirm"
 	ManageArchiveConfirmID = "manage_archive_confirm"
@@ -968,8 +972,8 @@ const (
 	PlayerDownloadTokensLabel       = "⬇️ Download Tokens"
 	PlayerDownloadSelectPlaceholder = "Select a campaign..."
 	PlayerDownloadAllLabel          = "All campaigns"
-	PlayerDownloadNoTokens          = "You haven't assigned tokens to any campaigns yet. Open a campaign card and use **Set Token** to assign one."
-	PlayerDownloadSoon              = "Download support is coming soon. *Your tokens are stored safely.**"
+	PlayerDownloadNoTokens = "You haven't assigned tokens to any campaigns yet. Open a campaign card and use **Set Token** to assign one."
+	PlayerDownloadContent  = "Here are your %d token(s):"
 )
 
 // Timezone preference
