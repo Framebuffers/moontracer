@@ -150,14 +150,15 @@ func (h *playerSetTokenHandler) HandleComponents(s *discordgo.Session, i *discor
 		t := tokens[0]
 		assignID := fmt.Sprintf("%s:%s:%s", messages.PlayerTokenAssignPrefix, campaignID, t.ID)
 		embed := &discordgo.MessageEmbed{
-			Title: "Your Token",
+			Title: t.Name,
 			Color: messages.EmbedColor,
 			Image: &discordgo.MessageEmbedImage{URL: t.URL},
 		}
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseUpdateMessage,
 			Data: &discordgo.InteractionResponseData{
-				Embeds: []*discordgo.MessageEmbed{embed},
+				Content: messages.PlayerTokenNewHint,
+				Embeds:  []*discordgo.MessageEmbed{embed},
 				Components: []discordgo.MessageComponent{
 					discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 						discordgo.Button{
@@ -174,7 +175,6 @@ func (h *playerSetTokenHandler) HandleComponents(s *discordgo.Session, i *discor
 		return
 	}
 
-	// NOTE: when the player has multiple tokens, show a menu
 	var options []discordgo.SelectMenuOption
 	for _, t := range tokens {
 		label := t.Name
@@ -189,7 +189,7 @@ func (h *playerSetTokenHandler) HandleComponents(s *discordgo.Session, i *discor
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Content: "Pick a token to assign:",
+			Content: messages.PlayerTokenNewHint,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.SelectMenu{
