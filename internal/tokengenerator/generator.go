@@ -14,6 +14,18 @@ import (
 
 const size = 512
 
+/*
+portraitRadius is the circle mask radius used when compositing against a frame image.
+
+Slightly smaller than size/2 so the portrait stays inside the frame's inner edge.
+Tune this if the portrait bleeds over a different frame's ring.
+
+Note:
+These magic numbers relate to the fact that tokens are ~512px square, and a little
+bit of a border just to avoid that bleeding outside the token.
+*/
+const portraitRadius = size/2 - 42
+
 func New(imgPath string, framePath string, destination string) (string, error) {
 	pic, err := imaging.Open(imgPath)
 	if err != nil {
@@ -37,7 +49,7 @@ func New(imgPath string, framePath string, destination string) (string, error) {
 	pic = resizeToSquare(pic)
 	frame = resizeToSquare(frame)
 
-	dst := applyCircleMask(pic)
+	dst := applyCircleMask(pic, portraitRadius)
 
 	result := imaging.Overlay(dst, frame, image.Pt(0, 0), 1.0)
 
@@ -100,7 +112,7 @@ func NewBasicToken(imgPath string, frameColor color.RGBA, thickness float32, des
 	}
 
 	pic = resizeToSquare(pic)
-	masked := applyCircleMask(pic)
+	masked := applyCircleMask(pic, size/2)
 
 	maxThickness := float32(size) / 2
 	if thickness > maxThickness {
@@ -122,10 +134,9 @@ func NewBasicToken(imgPath string, frameColor color.RGBA, thickness float32, des
 	return destination, nil
 }
 
-func applyCircleMask(img image.Image) *image.RGBA {
+func applyCircleMask(img image.Image, radius int) *image.RGBA {
 	bounds := image.Rect(0, 0, size, size)
 	center := image.Point{X: size / 2, Y: size / 2}
-	radius := size / 2
 
 	mask := image.NewAlpha(bounds)
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
@@ -177,5 +188,5 @@ func applyGradientRing(img *image.RGBA, frameColor color.RGBA, thickness float32
 }
 
 func resizeToSquare(img image.Image) image.Image {
-	return imaging.Fill(img, size, size, imaging.Center, imaging.Lanczos)
+	return imaging.Fill(img, size, size, imaging.Top, imaging.Lanczos)
 }
