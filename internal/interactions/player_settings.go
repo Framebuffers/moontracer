@@ -489,3 +489,82 @@ func (h *playerContactDMModal) HandleModal(s *discordgo.Session, i *discordgo.In
 
 	helpers.RespondUpdateTerminal(s, i, messages.PlayerContactDMSuccess)
 }
+
+/*
+playerDownloadTokensHandler shows a campaign select for the player to pick
+which token(s) to download.
+
+CustomID: player_download_tokens
+*/
+type playerDownloadTokensHandler struct {
+	db *bun.DB
+}
+
+func (h *playerDownloadTokensHandler) CustomIDPrefix() string {
+	return messages.PlayerDownloadTokensPrefix
+}
+
+func (h *playerDownloadTokensHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	userID := helpers.GetUserID(i)
+
+	all, err := models.GetPlayerCampaigns(h.db, userID)
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
+	// NOTE: Consider only campaigns where the player has a token assigned.
+	var withToken []models.CampaignPlayer
+	for _, cp := range all {
+		if cp.MediaID != "" && cp.Campaign != nil {
+			withToken = append(withToken, cp)
+		}
+	}
+	if len(withToken) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.PlayerDownloadNoTokens)
+		return
+	}
+
+	options := []discordgo.SelectMenuOption{
+		{Label: messages.PlayerDownloadAllLabel, Value: messages.PlayerDownloadAllValue},
+	}
+	for _, cp := range withToken {
+		options = append(options, discordgo.SelectMenuOption{
+			Label: cp.Campaign.Name,
+			Value: cp.CampaignID,
+		})
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Select a campaign to download tokens for:",
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						CustomID:    messages.PlayerDownloadSelectPrefix,
+						Placeholder: messages.PlayerDownloadSelectPlaceholder,
+						Options:     options,
+					},
+				}},
+				helpers.BackRow(router.ViewMyCampaigns),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
+/*
+playerDownloadSelectHandler is a placeholder until download logic is implemented.
+
+CustomID: player_download_select
+*/
+type playerDownloadSelectHandler struct{}
+
+func (h *playerDownloadSelectHandler) CustomIDPrefix() string {
+	return messages.PlayerDownloadSelectPrefix
+}
+
+func (h *playerDownloadSelectHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	helpers.RespondUpdateTerminal(s, i, messages.PlayerDownloadSoon)
+}
