@@ -73,6 +73,13 @@ func RenderMyCampaignsList(s *discordgo.Session, i *discordgo.InteractionCreate,
 
 	helpers.RespondUpdate(s, i, content, nil, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{selectMenu}},
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.PlayerDownloadTokensLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: messages.PlayerDownloadTokensPrefix,
+			},
+		}},
 		helpers.BackRow(router.ViewMe),
 	})
 }

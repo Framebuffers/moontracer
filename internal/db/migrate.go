@@ -97,6 +97,7 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE campaign_players ADD COLUMN media_id TEXT",
 		"ALTER TABLE media ADD COLUMN url TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE campaigns ADD COLUMN player_sheet_url TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE campaign_players ADD COLUMN sheet_url TEXT",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
