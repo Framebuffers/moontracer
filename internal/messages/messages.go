@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.11.14"
+	BotVersion               = "v0.11.15"
 )
 
 /*
@@ -249,18 +249,18 @@ const (
 
 // Token upload
 const (
-	TokenUploadCommandName    = "newtoken"
-	TokenUploadCommandDesc    = "Create a player token by merging a photo with a frame."
-	TokenUploadSourceOptName  = "source"
-	TokenUploadSourceOptDesc  = "Your photo (JPG/PNG)."
-	TokenUploadFrameOptName   = "frame"
-	TokenUploadFrameOptDesc   = "Frame/border image (PNG with transparency)."
-	TokenUploadNotImage       = "Both files must be images (JPEG or PNG)."
-	TokenUploadTooLarge       = "Each file must be under 8 MiB."
-	TokenUploadProcessFailed  = "Failed to process your token. Please try again."
-	TokenUploadPreviewContent = "Here's a preview of your token. Apply it to your profile or discard."
-	TokenApplyLabel           = "✅ Apply"
-	TokenDiscardLabel         = "❌ Discard"
+	TokenUploadCommandName           = "newtoken"
+	TokenUploadCommandDesc           = "Create a player token by merging a photo with a frame."
+	TokenUploadSourceOptName         = "source"
+	TokenUploadSourceOptDesc         = "Your photo (JPG/PNG)."
+	TokenUploadFrameOptName          = "frame"
+	TokenUploadFrameOptDesc          = "Frame/border image (PNG with transparency)."
+	TokenUploadNotImage              = "Both files must be images (JPEG or PNG)."
+	TokenUploadTooLarge              = "Each file must be under 8 MiB."
+	TokenUploadProcessFailed         = "Failed to process your token. Please try again."
+	TokenUploadPreviewContent        = "Here's a preview of your token. Apply it to your profile or discard."
+	TokenApplyLabel                  = "✅ Apply"
+	TokenDiscardLabel                = "❌ Discard"
 	TokenApplyPrefix                 = "token_apply"
 	TokenApplyModalPrefix            = "token_apply_modal"
 	TokenDiscardPrefix               = "token_discard"
@@ -271,13 +271,13 @@ const (
 	TokenPostcreateHeader            = "**%s** saved! Assign it to one of your campaigns, or skip."
 	TokenPostcreateAssigned          = "Token assigned to **%s**!"
 	TokenSavedNoAssign               = "Token saved. You can assign it later from your campaign card."
-	TokenNameModalTitle       = "Name Your Token"
-	TokenNameFieldID          = "token_name"
-	TokenNameFieldLabel       = "Character Name"
-	TokenNameFieldPlaceholder = "e.g. Soft Doggo"
-	TokenApplySuccess         = "Token saved as **%s**!"
-	TokenDiscardSuccess       = "Token discarded."
-	TokenApplyFailed          = "Failed to save token. Please try again."
+	TokenNameModalTitle              = "Name Your Token"
+	TokenNameFieldID                 = "token_name"
+	TokenNameFieldLabel              = "Character Name"
+	TokenNameFieldPlaceholder        = "e.g. Soft Doggo"
+	TokenApplySuccess                = "Token saved as **%s**!"
+	TokenDiscardSuccess              = "Token discarded."
+	TokenApplyFailed                 = "Failed to save token. Please try again."
 )
 
 // Campaign cover / upload
@@ -505,8 +505,8 @@ const (
 	ManageSessionsLabel  = "Sessions"
 	ManageSettingsLabel  = "Settings"
 	ManageDangerLabel    = "⚠️ Spicy Zone"
-	ManageOpenLabel      = "🟢 Open Recruitment"
-	ManageCloseLabel     = "🔴 Close Recruitment"
+	ManageOpenLabel      = "🟢 Open Campaign"
+	ManageCloseLabel     = "🔴 Close Campaign"
 	CampaignAutoClosedDM = "**%s** has been automatically closed — all %d slots are filled."
 )
 
@@ -750,6 +750,7 @@ const (
 	PlayerSetTokenLabel             = "Set Token"
 	PlayerTokenSelectPrefix         = "player_token_select"
 	PlayerTokenSelectPlaceholder    = "Select a token..."
+	PlayerTokenNewHint              = "Use `/newtoken` to create a new one."
 	PlayerTokenAssignPrefix         = "player_token_assign"
 	PlayerTokenAssignLabel          = "Assign to this campaign"
 	PlayerTokenAssignSuccess        = "Token assigned to **%s**."
