@@ -68,6 +68,13 @@ func newCampaignConfigComponents(campaignID string) []discordgo.MessageComponent
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{formatSelect}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
+				Label:    messages.ManageLinksLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageLinksPrefix, campaignID),
+			},
+		}},
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
 				Label:    messages.NewCampaignSubmitLabel,
 				Style:    discordgo.SuccessButton,
 				CustomID: fmt.Sprintf("%s:%s", messages.NewCampaignSubmitPrefix, campaignID),

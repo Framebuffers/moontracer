@@ -74,7 +74,7 @@ func fireReminder(s *Scheduler, guildID, campaignID string) {
 			displayTime,
 			helpers.TZLabel(loc),
 		)
-		content += formatReminderLinks(campaign)
+		content += formatReminderLinks(campaign, p.SheetURL)
 		s.dispatcher.Push(dispatch.DirectMessage{
 			ID:      fmt.Sprintf("reminder:%s:%s", campaignID, p.PlayerID),
 			Target:  p.PlayerID,
@@ -101,9 +101,9 @@ func fireReminder(s *Scheduler, guildID, campaignID string) {
 		campaign.Name, campaignID, guildID, sent)
 }
 
-func formatReminderLinks(c *models.Campaign) string {
+func formatReminderLinks(c *models.Campaign, sheetURL string) string {
 	hasVTT := c.VTTLink != ""
-	hasSheets := c.PlayerSheetURL != ""
+	hasSheets := sheetURL != ""
 	hasResources := len(c.Links) > 0
 	if !hasVTT && !hasSheets && !hasResources {
 		return ""
@@ -114,7 +114,7 @@ func formatReminderLinks(c *models.Campaign) string {
 		b.WriteString(fmt.Sprintf(messages.ManageReminderVTT, c.VTTLink))
 	}
 	if hasSheets {
-		b.WriteString(fmt.Sprintf(messages.ManageReminderSheets, c.PlayerSheetURL))
+		b.WriteString(fmt.Sprintf(messages.ManageReminderSheets, sheetURL))
 	}
 	for _, r := range c.Links {
 		b.WriteString(fmt.Sprintf(messages.ManageReminderResource, r))

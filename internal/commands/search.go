@@ -64,8 +64,8 @@ func (c *searchCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 
 	userID := i.Member.User.ID
 	coverURL := models.CoverURLForCampaign(c.db, campaign.ID)
-	embed := CampaignEmbed(*campaign, players, coverURL)
-	buttons := CampaignButtons(userID, *campaign, players)
+	embed := CampaignEmbed(*campaign, players, coverURL, "")
+	buttons := CampaignButtons(userID, *campaign, players, "")
 
 	resp := &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,

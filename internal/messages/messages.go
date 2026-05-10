@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.11.0"
+	BotVersion               = "v0.11.16"
 )
 
 /*
@@ -249,23 +249,35 @@ const (
 
 // Token upload
 const (
-	TokenUploadCommandName    = "uploadtoken"
-	TokenUploadCommandDesc    = "Upload a player token (source photo + frame), this will merge them together."
-	TokenUploadSourceOptName  = "source"
-	TokenUploadSourceOptDesc  = "Your photo (JPG/PNG)."
-	TokenUploadFrameOptName   = "frame"
-	TokenUploadFrameOptDesc   = "Frame/border image (PNG with transparency)."
-	TokenUploadNotImage       = "Both files must be images (JPEG or PNG)."
-	TokenUploadTooLarge       = "Each file must be under 8 MiB."
-	TokenUploadProcessFailed  = "Failed to process your token. Please try again."
-	TokenUploadPreviewContent = "Here's a preview of your token. Apply it to your profile or discard."
-	TokenApplyLabel           = "✅ Apply"
-	TokenDiscardLabel         = "❌ Discard"
-	TokenApplyPrefix          = "token_apply"
-	TokenDiscardPrefix        = "token_discard"
-	TokenApplySuccess         = "Token applied to your profile!"
-	TokenDiscardSuccess       = "Token discarded."
-	TokenApplyFailed          = "Failed to save token. Please try again."
+	TokenUploadCommandName           = "newtoken"
+	TokenUploadCommandDesc           = "Create a player token by merging a photo with a frame."
+	TokenUploadSourceOptName         = "source"
+	TokenUploadSourceOptDesc         = "Your photo (JPG/PNG)."
+	TokenUploadFrameOptName          = "frame"
+	TokenUploadFrameOptDesc          = "Frame/border image (PNG with transparency)."
+	TokenUploadNotImage              = "Both files must be images (JPEG or PNG)."
+	TokenUploadTooLarge              = "Each file must be under 8 MiB."
+	TokenUploadProcessFailed         = "Failed to process your token. Please try again."
+	TokenUploadPreviewContent        = "Here's a preview of your token. Apply it to your profile or discard."
+	TokenApplyLabel                  = "✅ Apply"
+	TokenDiscardLabel                = "❌ Discard"
+	TokenApplyPrefix                 = "token_apply"
+	TokenApplyModalPrefix            = "token_apply_modal"
+	TokenDiscardPrefix               = "token_discard"
+	TokenPostcreateSelectPrefix      = "player_token_postcreate"
+	TokenPostcreateSelectPlaceholder = "Assign to a campaign..."
+	TokenSkipPrefix                  = "player_token_skip"
+	TokenSkipLabel                   = "Skip for now"
+	TokenPostcreateHeader            = "**%s** saved! Assign it to one of your campaigns, or skip."
+	TokenPostcreateAssigned          = "Token assigned to **%s**!"
+	TokenSavedNoAssign               = "Token saved. You can assign it later from your campaign card."
+	TokenNameModalTitle              = "Name Your Token"
+	TokenNameFieldID                 = "token_name"
+	TokenNameFieldLabel              = "Character Name"
+	TokenNameFieldPlaceholder        = "e.g. Soft Doggo"
+	TokenApplySuccess                = "Token saved as **%s**!"
+	TokenDiscardSuccess              = "Token discarded."
+	TokenApplyFailed                 = "Failed to save token. Please try again."
 )
 
 // Campaign cover / upload
@@ -295,7 +307,7 @@ const (
 const (
 	ManageDeleteLabel         = "Delete"
 	ManageBanLabel            = "Ban Member"
-	ManageAnnounceLabel       = "Announce"
+	ManageAnnounceLabel       = "New Session"
 	ManageRescheduleLabel     = "Configure Schedule"
 	ManageCampaignButtonLabel = "Manage"
 )
@@ -339,7 +351,7 @@ const (
 const (
 	AnnounceModalPrefix      = "manage_announce_modal"
 	AnnounceComponentPrefix  = "manage_announce"
-	AnnounceModalTitle       = "Send Announcement"
+	AnnounceModalTitle       = "New Session Announcement"
 	AnnounceFieldID          = "announce_message"
 	AnnounceFieldLabel       = "Message"
 	AnnounceFieldPlaceholder = "Type your announcement to all campaign members..."
@@ -489,10 +501,13 @@ const (
 
 // Manage campaign hub labels
 const (
-	ManagePlayersLabel  = "Players"
-	ManageSessionsLabel = "Sessions"
-	ManageSettingsLabel = "Settings"
-	ManageDangerLabel   = "⚠️ Spicy Zone"
+	ManagePlayersLabel   = "Players"
+	ManageSessionsLabel  = "Sessions"
+	ManageSettingsLabel  = "Settings"
+	ManageDangerLabel    = "⚠️ Spicy Zone"
+	ManageOpenLabel      = "🟢 Open Campaign"
+	ManageCloseLabel     = "🔴 Close Campaign"
+	CampaignAutoClosedDM = "**%s** has been automatically closed — all %d slots are filled."
 )
 
 // Manage campaign: Links
@@ -503,8 +518,6 @@ const (
 	ManageLinksModalTitle           = "Campaign Links"
 	ManageLinksVTTLabel             = "VTT Link"
 	ManageLinksVTTPlaceholder       = "https://owlbear.rodeo/... or https://app.roll20.net/..."
-	ManageLinksSheetsLabel          = "Player Sheet URL"
-	ManageLinksSheetsPlaceholder    = "https://www.dndbeyond.com/campaigns/..."
 	ManageLinksResourcesLabel       = "Session Resources (one URL per line)"
 	ManageLinksResourcesPlaceholder = "https://drive.google.com/...\nhttps://example.com/map"
 	ManageLinksSuccess              = "Links updated for **%s**."
@@ -553,7 +566,7 @@ const (
 	NewCampaignCancelPrefix      = "newcampaign_cancel"
 	NewCampaignBookPlaceholder   = "Select a game system..."
 	NewCampaignFormatPlaceholder = "Select a format..."
-	NewCampaignConfigMessage     = "Campaign **%s** created (pending setup).\n\nSelect a game system and format, then submit for approval."
+	NewCampaignConfigMessage     = "Campaign **%s** created (pending setup).\n\nSelect a game system and format, then submit for approval. You can set a cover image and links from the campaign settings after approval."
 	NewCampaignSubmitLabel       = "Submit for Approval"
 	NewCampaignCancelLabel       = "Cancel"
 	NewCampaignSubmittedMessage  = "Campaign **%s** has been submitted for approval!"
@@ -719,6 +732,53 @@ const (
 	RSVPDMNotifyDecline  = "❌ <@%s> won't be coming for **%s** — %s."
 	RSVPAlreadyResponded = "You've already responded for this session. If you changed your mind, talk to your DM"
 	RSVPCampaignGone     = "This campaign is no longer active."
+)
+
+// Player campaign card (player self-service)
+const (
+	PlayerSetSheetPrefix            = "player_set_sheet"
+	PlayerSetSheetModalID           = "player_set_sheet_modal"
+	PlayerSetSheetModalTitle        = "Set Character Sheet"
+	PlayerSetSheetFieldID           = "sheet_url"
+	PlayerSetSheetFieldLabel        = "Character Sheet URL"
+	PlayerSetSheetFieldPlaceholder  = "https://www.dndbeyond.com/characters/..."
+	PlayerSetSheetSuccess           = "Character sheet updated for **%s**."
+	PlayerSetSheetFailed            = "Failed to save character sheet."
+	PlayerSetSheetLabel             = "Set Sheet"
+	PlayerOpenSheetLabel            = "Open Sheet"
+	PlayerSetTokenPrefix            = "player_set_token"
+	PlayerSetTokenLabel             = "Set Token"
+	PlayerTokenSelectPrefix         = "player_token_select"
+	PlayerTokenSelectPlaceholder    = "Select a token..."
+	PlayerTokenNewHint              = "Use `/newtoken` to create a new one."
+	PlayerTokenAssignPrefix         = "player_token_assign"
+	PlayerTokenAssignLabel          = "Assign to this campaign"
+	PlayerTokenAssignSuccess        = "Token assigned to **%s**."
+	PlayerNoTokens                  = "No tokens found. Create one first with `/newtoken`."
+	PlayerLeaveConfirmPrefix        = "player_leave_confirm"
+	PlayerLeaveDoPrefix             = "player_leave_do"
+	PlayerLeaveConfirmLabel         = "Yes, Leave"
+	PlayerLeaveConfirmMsg           = "Are you sure you want to leave **%s**? This cannot be undone."
+	PlayerLeaveCancelLabel          = "Cancel"
+	PlayerContactDMPrefix           = "player_contact_dm"
+	PlayerContactDMModalID          = "player_contact_dm_modal"
+	PlayerContactDMModalTitle       = "Send a Message to Your DM"
+	PlayerContactDMFieldID          = "dm_message"
+	PlayerContactDMFieldLabel       = "Message"
+	PlayerContactDMFieldPlaceholder = "Ask about scheduling, character questions, lore..."
+	PlayerContactDMLabel            = "Contact DM"
+	PlayerContactDMSuccess          = "Your message has been sent to the DM."
+	PlayerContactDMReceived         = "**Message from <@%s>** regarding **%s**:\n\n%s"
+
+	// Token download (UI wired; download logic deferred)
+	PlayerDownloadTokensPrefix      = "player_download_tokens"
+	PlayerDownloadTokensLabel       = "⬇️ Download Tokens"
+	PlayerDownloadSelectPrefix      = "player_download_select"
+	PlayerDownloadSelectPlaceholder = "Select a campaign..."
+	PlayerDownloadAllLabel          = "All campaigns"
+	PlayerDownloadAllValue          = "all"
+	PlayerDownloadNoTokens          = "You haven't assigned tokens to any campaigns yet. Open a campaign card and use **Set Token** to assign one."
+	PlayerDownloadSoon              = "Download support is coming soon. *Your tokens are stored safely.**"
 )
 
 // Timezone preference
