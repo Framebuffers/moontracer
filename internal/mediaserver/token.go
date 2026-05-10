@@ -1,9 +1,11 @@
 package mediaserver
 
 import (
-	"io"
+	"image/color"
 	"os"
 	"path/filepath"
+
+	"moontracer/internal/tokengenerator"
 )
 
 /*
@@ -18,27 +20,20 @@ func TokenPath(dataDir, baseURL, guildID, playerID, suffix, ext string) (disk, u
 	return
 }
 
-/*
-ProcessToken composites a source photo with a frame and writes the result to outPath.
-
-The output directory is created if it does not exist
-*/
+// ProcessToken composites a source photo with a frame image and writes the result to outPath.
 func ProcessToken(srcPath, frmPath, outPath string) error {
 	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
-	src, err := os.Open(srcPath)
-	if err != nil {
+	_, err := tokengenerator.New(srcPath, frmPath, outPath)
+	return err
+}
+
+// ProcessBasicToken composites a source photo with a solid-color gradient ring and writes the result to outPath.
+func ProcessBasicToken(srcPath, outPath string, frameColor color.RGBA) error {
+	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
 		return err
 	}
-	defer src.Close()
-
-	dst, err := os.Create(outPath)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, src)
+	_, err := tokengenerator.NewBasicToken(srcPath, frameColor, 32, outPath)
 	return err
 }
