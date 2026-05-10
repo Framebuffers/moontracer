@@ -120,9 +120,11 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&manageNewCampaignButton{db: db},
 		&manageLinksHandler{db: db},
 
-		// Token generator confirm/discard
+		// Token generator confirm/discard/assign
 		&tokenApplyHandler{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&tokenDiscardHandler{dataDir: dataDir, mediaBaseURL: mediaBaseURL},
+		&playerTokenPostcreateSelectHandler{db: db},
+		&playerTokenSkipHandler{},
 		&manageSetSession{db: db},
 
 		// Player campaign card menus
