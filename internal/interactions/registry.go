@@ -125,6 +125,15 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&tokenDiscardHandler{dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&manageSetSession{db: db},
 
+		// Player campaign card menus
+		&playerSetSheetHandler{db: db},
+		&playerSetTokenHandler{db: db},
+		&playerTokenSelectHandler{db: db},
+		&playerTokenAssignHandler{db: db},
+		&playerLeaveConfirmPromptHandler{db: db},
+		&playerLeaveDoHandler{db: db},
+		&playerContactDMHandler{db: db},
+
 		// Session RSVP (buttons on reminder DMs)
 		&rsvpAcceptHandler{db: db, dispatcher: d},
 		&rsvpDeclineHandler{db: db, dispatcher: d},
@@ -148,5 +157,7 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) [
 		&manageLinksModal{db: db},
 		&manageSetSessionModal{db: db, sched: sched},
 		&adminBroadcastModal{db: db, dispatcher: d},
+		&playerSetSheetModal{db: db},
+		&playerContactDMModal{db: db, dispatcher: d},
 	}
 }
