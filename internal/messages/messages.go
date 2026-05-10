@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.11.11"
+	BotVersion               = "v0.11.12"
 )
 
 /*
@@ -262,8 +262,13 @@ const (
 	TokenApplyLabel           = "✅ Apply"
 	TokenDiscardLabel         = "❌ Discard"
 	TokenApplyPrefix          = "token_apply"
+	TokenApplyModalPrefix     = "token_apply_modal"
 	TokenDiscardPrefix        = "token_discard"
-	TokenApplySuccess         = "Token applied to your profile!"
+	TokenNameModalTitle       = "Name Your Token"
+	TokenNameFieldID          = "token_name"
+	TokenNameFieldLabel       = "Character Name"
+	TokenNameFieldPlaceholder = "e.g. Soft Doggo"
+	TokenApplySuccess         = "Token saved as **%s**!"
 	TokenDiscardSuccess       = "Token discarded."
 	TokenApplyFailed          = "Failed to save token. Please try again."
 )
