@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.11.13"
+	BotVersion               = "v0.11.14"
 )
 
 /*
@@ -249,8 +249,8 @@ const (
 
 // Token upload
 const (
-	TokenUploadCommandName    = "uploadtoken"
-	TokenUploadCommandDesc    = "Upload a player token (source photo + frame), this will merge them together."
+	TokenUploadCommandName    = "newtoken"
+	TokenUploadCommandDesc    = "Create a player token by merging a photo with a frame."
 	TokenUploadSourceOptName  = "source"
 	TokenUploadSourceOptDesc  = "Your photo (JPG/PNG)."
 	TokenUploadFrameOptName   = "frame"
@@ -261,9 +261,16 @@ const (
 	TokenUploadPreviewContent = "Here's a preview of your token. Apply it to your profile or discard."
 	TokenApplyLabel           = "✅ Apply"
 	TokenDiscardLabel         = "❌ Discard"
-	TokenApplyPrefix          = "token_apply"
-	TokenApplyModalPrefix     = "token_apply_modal"
-	TokenDiscardPrefix        = "token_discard"
+	TokenApplyPrefix                 = "token_apply"
+	TokenApplyModalPrefix            = "token_apply_modal"
+	TokenDiscardPrefix               = "token_discard"
+	TokenPostcreateSelectPrefix      = "player_token_postcreate"
+	TokenPostcreateSelectPlaceholder = "Assign to a campaign..."
+	TokenSkipPrefix                  = "player_token_skip"
+	TokenSkipLabel                   = "Skip for now"
+	TokenPostcreateHeader            = "**%s** saved! Assign it to one of your campaigns, or skip."
+	TokenPostcreateAssigned          = "Token assigned to **%s**!"
+	TokenSavedNoAssign               = "Token saved. You can assign it later from your campaign card."
 	TokenNameModalTitle       = "Name Your Token"
 	TokenNameFieldID          = "token_name"
 	TokenNameFieldLabel       = "Character Name"
@@ -746,7 +753,7 @@ const (
 	PlayerTokenAssignPrefix         = "player_token_assign"
 	PlayerTokenAssignLabel          = "Assign to this campaign"
 	PlayerTokenAssignSuccess        = "Token assigned to **%s**."
-	PlayerNoTokens                  = "No tokens found. Upload one first with `/uploadtoken`."
+	PlayerNoTokens                  = "No tokens found. Create one first with `/newtoken`."
 	PlayerLeaveConfirmPrefix        = "player_leave_confirm"
 	PlayerLeaveDoPrefix             = "player_leave_do"
 	PlayerLeaveConfirmLabel         = "Yes, Leave"

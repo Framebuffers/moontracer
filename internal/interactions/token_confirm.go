@@ -13,6 +13,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
+	"moontracer/internal/db"
 	"moontracer/internal/interactions/helpers"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/mediaserver"
@@ -62,8 +63,7 @@ func (h *tokenApplyHandler) HandleComponents(s *discordgo.Session, i *discordgo.
 }
 
 /*
-tokenApplyModal saves the processed token as a permanent Media record using the
-player-provided character name, then removes the src and frm temp files.
+tokenApplyModal saves the processed token, then offers to assign it to a campaign.
 
 CustomID: token_apply_modal:{guildID}:{playerID}:{token-uuid}
 */
@@ -122,7 +122,121 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	}
 
 	log.Printf("token_apply_modal: token %q saved for player %s, media %s", name, playerID, media.ID)
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenApplySuccess, name))
+
+	// Load campaigns where the player is an active non-DM member.
+	allCPs, err := models.GetPlayerCampaigns(h.db, playerID)
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenApplySuccess, name))
+		return
+	}
+	var activeCPs []models.CampaignPlayer
+	for _, cp := range allCPs {
+		if cp.Role == models.RolePlayer && cp.Status == models.StatusActive && cp.Campaign != nil {
+			activeCPs = append(activeCPs, cp)
+		}
+	}
+	if len(activeCPs) == 0 {
+		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenApplySuccess, name))
+		return
+	}
+
+	var options []discordgo.SelectMenuOption
+	for _, cp := range activeCPs {
+		options = append(options, discordgo.SelectMenuOption{
+			Label: cp.Campaign.Name,
+			Value: cp.CampaignID,
+		})
+	}
+
+	embed := &discordgo.MessageEmbed{
+		Title: name,
+		Color: messages.EmbedColor,
+		Image: &discordgo.MessageEmbedImage{URL: outURL},
+	}
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf(messages.TokenPostcreateHeader, name),
+			Embeds:  []*discordgo.MessageEmbed{embed},
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						CustomID:    fmt.Sprintf("%s:%s", messages.TokenPostcreateSelectPrefix, media.ID),
+						Placeholder: messages.TokenPostcreateSelectPlaceholder,
+						Options:     options,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    messages.TokenSkipLabel,
+						Style:    discordgo.SecondaryButton,
+						CustomID: fmt.Sprintf("%s:%s", messages.TokenSkipPrefix, media.ID),
+					},
+				}},
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
+/*
+playerTokenPostcreateSelectHandler assigns a freshly-created token to a campaign.
+
+CustomID: player_token_postcreate:{mediaID}
+Values[0]: campaignID
+*/
+type playerTokenPostcreateSelectHandler struct {
+	db *bun.DB
+}
+
+func (h *playerTokenPostcreateSelectHandler) CustomIDPrefix() string {
+	return messages.TokenPostcreateSelectPrefix
+}
+
+func (h *playerTokenPostcreateSelectHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	mediaID := parts[1]
+	userID := helpers.GetUserID(i)
+
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	campaignID := values[0]
+
+	_, err := h.db.NewUpdate().Model((*models.CampaignPlayer)(nil)).
+		Set("media_id = ?", mediaID).
+		Where("player_id = ? AND campaign_id = ?", userID, campaignID).
+		Exec(context.Background())
+	if err != nil {
+		log.Printf("token_postcreate: assign failed player %s campaign %s: %v", userID, campaignID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
+	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenPostcreateAssigned, campaignID))
+		return
+	}
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenPostcreateAssigned, campaign.Name))
+}
+
+/*
+playerTokenSkipHandler dismisses the post-create assignment prompt.
+
+CustomID: player_token_skip:{mediaID}
+*/
+type playerTokenSkipHandler struct{}
+
+func (h *playerTokenSkipHandler) CustomIDPrefix() string { return messages.TokenSkipPrefix }
+
+func (h *playerTokenSkipHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	helpers.RespondUpdateTerminal(s, i, messages.TokenSavedNoAssign)
 }
 
 /*
