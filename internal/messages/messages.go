@@ -13,7 +13,7 @@ package messages
 const (
 	GenericErrorMessage      = "Something went wrong."
 	InvalidButtonDataMessage = "Invalid button data."
-	BotVersion               = "v0.11.12"
+	BotVersion               = "v0.11.13"
 )
 
 /*
@@ -559,7 +559,7 @@ const (
 	NewCampaignCancelPrefix      = "newcampaign_cancel"
 	NewCampaignBookPlaceholder   = "Select a game system..."
 	NewCampaignFormatPlaceholder = "Select a format..."
-	NewCampaignConfigMessage     = "Campaign **%s** created (pending setup).\n\nSelect a game system and format, then submit for approval."
+	NewCampaignConfigMessage     = "Campaign **%s** created (pending setup).\n\nSelect a game system and format, then submit for approval. You can set a cover image and links from the campaign settings after approval."
 	NewCampaignSubmitLabel       = "Submit for Approval"
 	NewCampaignCancelLabel       = "Cancel"
 	NewCampaignSubmittedMessage  = "Campaign **%s** has been submitted for approval!"

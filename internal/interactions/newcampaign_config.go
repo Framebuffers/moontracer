@@ -68,11 +68,6 @@ func newCampaignConfigComponents(campaignID string) []discordgo.MessageComponent
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{formatSelect}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
-				Label:    messages.SetCoverButtonLabel,
-				Style:    discordgo.SecondaryButton,
-				CustomID: fmt.Sprintf("manage_setcover:%s", campaignID),
-			},
-			discordgo.Button{
 				Label:    messages.ManageLinksLabel,
 				Style:    discordgo.SecondaryButton,
 				CustomID: fmt.Sprintf("%s:%s", messages.ManageLinksPrefix, campaignID),
