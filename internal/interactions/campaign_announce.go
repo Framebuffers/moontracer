@@ -81,17 +81,6 @@ func (h *manageCampaignAnnounce) HandleComponents(s *discordgo.Session, i *disco
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:    "player_sheet_url",
-						Label:       messages.ManageLinksSheetsLabel,
-						Style:       discordgo.TextInputShort,
-						Placeholder: messages.ManageLinksSheetsPlaceholder,
-						Value:       campaign.PlayerSheetURL,
-						Required:    false,
-						MaxLength:   500,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
 						CustomID:    "resources",
 						Label:       messages.ManageLinksResourcesLabel,
 						Style:       discordgo.TextInputParagraph,
@@ -149,8 +138,6 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 				message = input.Value
 			case "vtt_link":
 				campaign.VTTLink = strings.TrimSpace(input.Value)
-			case "player_sheet_url":
-				campaign.PlayerSheetURL = strings.TrimSpace(input.Value)
 			case "resources":
 				campaign.Links = parseLinks(input.Value)
 			}
@@ -162,14 +149,12 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 		// Non-fatal: continue with the announcement even if link save fails.
 	}
 
-	linkBlock := buildAnnounceLinkBlock(campaign)
-
 	if campaign.AnnouncementsThreadID != "" {
 		rolePing := ""
 		if campaign.RoleID != "" {
 			rolePing = fmt.Sprintf("<@&%s> ", campaign.RoleID)
 		}
-		content := fmt.Sprintf(messages.AnnounceThreadContent, rolePing, userID, message) + linkBlock
+		content := fmt.Sprintf(messages.AnnounceThreadContent, rolePing, userID, message) + buildAnnounceLinkBlock(campaign, "")
 		if _, err := guard.ChannelMessageSend(s, campaign.AnnouncementsThreadID, content); err != nil {
 			log.Printf("campaign_announce: failed to post to thread %s: %v", campaign.AnnouncementsThreadID, err)
 			helpers.RespondUpdateTerminal(s, i, messages.AnnounceError)
@@ -205,7 +190,7 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 			ID:      msgID,
 			Sender:  userID,
 			Target:  p.PlayerID,
-			Content: fmt.Sprintf(messages.AnnounceDMContent, campaign.Name, userID, message) + linkBlock,
+			Content: fmt.Sprintf(messages.AnnounceDMContent, campaign.Name, userID, message) + buildAnnounceLinkBlock(campaign, p.SheetURL),
 		})
 		sent++
 	}
@@ -218,8 +203,8 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.AnnounceSentMessage, sent, campaign.Name))
 }
 
-func buildAnnounceLinkBlock(campaign *models.Campaign) string {
-	if campaign.VTTLink == "" && campaign.PlayerSheetURL == "" && len(campaign.Links) == 0 {
+func buildAnnounceLinkBlock(campaign *models.Campaign, sheetURL string) string {
+	if campaign.VTTLink == "" && sheetURL == "" && len(campaign.Links) == 0 {
 		return ""
 	}
 	var b strings.Builder
@@ -227,8 +212,8 @@ func buildAnnounceLinkBlock(campaign *models.Campaign) string {
 	if campaign.VTTLink != "" {
 		b.WriteString(fmt.Sprintf(messages.ManageReminderVTT, campaign.VTTLink))
 	}
-	if campaign.PlayerSheetURL != "" {
-		b.WriteString(fmt.Sprintf(messages.ManageReminderSheets, campaign.PlayerSheetURL))
+	if sheetURL != "" {
+		b.WriteString(fmt.Sprintf(messages.ManageReminderSheets, sheetURL))
 	}
 	for _, r := range campaign.Links {
 		b.WriteString(fmt.Sprintf(messages.ManageReminderResource, r))

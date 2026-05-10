@@ -45,13 +45,8 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 	if campaign.IsArchived {
 		embed.Footer = &discordgo.MessageEmbedFooter{Text: messages.CampaignArchivedFooter}
 	}
-	actionButtons := commands.CampaignButtons(userID, *campaign, players)
 
-	var components []discordgo.MessageComponent
-	if len(actionButtons) > 0 {
-		components = append(components, discordgo.ActionsRow{Components: actionButtons})
-	}
-
+	components := commands.CampaignButtons(userID, *campaign, players)
 	components = append(components, helpers.BackRow(router.ViewCampaignsBrowse, "all"))
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{

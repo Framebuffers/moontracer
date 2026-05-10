@@ -46,11 +46,6 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL 
 		warnings = strings.Join(c.Warnings, ", ")
 	}
 
-	books := messages.NoBooksSpecifiedLabel
-	if len(c.Game.BooksAllowed) > 0 {
-		books = strings.Join(c.Game.BooksAllowed, ", ")
-	}
-
 	slotsValue := c.DisplaySlots()
 
 	fields := []*discordgo.MessageEmbedField{
@@ -70,8 +65,12 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL 
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "Channel", Value: fmt.Sprintf("<#%s>", c.ChannelID), Inline: true})
 	}
 
+	synopsis := c.Description
+	if synopsis == "" {
+		synopsis = messages.NoneLabel
+	}
 	fields = append(fields,
-		&discordgo.MessageEmbedField{Name: "Books", Value: books, Inline: false},
+		&discordgo.MessageEmbedField{Name: "Synopsis", Value: synopsis, Inline: false},
 		&discordgo.MessageEmbedField{Name: "Schedule", Value: FormatSchedule(c), Inline: false},
 		&discordgo.MessageEmbedField{Name: "Warnings", Value: warnings, Inline: false},
 		&discordgo.MessageEmbedField{Name: fmt.Sprintf("Players (%d)", len(players)), Value: playersValue, Inline: false},
@@ -82,10 +81,9 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL 
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("%s — %s", campaignType, c.Name),
-		Description: c.Description,
-		Color:       messages.EmbedColor,
-		Fields:      fields,
+		Title:  fmt.Sprintf("%s — %s", campaignType, c.Name),
+		Color:  messages.EmbedColor,
+		Fields: fields,
 	}
 	if coverURL != "" {
 		embed.Image = &discordgo.MessageEmbedImage{URL: coverURL}
@@ -93,21 +91,26 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL 
 	return embed
 }
 
-// CampaignButtons builds context-aware action buttons for a campaign view.
-func CampaignButtons(callerID string, c models.Campaign, players []models.CampaignPlayer) []discordgo.MessageComponent {
-	var buttons []discordgo.MessageComponent
+/*
+CampaignButtons builds context-aware action rows for a campaign view.
 
+Returns complete ActionsRows ready to append directly to a component list.
+*/
+func CampaignButtons(callerID string, c models.Campaign, players []models.CampaignPlayer) []discordgo.MessageComponent {
 	if c.IsArchived {
-		return buttons
+		return nil
 	}
 
 	if c.DungeonMaster == callerID {
-		buttons = append(buttons, discordgo.Button{
-			Label:    messages.ManageCampaignButtonLabel,
-			Style:    discordgo.SecondaryButton,
-			CustomID: fmt.Sprintf("manage_campaign:%s", c.ID),
-		})
-		return buttons
+		return []discordgo.MessageComponent{
+			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    messages.ManageCampaignButtonLabel,
+					Style:    discordgo.SecondaryButton,
+					CustomID: fmt.Sprintf("manage_campaign:%s", c.ID),
+				},
+			}},
+		}
 	}
 
 	isCallerMember := false
@@ -119,29 +122,53 @@ func CampaignButtons(callerID string, c models.Campaign, players []models.Campai
 	}
 
 	if isCallerMember {
-		buttons = append(buttons, discordgo.Button{
-			Label:    messages.LeaveCampaignLabel,
-			Style:    discordgo.DangerButton,
-			CustomID: fmt.Sprintf("campaign_leave:%s", c.Tag),
-		})
-	} else if c.IsOpen {
-		buttons = append(buttons, discordgo.Button{
-			Label:    messages.JoinCampaignLabel,
-			Style:    discordgo.SuccessButton,
-			CustomID: fmt.Sprintf("campaign_join:%s", c.Tag),
-		})
+		return []discordgo.MessageComponent{
+			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    messages.PlayerSetSheetLabel,
+					Style:    discordgo.SecondaryButton,
+					CustomID: fmt.Sprintf("%s:%s", messages.PlayerSetSheetPrefix, c.ID),
+				},
+				discordgo.Button{
+					Label:    messages.PlayerSetTokenLabel,
+					Style:    discordgo.SecondaryButton,
+					CustomID: fmt.Sprintf("%s:%s", messages.PlayerSetTokenPrefix, c.ID),
+				},
+				discordgo.Button{
+					Label:    messages.PlayerContactDMLabel,
+					Style:    discordgo.SecondaryButton,
+					CustomID: fmt.Sprintf("%s:%s", messages.PlayerContactDMPrefix, c.ID),
+				},
+			}},
+			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    messages.LeaveCampaignLabel,
+					Style:    discordgo.DangerButton,
+					CustomID: fmt.Sprintf("%s:%s", messages.PlayerLeaveConfirmPrefix, c.ID),
+				},
+			}},
+		}
 	}
 
-	return buttons
+	if c.IsOpen {
+		return []discordgo.MessageComponent{
+			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    messages.JoinCampaignLabel,
+					Style:    discordgo.SuccessButton,
+					CustomID: fmt.Sprintf("campaign_join:%s", c.Tag),
+				},
+			}},
+		}
+	}
+
+	return nil
 }
 
 func formatEmbedLinks(c models.Campaign) string {
 	var parts []string
 	if c.VTTLink != "" {
 		parts = append(parts, fmt.Sprintf("**VTT:** %s", c.VTTLink))
-	}
-	if c.PlayerSheetURL != "" {
-		parts = append(parts, fmt.Sprintf("**Sheets:** %s", c.PlayerSheetURL))
 	}
 	for _, r := range c.Links {
 		parts = append(parts, fmt.Sprintf("• %s", r))

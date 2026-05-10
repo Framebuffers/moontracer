@@ -57,17 +57,6 @@ func (h *manageLinksHandler) HandleComponents(s *discordgo.Session, i *discordgo
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.TextInput{
-						CustomID:    "player_sheet_url",
-						Label:       messages.ManageLinksSheetsLabel,
-						Style:       discordgo.TextInputShort,
-						Placeholder: messages.ManageLinksSheetsPlaceholder,
-						Value:       campaign.PlayerSheetURL,
-						Required:    false,
-						MaxLength:   500,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
 						CustomID:    "resources",
 						Label:       messages.ManageLinksResourcesLabel,
 						Style:       discordgo.TextInputParagraph,
@@ -119,8 +108,6 @@ func (h *manageLinksModal) HandleModal(s *discordgo.Session, i *discordgo.Intera
 			switch ti.CustomID {
 			case "vtt_link":
 				campaign.VTTLink = strings.TrimSpace(ti.Value)
-			case "player_sheet_url":
-				campaign.PlayerSheetURL = strings.TrimSpace(ti.Value)
 			case "resources":
 				campaign.Links = parseLinks(ti.Value)
 			}
