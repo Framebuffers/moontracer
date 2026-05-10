@@ -127,6 +127,13 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&playerTokenSkipHandler{},
 		&manageSetSession{db: db},
 
+		// Token gallery (/me -> Tokens)
+		&tokenGallerySelectHandler{db: db},
+		&tokenGalleryAssignHandler{db: db},
+		&tokenGalleryAssignSelectHandler{db: db},
+		&tokenDeletePromptHandler{db: db},
+		&tokenDeleteConfirmHandler{db: db, dataDir: dataDir},
+
 		// Player campaign card menus
 		&playerSetSheetHandler{db: db},
 		&playerSetTokenHandler{db: db},

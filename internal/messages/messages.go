@@ -313,6 +313,32 @@ const (
 
 // Token upload
 const (
+	// identifiers — token gallery
+	TokenGallerySelectPrefix       = "token_gallery_select"
+	TokenGalleryAssignPrefix       = "token_gallery_assign"
+	TokenGalleryAssignSelectPrefix = "token_gallery_assign_select"
+	TokenDeletePromptPrefix        = "token_delete_prompt"
+	TokenDeleteConfirmPrefix       = "token_delete_confirm"
+)
+const (
+	// user-facing — token gallery
+	TokensLabel                         = "Tokens"
+	TokenGalleryHeader                  = "Your tokens:"
+	TokenGalleryNone                    = "You have no tokens yet! Use `/newtoken` to create one."
+	TokenNotAssigned                    = "This token is not assigned to any campaign"
+	TokenGallerySelectPlaceholder       = "Select a token to manage..."
+	TokenDeleteLabel                    = "🗑️ Delete"
+	TokenDeleteConfirmMsg               = "Are you sure you want to delete **%s**? This cannot be undone."
+	TokenDeleteConfirmLabel             = "Yes, Delete"
+	TokenDeleteCancelLabel              = "Cancel"
+	TokenDeleteSuccess                  = "Token **%s** deleted."
+	TokenDeleteFailed                   = "Failed to delete token."
+	TokenGalleryAssignPrompt            = "Assign **%s** to a campaign:"
+	TokenGalleryAssignSelectPlaceholder = "Select a campaign..."
+)
+
+// Token upload
+const (
 	// identifiers
 	TokenUploadCommandName      = "newtoken"
 	TokenUploadSourceOptName    = "source"

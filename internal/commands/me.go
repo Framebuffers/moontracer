@@ -103,6 +103,7 @@ func buildMeHubComponents() []discordgo.MessageComponent {
 	return []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			router.NavButton(messages.MeCampaignsLabel, discordgo.PrimaryButton, router.ViewMeCampaigns),
+			router.NavButton(messages.TokensLabel, discordgo.PrimaryButton, router.ViewMeTokens),
 			discordgo.Button{
 				Label:    messages.NextSessionsLabel,
 				Style:    discordgo.PrimaryButton,
