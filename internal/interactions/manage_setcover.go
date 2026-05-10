@@ -4,6 +4,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/interactions/helpers"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/messages"
 )
 
@@ -22,12 +24,19 @@ func (h *manageSetCover) CustomIDPrefix() string {
 }
 
 func (h *manageSetCover) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Content: messages.SetCoverInstructions,
-			Embeds:  []*discordgo.MessageEmbed{},
-			Flags:   discordgo.MessageFlagsEphemeral,
+			Content:    messages.SetCoverInstructions,
+			Embeds:     []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{helpers.BackRow(router.ViewManageSettings, campaignID)},
+			Flags:      discordgo.MessageFlagsEphemeral,
 		},
 	})
 }

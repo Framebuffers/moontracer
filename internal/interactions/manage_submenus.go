@@ -94,6 +94,10 @@ func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 	if !ok {
 		return
 	}
+	toggleLabel := messages.ManageCloseLabel
+	if !campaign.IsOpen {
+		toggleLabel = messages.ManageOpenLabel
+	}
 	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageCampaignHeader, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
@@ -110,6 +114,11 @@ func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 				Label:    messages.ManageLinksLabel,
 				Style:    discordgo.SecondaryButton,
 				CustomID: fmt.Sprintf("%s:%s", messages.ManageLinksPrefix, campaignID),
+			},
+			discordgo.Button{
+				Label:    toggleLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("campaign_toggle:%s", campaignID),
 			},
 		}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{

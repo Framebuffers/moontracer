@@ -136,7 +136,7 @@ func CampaignButtons(callerID string, c models.Campaign, players []models.Campai
 				},
 				discordgo.Button{
 					Label:    messages.PlayerContactDMLabel,
-					Style:    discordgo.SecondaryButton,
+					Style:    discordgo.SuccessButton,
 					CustomID: fmt.Sprintf("%s:%s", messages.PlayerContactDMPrefix, c.ID),
 				},
 			}},

@@ -146,6 +146,20 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		}
 	}
 
+	// Auto-close when the last slot fills.
+	if !campaign.IsWestmarch && campaign.Slots > 0 && newActiveCount >= campaign.Slots && campaign.IsOpen {
+		campaign.IsOpen = false
+		if err := db.Update(h.db, campaign); err != nil {
+			log.Printf("campaign_join: auto-close failed for campaign %s: %v", campaign.ID, err)
+		} else {
+			h.dispatcher.Push(dispatch.DirectMessage{
+				ID:      uuid.NewString(),
+				Target:  campaign.DungeonMaster,
+				Content: fmt.Sprintf(messages.CampaignAutoClosedDM, campaign.Name, campaign.Slots),
+			})
+		}
+	}
+
 	// Westmarch tripwire: admit, then alert if the limit is passed.
 	if campaign.IsWestmarch && campaign.SessionCapacity > 0 && newActiveCount > campaign.SessionCapacity {
 		h.dispatcher.Push(dispatch.DirectMessage{

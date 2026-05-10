@@ -295,7 +295,7 @@ const (
 const (
 	ManageDeleteLabel         = "Delete"
 	ManageBanLabel            = "Ban Member"
-	ManageAnnounceLabel       = "Announce"
+	ManageAnnounceLabel       = "New Session"
 	ManageRescheduleLabel     = "Configure Schedule"
 	ManageCampaignButtonLabel = "Manage"
 )
@@ -339,7 +339,7 @@ const (
 const (
 	AnnounceModalPrefix      = "manage_announce_modal"
 	AnnounceComponentPrefix  = "manage_announce"
-	AnnounceModalTitle       = "Send Announcement"
+	AnnounceModalTitle       = "New Session Announcement"
 	AnnounceFieldID          = "announce_message"
 	AnnounceFieldLabel       = "Message"
 	AnnounceFieldPlaceholder = "Type your announcement to all campaign members..."
@@ -489,10 +489,13 @@ const (
 
 // Manage campaign hub labels
 const (
-	ManagePlayersLabel  = "Players"
-	ManageSessionsLabel = "Sessions"
-	ManageSettingsLabel = "Settings"
-	ManageDangerLabel   = "⚠️ Spicy Zone"
+	ManagePlayersLabel   = "Players"
+	ManageSessionsLabel  = "Sessions"
+	ManageSettingsLabel  = "Settings"
+	ManageDangerLabel    = "⚠️ Spicy Zone"
+	ManageOpenLabel      = "🟢 Open Recruitment"
+	ManageCloseLabel     = "🔴 Close Recruitment"
+	CampaignAutoClosedDM = "**%s** has been automatically closed — all %d slots are filled."
 )
 
 // Manage campaign: Links
