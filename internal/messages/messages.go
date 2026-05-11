@@ -161,7 +161,7 @@ const (
 const (
 	// user-facing
 	MasterCanToggleStatusErrorMessage = "ℹ️ Only the DM can toggle campaign status."
-	CampaignStatusMessage             = "**%s** is now **%s**."
+	CampaignStatusMessage             = "ℹ️ **%s** is now **%s**."
 )
 
 // My campaigns (all user-facing)
@@ -324,7 +324,7 @@ const (
 )
 const (
 	// user-facing — token gallery
-	TokensLabel                         = "Tokens"
+	TokensLabel                         = "🐺 Tokens"
 	TokenGalleryHeader                  = "Your tokens:"
 	TokenGalleryNone                    = "ℹ️ You have no tokens yet! Use `/newtoken` to create one."
 	TokenNotAssigned                    = "ℹ️ This token is not assigned to any campaign"
@@ -367,7 +367,7 @@ const (
 	TokenApplyLabel                  = "✅ Apply"
 	TokenDiscardLabel                = "❌ Discard"
 	TokenPostcreateSelectPlaceholder = "Assign to a campaign..."
-	TokenSkipLabel                   = "Skip for now"
+	TokenSkipLabel                   = "⬅️ Skip for now"
 	TokenPostcreateHeader            = "✅ **%s** saved! Assign it to one of your campaigns, or skip."
 	TokenPostcreateAssigned          = "🐺 Token assigned to **%s**!"
 	TokenSavedNoAssign               = "ℹ️ Token saved. You can assign it later from your campaign card."
@@ -413,7 +413,7 @@ const (
 	ManageCampaignButtonLabel   = "⚙️ Manage"
 	ManageDownloadTokensLabel   = "⬇️ Player Tokens"
 	ManageDownloadTokensNone    = "ℹ️ No players in this campaign have tokens assigned."
-	ManageDownloadTokensContent = "Tokens for **%s** (%d player(s)):"
+	ManageDownloadTokensContent = "ℹ️ Tokens for **%s** (%d player(s)):"
 )
 
 // Set campaign role
@@ -469,7 +469,7 @@ const (
 const (
 	// user-facing
 	AnnounceModalTitle       = "New Session Announcement"
-	AnnounceFieldLabel       = "Message"
+	AnnounceFieldLabel       = "✉️ Message"
 	AnnounceFieldPlaceholder = "Type your announcement to all campaign members..."
 	AnnounceSentMessage      = "🗣️ Announcement sent to %d members of **%s**."
 	AnnounceNoMembers        = "ℹ️ This campaign has no members to announce to."
@@ -552,7 +552,7 @@ const (
 const (
 	// user-facing
 	MeCommandDesc     = "Your player profile and quick actions."
-	MeHubMessage      = "Hey, <@%s>! What would you like to do?"
+	MeHubMessage      = "🐺 Hey, <@%s>! What would you like to do?"
 	MeCampaignsLabel  = "🏰 Campaigns"
 	MeConfigLabel     = "⚙️ Configuration"
 	MeCampaignsHeader = "🏰 Campaigns"
@@ -601,12 +601,12 @@ const (
 	AdminNotStaff        = "ℹ️ Only mods or admins can use this command."
 	DebugSurfaceDisabled = "ℹ️ This surface is disabled in production. Set DEV_MODE=true to re-enable."
 	AdminHubMessage      = "Admin Panel:"
-	AdminCampaignsLabel  = "Query Campaigns"
-	AdminDMsLabel        = "DMs"
-	AdminBroadcastLabel  = "Broadcast"
-	AdminDatabaseLabel   = "Database"
-	AdminSettingsLabel   = "Settings"
-	AdminDiagLabel       = "Diagnostics"
+	AdminCampaignsLabel  = "ℹ️ Query Campaigns"
+	AdminDMsLabel        = "✉️ DMs"
+	AdminBroadcastLabel  = "🗣️ Broadcast"
+	AdminDatabaseLabel   = "🗃️ Database"
+	AdminSettingsLabel   = "⚙️ Settings"
+	AdminDiagLabel       = "🐺 Diagnostics"
 )
 
 // About (/moontracer)
@@ -620,9 +620,9 @@ const (
 const (
 	// user-facing
 	AboutCommandDesc         = "About this bot."
-	AboutCommandGitHubLabel  = "GitHub"
-	AboutLabel               = "About"
-	HelpLabel                = "Help"
+	AboutCommandGitHubLabel  = "💻 GitHub"
+	AboutLabel               = "🐺 About"
+	HelpLabel                = "❓ Help"
 	AboutCommandBotDesc      = "...a D&D campaign manager for players, DM and spectators!"
 	AboutCommandCopyright    = "(C) 2026 **Framebuffer**"
 	AboutCommandHelp         = "Type `/help`, or press the **Help** button below for a list of commands."
@@ -638,20 +638,20 @@ const (
 
 // Hub button labels (all user-facing)
 const (
-	MyCampaignsLabel     = "My Campaigns"
-	NextSessionsLabel    = "Next Sessions"
-	NotificationsLabel   = "Notifications"
-	BrowseCampaignsLabel = "Browse Campaigns"
+	MyCampaignsLabel     = "🏰 My Campaigns"
+	NextSessionsLabel    = "📅 Next Sessions"
+	NotificationsLabel   = "ℹ️ Notifications"
+	BrowseCampaignsLabel = "📚 Browse Campaigns"
 	MyProfileLabel       = HomeLabel
-	NewCampaignLabel     = "New Campaign"
-	AdminPanelLabel      = "Admin Panel"
+	NewCampaignLabel     = "📖 New Campaign"
+	AdminPanelLabel      = "⚙️ Admin Panel"
 )
 
 // Manage campaign hub labels (all user-facing)
 const (
-	ManagePlayersLabel   = "Players"
-	ManageSessionsLabel  = "Sessions"
-	ManageSettingsLabel  = "Settings"
+	ManagePlayersLabel   = "🐺 Players"
+	ManageSessionsLabel  = "📑 Sessions"
+	ManageSettingsLabel  = "⚙️ Settings"
 	ManageDangerLabel    = "⚠️ Spicy Zone"
 	ManageOpenLabel      = "🟢 Open Campaign"
 	ManageCloseLabel     = "🔴 Close Campaign"
@@ -666,9 +666,9 @@ const (
 )
 const (
 	// user-facing
-	ManageLinksLabel                = "Links"
-	ManageLinksModalTitle           = "Campaign Links"
-	ManageLinksVTTLabel             = "VTT Link"
+	ManageLinksLabel                = "🔗 Links"
+	ManageLinksModalTitle           = "🔗 Campaign Links"
+	ManageLinksVTTLabel             = "🔗 VTT Link"
 	ManageLinksVTTPlaceholder       = "https://owlbear.rodeo/... or https://app.roll20.net/..."
 	ManageLinksResourcesLabel       = "Session Resources (one URL per line)"
 	ManageLinksResourcesPlaceholder = "https://drive.google.com/...\nhttps://example.com/map"
@@ -693,19 +693,19 @@ const (
 )
 const (
 	// user-facing
-	ManageSetRoleLabel = "Set Role"
-	ManageArchiveLabel = "Archive"
+	ManageSetRoleLabel = "👥 Set Role"
+	ManageArchiveLabel = "📂 Archive"
 
 	// Set Role modal
-	ManageSetRoleModalTitle = "Link Discord Role"
+	ManageSetRoleModalTitle = "🔗 Link Discord Role"
 	ManageSetRoleFieldLabel = "Role name (creates if it doesn't exist)"
 	ManageSetRoleSuccess    = "✅ Linked role **%s** to campaign **%s**."
 	ManageSetRoleFailed     = "🚫 Failed to set role."
 
 	// Delete confirmation + handler
 	ManageDeleteConfirm      = "⚠️ Are you sure you want to delete **%s**? This is permanent and cannot be undone. All members will be removed."
-	ManageDeleteConfirmLabel = "Yes, Delete"
-	ManageDeleteCancelLabel  = "Cancel"
+	ManageDeleteConfirmLabel = "✅ Yes, Delete"
+	ManageDeleteCancelLabel  = "❌ Cancel"
 
 	// Archive confirmation + handler
 	ManageArchiveConfirm      = "⚠️ Are you sure you want to archive **%s**? This is permanent and cannot be undone."
@@ -823,8 +823,8 @@ const (
 )
 const (
 	// user-facing
-	AdminBroadcastModalTitle = "Broadcast Message"
-	AdminBroadcastFieldLabel = "Message"
+	AdminBroadcastModalTitle = "📢 Broadcast Message"
+	AdminBroadcastFieldLabel = "✉️ Message"
 	AdminBroadcastSuccess    = "✅ Broadcast sent."
 	AdminBroadcastSent       = "✅ Broadcast sent to %d players."
 	AdminBroadcastFailed     = "🚫 Failed to send broadcast."
@@ -878,10 +878,10 @@ const (
 )
 const (
 	// user-facing
-	ManageInviteLabel               = "Invite Player"
-	ManageSetSessionLabel           = "Set Session"
-	ManageRescheduleSessionLabel    = "Reschedule"
-	ManageSetSessionModalTitle      = "Set Next Session"
+	ManageInviteLabel               = "👤 Invite Player"
+	ManageSetSessionLabel           = "📅 Set Session"
+	ManageRescheduleSessionLabel    = "⌚ Reschedule"
+	ManageSetSessionModalTitle      = "🏰 Set Next Session"
 	ManageSetSessionDateLabel       = "Date (YYYY-MM-DD)"
 	ManageSetSessionDatePlaceholder = "2026-05-08"
 	ManageSetSessionTimeLabel       = "Time UTC (HH:MM, 24h)"
@@ -953,23 +953,23 @@ const (
 	PlayerSetSheetFieldPlaceholder  = "https://www.dndbeyond.com/characters/..."
 	PlayerSetSheetSuccess           = "✅ Character sheet updated for **%s**."
 	PlayerSetSheetFailed            = "🚫 Failed to save character sheet."
-	PlayerSetSheetLabel             = "Set Sheet"
-	PlayerOpenSheetLabel            = "Open Sheet"
-	PlayerSetTokenLabel             = "Set Token"
+	PlayerSetSheetLabel             = "📜 Set Sheet"
+	PlayerOpenSheetLabel            = "📰 Open Sheet"
+	PlayerSetTokenLabel             = "🐺 Set Token"
 	PlayerTokenSelectPlaceholder    = "Select a token..."
 	PlayerTokenNewHint              = "Use `/newtoken` to create a new one."
 	PlayerTokenAssignLabel          = "Assign to this campaign"
 	PlayerTokenAssignSuccess        = "✅ Token assigned to **%s**."
 	PlayerNoTokens                  = "ℹ️ No tokens found. Create one first with `/newtoken`."
-	PlayerLeaveConfirmLabel         = "Yes, Leave"
+	PlayerLeaveConfirmLabel         = "⬅️ Yes, Leave"
 	PlayerLeaveConfirmMsg           = "⚠️ Are you sure you want to leave **%s**? This cannot be undone."
-	PlayerLeaveCancelLabel          = "Cancel"
-	PlayerContactDMModalTitle       = "Send a Message to Your DM"
-	PlayerContactDMFieldLabel       = "Message"
+	PlayerLeaveCancelLabel          = "❌ Cancel"
+	PlayerContactDMModalTitle       = "📨 Send a Message to Your DM"
+	PlayerContactDMFieldLabel       = "✉️ Message"
 	PlayerContactDMFieldPlaceholder = "Ask about scheduling, character questions, lore..."
-	PlayerContactDMLabel            = "Contact DM"
+	PlayerContactDMLabel            = "📨 Contact DM"
 	PlayerContactDMSuccess          = "✅ Your message has been sent to the DM."
-	PlayerContactDMReceived         = "**Message from <@%s>** regarding **%s**:\n\n%s"
+	PlayerContactDMReceived         = "**🗣️ Message from <@%s>** regarding **%s**:\n\n%s"
 
 	PlayerDownloadTokensLabel       = "⬇️ Download Tokens"
 	PlayerDownloadSelectPlaceholder = "Select a campaign..."
@@ -986,7 +986,7 @@ const (
 )
 const (
 	// user-facing
-	TimezoneLabel             = "Timezone"
+	TimezoneLabel             = "🌐 Timezone"
 	TimezoneHeader            = "**Set your timezone**\nTimes will be shown in your local time.\nCurrent: **%s**"
 	TimezoneSelectPlaceholder = "Select your timezone…"
 	TimezoneSuccess           = "✅ Timezone set to **%s**."
