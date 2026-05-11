@@ -20,8 +20,9 @@ import (
 /*
 	Flow:
 		Triggered from the top-level manage-campaign menu (a per-campaign hub
-		reached from /managecampaigns -> select). This file owns the four
-		sub-menus below that hub, plus one action button.
+		reached from /managecampaigns -> select).
+
+		This file owns the four sub-menus below that hub, plus one action button.
 
 		Each Render* function is invoked by router.ViewManage* nav targets:
 		1. RenderManagePlayersMenu (ViewManagePlayers):
@@ -46,7 +47,7 @@ import (
 			d. Empty state -> ManageDownloadTokensNone terminal reply.
 
 	Notes:
-		- renderManageSubAuth centralises the load-campaign + DM-auth + mutable
+		- renderManageSubAuth centralizes the load-campaign + DM-auth + mutable
 		  triple-check used by every sub-menu render. Returns (campaign, false)
 		  and writes the error reply on any failure.
 		- Mutable check rejects archived campaigns: archived campaigns can be
