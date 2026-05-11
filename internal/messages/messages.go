@@ -623,11 +623,11 @@ const (
 	AboutCommandGitHubLabel  = "GitHub"
 	AboutLabel               = "About"
 	HelpLabel                = "Help"
-	AboutCommandBotDesc      = "_a D&D campaign manager for players, DM and spectators!_"
+	AboutCommandBotDesc      = "...a D&D campaign manager for players, DM and spectators!"
 	AboutCommandCopyright    = "(C) 2026 **Framebuffer**"
-	AboutCommandHelp         = "Type `/help` for a list of commands."
+	AboutCommandHelp         = "Type `/help`, or press the **Help** button below for a list of commands."
 	AboutCommandAwoo         = "awoo!"
-	AboutCommandAttributions = "-#Thanks to the D&D r/Chile Discord server for giving me the idea, letting me test the bot on their server and give me feedback to improve this bot."
+	AboutCommandAttributions = "Thanks to the D&D r/Chile Discord server for giving me the idea, letting me test the bot on their server and give me feedback to improve this bot."
 )
 
 // Navigation buttons (all user-facing)
