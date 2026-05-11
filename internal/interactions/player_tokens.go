@@ -409,6 +409,9 @@ func (h *tokenDownloadHandler) HandleComponents(s *discordgo.Session, i *discord
 				ContentType: "image/png",
 				Reader:      f,
 			}},
+			Components: []discordgo.MessageComponent{
+				helpers.BackRow(router.ViewMeTokens),
+			},
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
