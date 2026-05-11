@@ -47,7 +47,7 @@ func newCDNTestServer(t *testing.T) (*httptest.Server, string) {
 	require.NoError(t, os.WriteFile(filepath.Join(legit, "legit.png"), []byte("png"), 0o644))
 
 	mux := http.NewServeMux()
-	mux.Handle("/api/v1/cdn/", http.StripPrefix("/api/v1/cdn/", http.FileServer(http.Dir(dataDir))))
+	mux.Handle("/api/v1/cdn/", http.StripPrefix("/api/v1/cdn/", filesOnlyHandler(dataDir)))
 
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)

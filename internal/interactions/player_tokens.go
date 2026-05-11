@@ -143,7 +143,7 @@ func (h *tokenGallerySelectHandler) HandleComponents(s *discordgo.Session, i *di
 	mediaID := values[0]
 
 	media, err := db.GetByID[models.Media](h.db, mediaID)
-	if err != nil {
+	if err != nil || media.OwnerID != helpers.GetUserID(i) {
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -206,7 +206,7 @@ func (h *tokenGalleryAssignHandler) HandleComponents(s *discordgo.Session, i *di
 	userID := helpers.GetUserID(i)
 
 	media, err := db.GetByID[models.Media](h.db, mediaID)
-	if err != nil {
+	if err != nil || media.OwnerID != userID {
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -280,6 +280,12 @@ func (h *tokenGalleryAssignSelectHandler) HandleComponents(s *discordgo.Session,
 	}
 	campaignID := values[0]
 
+	media, err := db.GetByID[models.Media](h.db, mediaID)
+	if err != nil || media.OwnerID != userID {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
 	if _, err := h.db.NewUpdate().Model((*models.CampaignPlayer)(nil)).
 		Set("media_id = ?", mediaID).
 		Where("player_id = ? AND campaign_id = ?", userID, campaignID).
@@ -316,7 +322,7 @@ func (h *tokenDeletePromptHandler) HandleComponents(s *discordgo.Session, i *dis
 	mediaID := parts[1]
 
 	media, err := db.GetByID[models.Media](h.db, mediaID)
-	if err != nil {
+	if err != nil || media.OwnerID != helpers.GetUserID(i) {
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -366,7 +372,7 @@ func (h *tokenDeleteConfirmHandler) HandleComponents(s *discordgo.Session, i *di
 	mediaID := parts[1]
 
 	media, err := db.GetByID[models.Media](h.db, mediaID)
-	if err != nil {
+	if err != nil || media.OwnerID != helpers.GetUserID(i) {
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
@@ -417,7 +423,7 @@ func (h *tokenDownloadHandler) HandleComponents(s *discordgo.Session, i *discord
 	mediaID := parts[1]
 
 	media, err := db.GetByID[models.Media](h.db, mediaID)
-	if err != nil {
+	if err != nil || media.OwnerID != helpers.GetUserID(i) {
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
