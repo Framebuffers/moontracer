@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -16,9 +19,8 @@ Files are accessible under the /api/v1/cdn/ prefix:
 This server runs in a background goroutine; does not block the Dispatcher or other goroutines.
 */
 func Serve(dataDir, addr string) {
-	fs := http.FileServer(http.Dir(dataDir))
 	mux := http.NewServeMux()
-	mux.Handle("/api/v1/cdn/", http.StripPrefix("/api/v1/cdn/", fs))
+	mux.Handle("/api/v1/cdn/", http.StripPrefix("/api/v1/cdn/", filesOnlyHandler(dataDir)))
 
 	go func() {
 		log.Printf("mediaserver: listening on %s: /api/v1/cdn/", addr)
@@ -26,6 +28,27 @@ func Serve(dataDir, addr string) {
 			log.Fatalf("mediaserver: %v", err)
 		}
 	}()
+}
+
+/*
+filesOnlyHandler serves files under dataDir but 404s any directory request,
+so the FileServer never auto-indexes and discloses filenames.
+*/
+func filesOnlyHandler(dataDir string) http.Handler {
+	fs := http.FileServer(http.Dir(dataDir))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		full := filepath.Join(dataDir, filepath.FromSlash(r.URL.Path))
+		info, err := os.Stat(full)
+		if err != nil || info.IsDir() {
+			http.NotFound(w, r)
+			return
+		}
+		fs.ServeHTTP(w, r)
+	})
 }
 
 /*

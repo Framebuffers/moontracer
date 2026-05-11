@@ -14,7 +14,12 @@ TokenPath generates disk and public URL paths for a player token file.
 suffix distinguishes src/frm/out variants (e.g. "source", "frame", "out").
 */
 func TokenPath(dataDir, baseURL, guildID, playerID, suffix, ext string) (disk, url string) {
-	rel := filepath.Join(guildID, "tokens", playerID, suffix+ext)
+	/*
+		filepath.Base collapses any traversal in suffix/ext to a single filename
+		component, keeping the result inside the player's token directory.
+	*/
+	filename := filepath.Base(suffix + ext)
+	rel := filepath.Join(guildID, "tokens", playerID, filename)
 	disk = filepath.Join(dataDir, rel)
 	url = baseURL + "/" + filepath.ToSlash(rel)
 	return
