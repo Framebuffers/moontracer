@@ -153,7 +153,7 @@ func (p *Player) IsBannedFrom() []CampaignPlayer {
 	var bannedFromCampaigns []CampaignPlayer
 
 	for _, cp := range p.CampaignPlayers {
-		if cp.PlayerID == p.ID && cp.BannedFromCampaign == true {
+		if cp.PlayerID == p.ID && cp.BannedFromCampaign {
 			bannedFromCampaigns = append(bannedFromCampaigns, cp)
 		}
 	}

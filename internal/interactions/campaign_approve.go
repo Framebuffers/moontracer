@@ -105,8 +105,7 @@ campaignDeny handles the "Deny" button click on a campaign approval DM.
 Custom ID format: campaign_deny:<campaignID>
 */
 type campaignDeny struct {
-	db     *bun.DB
-	reason string
+	db *bun.DB
 }
 
 func (c *campaignDeny) CustomIDPrefix() string {
