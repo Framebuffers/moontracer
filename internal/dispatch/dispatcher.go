@@ -16,7 +16,8 @@ type DirectMessage struct {
 	Sender     string
 	Target     string
 	Content    string
-	Components []discordgo.MessageComponent // optional; when set, message is sent with buttons/menus
+	Components []discordgo.MessageComponent  // optional
+	Embeds     []*discordgo.MessageEmbed     // optional
 }
 
 /*
@@ -160,6 +161,7 @@ func (d *Dispatcher) send(msg DirectMessage) error {
 	_, err = d.session.ChannelMessageSendComplex(channel.ID, &discordgo.MessageSend{
 		Content:    msg.Content,
 		Components: msg.Components,
+		Embeds:     msg.Embeds,
 	})
 	if err != nil {
 		return fmt.Errorf("dispatcher: send to channel %s: %w", channel.ID, err)
