@@ -15,6 +15,31 @@ import (
 )
 
 /*
+	Flow:
+		Triggered when a viewer drills into a single campaign.
+		From the browse select menu (campaigns_browse.go), search results, or any nav target
+		pointing at ViewCampaignDetail.
+		1. RenderCampaignDetail(database, campaignID):
+			a. Loads the campaign; replies CampaignNotFound if missing.
+			b. Gate: must be approved OR archived. Pending campaigns are hidden
+			   from public detail view.
+			c. Loads players + cover URL.
+			d. If the viewer is a member, loads their CampaignPlayer to surface
+			   their assigned token URL and personal sheet URL into the embed/buttons.
+			e. Builds embed via commands.CampaignEmbed; if archived, stamps the
+			   ArchivedFooter.
+			f. Builds context-aware buttons via commands.CampaignButtons (Join/Leave/
+			   Manage/Sheet depending on viewer + state).
+			g. [Back -> ViewCampaignsBrowse(all)]
+			h. Replies with UpdateMessage so it replaces the current ephemeral view.
+
+	Notes:
+		- The button set is intentionally computed in the commands package so it
+		  stays consistent between the slash-command detail view and this
+		  interaction-driven view.
+*/
+
+/*
 RenderCampaignDetail shows a campaign embed with context-aware buttons.
 
 Uses InteractionResponseUpdateMessage so it replaces the current message.
