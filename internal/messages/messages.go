@@ -321,6 +321,7 @@ const (
 	TokenGalleryAssignSelectPrefix = "token_gallery_assign_select"
 	TokenDeletePromptPrefix        = "token_delete_prompt"
 	TokenDeleteConfirmPrefix       = "token_delete_confirm"
+	TokenDownloadPrefix            = "token_download"
 )
 const (
 	// user-facing — token gallery
@@ -329,6 +330,7 @@ const (
 	TokenGalleryNone                    = "ℹ️ You have no tokens yet! Use `/newtoken` to create one."
 	TokenNotAssigned                    = "ℹ️ This token is not assigned to any campaign"
 	TokenGallerySelectPlaceholder       = "Select a token to manage..."
+	TokenDownloadLabel                  = "⬇️ Download"
 	TokenDeleteLabel                    = "🗑️ Delete"
 	TokenDeleteConfirmMsg               = "⚠️ Are you sure you want to delete **%s**? This cannot be undone."
 	TokenDeleteConfirmLabel             = "🗑️ Yes, Delete"
@@ -958,7 +960,7 @@ const (
 	PlayerSetTokenLabel             = "🐺 Set Token"
 	PlayerTokenSelectPlaceholder    = "Select a token..."
 	PlayerTokenNewHint              = "Use `/newtoken` to create a new one."
-	PlayerTokenAssignLabel          = "🏰 Assign to a campaign"
+	PlayerTokenAssignLabel          = "🏰 Assign to Campaign"
 	PlayerTokenAssignSuccess        = "✅ Token assigned to **%s**."
 	PlayerNoTokens                  = "ℹ️ No tokens found. Create one first with `/newtoken`."
 	PlayerLeaveConfirmLabel         = "⬅️ Yes, Leave"
