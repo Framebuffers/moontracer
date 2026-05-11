@@ -21,6 +21,33 @@ import (
 )
 
 /*
+	Flow:
+		Triggered post-upload token confirmation, started by /uploadtoken.
+		1. /uploadtoken processes the source+frame attachments
+			a. writes src_/frm_/out_ temp files under dataDir, and
+			b. posts a preview embed with Apply/Discard buttons (handled in commands/upload_token.go).
+		2. Apply click: tokenApplyHandler opens a naming modal
+		   (CustomID: token_apply:<guildID>:<playerID>:<token-uuid>).
+		3. Modal submit: tokenApplyModal:
+		    a. Inserts a Media row (KindTokenPlayer) pointing at the out_ file.
+		    b. Removes the src_/frm_ temps (out_ becomes the canonical file).
+		    c. If the player has active non-DM campaigns, renders a campaign
+		       select + Skip button so the token can be assigned immediately.
+		       Otherwise replies with a terminal "saved" message.
+		4. Campaign select: playerTokenPostcreateSelectHandler updates
+		   CampaignPlayer.media_id for (player, campaign).
+		5. Skip click: playerTokenSkipHandler dismisses with "saved, not assigned".
+		6. Discard click (any time before Apply): tokenDiscardHandler removes
+		   all three temp files (src_/frm_/out_) and replies with a dismissal.
+
+	Notes:
+		- Re-assignment of an existing token is handled in player_tokens.go
+		  (gallery flow), not here.
+		- File extensions are probed across {.jpg,.jpeg,.png,.webp} because the
+		  source upload can be any of these; out_ is always .png.
+*/
+
+/*
 tokenApplyHandler opens a naming modal before saving the token.
 
 CustomID: token_apply:{guildID}:{playerID}:{token-uuid}

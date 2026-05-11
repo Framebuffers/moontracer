@@ -17,6 +17,42 @@ import (
 )
 
 /*
+	Flow
+		Triggered from player token gallery, entered from /me -> Tokens):
+		1. ViewMeTokens nav target calls RenderMeTokens,
+			a. loads up to 10 of the player's KindTokenPlayer media rows (newest first) and,
+		   	b. renders one embed per token plus a select menu listing them.
+			c. Back button -> ViewMe.
+		   	d. Empty state shows TokenGalleryNone with only a Back row.
+		2. Selecting a token: tokenGallerySelectHandler renders a detail
+		   view (single embed) with three action buttons:
+		     - Assign (success):	 tokenGalleryAssignHandler
+		     - Download (secondary): tokenDownloadHandler
+		     - Delete (danger):		 tokenDeletePromptHandler
+		   	[Back button -> ViewMeTokens]
+		3. Assign click: tokenGalleryAssignHandler renders a campaign select
+		   sourced from GetPlayerCampaigns.
+		   	- Selection -> tokenGalleryAssignSelectHandler updates CampaignPlayer.media_id
+		   for (userID, campaignID).
+		4. Download click: tokenDownloadHandler opens the out_ file on disk
+		   and replies with it as an ephemeral attachment.
+		   [Back -> ViewMeTokens]
+		5. Delete click: tokenDeletePromptHandler shows a Confirm/Cancel pair.
+		   [Confirm -> tokenDeleteConfirmHandler]
+		     a. Clears media_id on every CampaignPlayer referencing this token
+		        (avoids dangling refs across all campaigns).
+		     b. Deletes the Media row.
+		     c. Removes the file from disk (logs but ignores not-exist).
+
+	Notes:
+		- Discord caps embeds per ephemeral message at 10
+			- the gallery query honors that limit and shows newest first.
+		- This file is the post-creation counterpart to token_confirm.go:
+		  token_confirm.go handles the one-shot assignment immediately after
+		  /uploadtoken. This file handles all later management.
+*/
+
+/*
 RenderMeTokens renders the token gallery: up to 10 embeds (one per token) with a manage select below.
 
 Navigated to via ViewMeTokens. Back goes to ViewMe.
