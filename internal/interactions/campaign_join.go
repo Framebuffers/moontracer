@@ -54,7 +54,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 	if !ok {
-		helpers.RespondUpdateTerminal(s, i, messages.NotRegisteredMessage)
+		helpers.RespondNotRegistered(s, i)
 		return
 	}
 

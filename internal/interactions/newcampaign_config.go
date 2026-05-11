@@ -1,11 +1,11 @@
 package interactions
 
 import (
-	"moontracer/internal/interactions/helpers"
 	"context"
 	"fmt"
 	"log"
 	"math"
+	"moontracer/internal/interactions/helpers"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -66,13 +66,6 @@ func newCampaignConfigComponents(campaignID string) []discordgo.MessageComponent
 	return []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{bookSelect}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{formatSelect}},
-		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			discordgo.Button{
-				Label:    messages.ManageLinksLabel,
-				Style:    discordgo.SecondaryButton,
-				CustomID: fmt.Sprintf("%s:%s", messages.ManageLinksPrefix, campaignID),
-			},
-		}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
 				Label:    messages.NewCampaignSubmitLabel,
@@ -143,7 +136,13 @@ func (h *newCampaignBookHandler) HandleComponents(s *discordgo.Session, i *disco
 		return
 	}
 
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.NewCampaignConfigSystemHeader, c.Name, values[0]), nil, newCampaignConfigComponents(campaignID))
+	/*
+		Updating the message for any reason will reset the message.
+		Therefore, ack silently and keep going.
+	*/
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
+	})
 }
 
 /*
@@ -195,7 +194,13 @@ func (h *newCampaignFormatHandler) HandleComponents(s *discordgo.Session, i *dis
 		return
 	}
 
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.NewCampaignConfigFormatHeader, c.Name, values[0]), nil, newCampaignConfigComponents(campaignID))
+	/*
+		Updating the message for any reason will reset the message.
+		Therefore, ack silently and keep going.
+	*/
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
+	})
 }
 
 /*

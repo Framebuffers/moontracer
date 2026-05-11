@@ -39,7 +39,7 @@ func (h *manageNewCampaignButton) HandleComponents(s *discordgo.Session, i *disc
 		return
 	}
 	if !ok {
-		helpers.RespondUpdateTerminal(s, i, messages.NotRegisteredMessage)
+		helpers.RespondNotRegistered(s, i)
 		return
 	}
 
