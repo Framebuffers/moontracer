@@ -15,6 +15,23 @@ import (
 )
 
 /*
+	Flow:
+		Triggered when an unregistered user clicks a "Register" CTA (call-to-action) button that
+		any gated surface can attach (campaign join, /me hub entry, etc.).
+		1. Button click (quick_register): quickRegisterHandler
+			a. Probes ScopePlayer auth to decide if a Player row already exists.
+			b. If not registered: inserts a fresh Player{ID:userID}. Failure ->
+			   RegistrationFailureMessage terminal reply.
+			c. Either way (already-registered users get the same UX), navigates
+			   the viewer to ViewMe via router.Navigate.
+
+	Notes:
+		- Idempotent on purpose: a stale button still works for an already-
+		  registered user. This just sends them to /me.
+		- No /register slash command call here. This is the inline shortcut.
+*/
+
+/*
 quickRegisterHandler registers the user on the spot and navigates them to the /me hub.
 
 Shown as a button whenever an unregistered user hits a gated surface.
