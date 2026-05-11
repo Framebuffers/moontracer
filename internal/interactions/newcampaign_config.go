@@ -1,17 +1,18 @@
 package interactions
 
 import (
-	"moontracer/internal/interactions/helpers"
 	"context"
 	"fmt"
 	"log"
 	"math"
+	"moontracer/internal/interactions/helpers"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/commands"
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/interactions/router"
@@ -136,7 +137,13 @@ func (h *newCampaignBookHandler) HandleComponents(s *discordgo.Session, i *disco
 		return
 	}
 
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.NewCampaignConfigSystemHeader, c.Name, values[0]), nil, newCampaignConfigComponents(campaignID))
+	/*
+		Updating the message for any reason will reset the message.
+		Therefore, ack silently and keep going.
+	*/
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
+	})
 }
 
 /*
@@ -188,7 +195,13 @@ func (h *newCampaignFormatHandler) HandleComponents(s *discordgo.Session, i *dis
 		return
 	}
 
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.NewCampaignConfigFormatHeader, c.Name, values[0]), nil, newCampaignConfigComponents(campaignID))
+	/*
+		Updating the message for any reason will reset the message.
+		Therefore, ack silently and keep going.
+	*/
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
+	})
 }
 
 /*
@@ -241,6 +254,10 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 		},
 	}
 
+	players, _ := models.GetCampaignPlayers(h.db, c.ID)
+	coverURL := models.CoverURLForCampaign(h.db, c.ID)
+	campaignEmbed := commands.CampaignEmbed(*c, players, coverURL, "")
+
 	msgID := uuid.NewString()
 	for _, staff := range staffMembers {
 		h.dispatcher.Push(dispatch.DirectMessage{
@@ -249,6 +266,7 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 			Target:     staff.ID,
 			Content:    fmt.Sprintf(messages.CampaignApprovalRequestMessage, c.Name, userID),
 			Components: approvalButtons,
+			Embeds:     []*discordgo.MessageEmbed{campaignEmbed},
 		})
 	}
 

@@ -67,7 +67,7 @@ func (m *meCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 	if !registered {
-		respond(s, i, messages.NotRegisteredMessage)
+		respondNotRegistered(s, i)
 		return
 	}
 
@@ -103,6 +103,7 @@ func buildMeHubComponents() []discordgo.MessageComponent {
 	return []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			router.NavButton(messages.MeCampaignsLabel, discordgo.PrimaryButton, router.ViewMeCampaigns),
+			router.NavButton(messages.TokensLabel, discordgo.PrimaryButton, router.ViewMeTokens),
 			discordgo.Button{
 				Label:    messages.NextSessionsLabel,
 				Style:    discordgo.PrimaryButton,

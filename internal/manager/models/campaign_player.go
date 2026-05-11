@@ -6,19 +6,30 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// Role distinguishes players from DMs within a campaign.
-// Players can be DMs.
+/*
+Role distinguishes players from DMs within a campaign.
+
+Players can be DMs.
+*/
 type Role string
 
-// Permissions are hierarchical: admins can override mod permissions, mod can override DMs and so on.
-// e.g. to authorise a campaign, a DM has to ask a mod for permission.
-// But, if a mod account gets compromised, an admin can override any mod and act as the final decisionmaker of the whole permissions chain.
-// Every new member starts as a player, with the server admin as the only admin account.
-// On Moontracer's config, a Moderator role can be used to automatically give mod access to the bot.
-// A player becomes a DM when: 1) uploads a request for a new campaign (filling the new campaign form), and 2) gets authorised by a mod.
-// A player can be part of a Campaign if:
-//  1. the campaign is active and properly authorised by a mod/admin.
-//  2. the DM is active, authorised as such, owner of the campaign and is not banned.
+/*
+Permissions are hierarchical: admins can override mod permissions, mod can override DMs and so on.
+e.g. to authorise a campaign, a DM has to ask a mod for permission.
+
+But, if a mod account gets compromised, an admin can override any mod and act as the final decisionmaker of the whole permissions chain.
+Every new member starts as a player, with the server admin as the only admin account.
+
+On Moontracer's config, a Moderator role can be used to automatically give mod access to the bot.
+A player becomes a DM when:
+
+ 1. uploads a request for a new campaign (filling the new campaign form), and
+ 2. gets authorised by a mod.
+
+A player can be part of a Campaign if:
+ 1. the campaign is active and properly authorized by a mod/admin.
+ 2. the DM is active, authorised as such, owner of the campaign and is not banned.
+*/
 const (
 	RolePlayer    Role = "player"
 	RoleDM        Role = "dm"
@@ -26,12 +37,17 @@ const (
 	RoleAdmin     Role = "admin"
 )
 
-// CampaignPlayerStatus tracks a participant's (DM or Player) standing in a campaign.
-// Before a Campaign is approved to be listed as active, it remanins by default as "pending".
-// After it gets approved, it becomes "active".
-// A campaign then can change to be on "hiatus" (paused by the DM until further notice), "cancelled" or "finished".
-// Since this type also defines the relationship between player and DM, a sixth status is added: "banned".
-// This last status is used when a user is permanently banned from a campaign, satisfying the player <-> DM relationship.
+/*
+CampaignPlayerStatus tracks a participant's (DM or Player) standing in a campaign.
+
+Before a Campaign is approved to be listed as active, it remanins by default as "pending".
+After it gets approved, it becomes "active".
+
+A campaign then can change to be on "hiatus" (paused by the DM until further notice), "cancelled" or "finished".
+
+Since this type also defines the relationship between player and DM, a sixth status is added: "banned".
+This last status is used when a user is permanently banned from a campaign, satisfying the player <-> DM relationship.
+*/
 type CampaignPlayerStatus string
 
 const (
@@ -43,8 +59,11 @@ const (
 	StatusPending   CampaignPlayerStatus = "pending"
 )
 
-// RSVPStatus records a player's attendance response for the current session.
-// Reset to RSVPPending whenever NextSession changes.
+/*
+RSVPStatus records a player's attendance response for the current session.
+
+Reset to RSVPPending whenever NextSession changes.
+*/
 type RSVPStatus string
 
 const (
@@ -53,8 +72,11 @@ const (
 	RSVPDeclined RSVPStatus = "declined"
 )
 
-// CampaignPlayer is the join table between Player and Campaign.
-// MediaID optionally links a Media record (player token) to this player's slot in a campaign.
+/*
+CampaignPlayer is the join table between Player and Campaign.
+
+MediaID optionally links a Media record (player token) to this player's slot in a campaign.
+*/
 type CampaignPlayer struct {
 	bun.BaseModel `bun:"table:campaign_players"`
 
@@ -72,6 +94,20 @@ type CampaignPlayer struct {
 	BannedFromCampaign    bool                 `bun:",notnull,default:false" json:"banned_from_campaign"`
 	BanReasonFromCampaign string               `bun:",nullzero" json:"ban_reason_from_campaign,omitempty"`
 	RSVPStatus            RSVPStatus           `bun:",notnull,default:''" json:"rsvp_status"`
+	SheetURL              string               `bun:",nullzero" json:"sheet_url,omitempty"`
+}
+
+// GetCampaignPlayer retrieves a single CampaignPlayer by its composite primary key.
+func GetCampaignPlayer(db *bun.DB, playerID, campaignID string) (*CampaignPlayer, error) {
+	ctx := context.Background()
+	cp := &CampaignPlayer{}
+	err := db.NewSelect().Model(cp).
+		Where("player_id = ? AND campaign_id = ?", playerID, campaignID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return cp, nil
 }
 
 // GetCampaignPlayers retrieves all CampaignPlayers belonging to a given Campaign ID
@@ -121,9 +157,13 @@ func SetCampaignPlayerStatus(db *bun.DB, playerID, campaignID string, status Cam
 	return err
 }
 
-// BulkSetCampaignPlayerStatus updates campaign memberships for a player in bulk.
-// skipLogic decides which entries to leave untouched (nil means skip nothing).
-// Returns updated/skipped counts and a map of campaignID→error for any failures.
+/*
+BulkSetCampaignPlayerStatus updates campaign memberships for a player in bulk.
+
+skipLogic decides which entries to leave untouched. nil means skip nothing.
+
+Returns updated/skipped counts and a map of campaignID→error for any failures.
+*/
 func BulkSetCampaignPlayerStatus(db *bun.DB, playerID string, campaigns []CampaignPlayer, to CampaignPlayerStatus, skipLogic func(CampaignPlayer) bool) (updated int, skipped int, errs map[string]error) {
 	errors := make(map[string]error)
 
@@ -145,8 +185,11 @@ func BulkSetCampaignPlayerStatus(db *bun.DB, playerID string, campaigns []Campai
 	return updated, skipped, errors
 }
 
-// ResetCampaignRSVPs clears the RSVP status for all players in a campaign.
-// Call whenever NextSession is updated so responses from the previous session don't persist.
+/*
+ResetCampaignRSVPs clears the RSVP status for all players in a campaign.
+
+Call whenever NextSession is updated so responses from the previous session don't persist.
+*/
 func ResetCampaignRSVPs(db *bun.DB, campaignID string) error {
 	_, err := db.NewUpdate().Model((*CampaignPlayer)(nil)).
 		Set("rsvp_status = ?", RSVPPending).

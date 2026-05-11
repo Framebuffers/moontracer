@@ -59,7 +59,7 @@ At startup the bot calls AllComponents/AllModals once per guild DB; the
 main handler (internal/discord/handler.go) dispatches incoming events to
 the first handler whose prefix matches.
 */
-func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) []ComponentHandler {
+func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, dataDir, mediaBaseURL string) []ComponentHandler {
 	RegisterAllViews(db, d)
 
 	return []ComponentHandler{
@@ -95,6 +95,9 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// Navigation (all "nav:*" CustomIDs go through the view router).
 		&navHandler{db: db},
 
+		// Quick registration button (shown on all "not registered" surfaces).
+		&quickRegisterHandler{db: db},
+
 		// New campaign config (post-modal)
 		&newCampaignBookHandler{db: db},
 		&newCampaignFormatHandler{db: db},
@@ -116,9 +119,36 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&adminSettingsHandler{db: db},
 		&adminDiagHandler{db: db},
 
-		// Manage: new campaign from button
+		// Manage: new campaign from button, links, player tokens
 		&manageNewCampaignButton{db: db},
+		&manageLinksHandler{db: db},
+		&manageDownloadTokensHandler{db: db},
+
+		// Token generator confirm/discard/assign
+		&tokenApplyHandler{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
+		&tokenDiscardHandler{dataDir: dataDir, mediaBaseURL: mediaBaseURL},
+		&playerTokenPostcreateSelectHandler{db: db},
+		&playerTokenSkipHandler{},
 		&manageSetSession{db: db},
+
+		// Token gallery (/me -> Tokens)
+		&tokenGallerySelectHandler{db: db},
+		&tokenGalleryAssignHandler{db: db},
+		&tokenGalleryAssignSelectHandler{db: db},
+		&tokenDeletePromptHandler{db: db},
+		&tokenDeleteConfirmHandler{db: db, dataDir: dataDir},
+		&tokenDownloadHandler{db: db},
+
+		// Player campaign card menus
+		&playerSetSheetHandler{db: db},
+		&playerSetTokenHandler{db: db},
+		&playerTokenSelectHandler{db: db},
+		&playerTokenAssignHandler{db: db},
+		&playerLeaveConfirmPromptHandler{db: db},
+		&playerLeaveDoHandler{db: db},
+		&playerContactDMHandler{db: db},
+		&playerDownloadTokensHandler{db: db},
+		&playerDownloadSelectHandler{db: db},
 
 		// Session RSVP (buttons on reminder DMs)
 		&rsvpAcceptHandler{db: db, dispatcher: d},
@@ -133,14 +163,18 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 }
 
 // AllModals returns an array with all the ModalHandlers available to the bot.
-func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler) []ModalHandler {
+func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, dataDir, mediaBaseURL string) []ModalHandler {
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
 		&campaignDenyModal{db: db, dispatcher: d},
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},
 		&manageSetRoleModal{db: db},
+		&manageLinksModal{db: db},
 		&manageSetSessionModal{db: db, sched: sched},
 		&adminBroadcastModal{db: db, dispatcher: d},
+		&playerSetSheetModal{db: db},
+		&playerContactDMModal{db: db, dispatcher: d},
+		&tokenApplyModal{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 	}
 }
