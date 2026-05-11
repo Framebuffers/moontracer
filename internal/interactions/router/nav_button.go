@@ -57,7 +57,7 @@ Label is supplied so callers can localize.
 func BackButton(label string, target ViewID, args ...string) discordgo.Button {
 	return discordgo.Button{
 		Label:    label,
-		Style:    discordgo.SecondaryButton,
+		Style:    discordgo.PrimaryButton,
 		CustomID: NavCustomID(target, args...),
 		Emoji:    &discordgo.ComponentEmoji{Name: "◀"},
 	}

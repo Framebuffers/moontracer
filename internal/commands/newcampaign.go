@@ -37,7 +37,7 @@ func (c *newCampaignCommand) Execute(s *discordgo.Session, i *discordgo.Interact
 		return
 	}
 	if !ok {
-		respond(s, i, messages.NotRegisteredMessage)
+		respondNotRegistered(s, i)
 		return
 	}
 

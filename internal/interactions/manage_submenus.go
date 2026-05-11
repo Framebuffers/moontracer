@@ -171,8 +171,8 @@ func (h *manageDownloadTokensHandler) HandleComponents(s *discordgo.Session, i *
 	var players []models.CampaignPlayer
 	if err := h.db.NewSelect().Model(&players).
 		Relation("Media").
-		Where("cp.campaign_id = ?", campaignID).
-		Where("cp.media_id != ''").
+		Where("campaign_player.campaign_id = ?", campaignID).
+		Where("campaign_player.media_id != ''").
 		Scan(context.Background()); err != nil {
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return

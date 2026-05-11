@@ -67,7 +67,7 @@ func (m *meCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate
 		return
 	}
 	if !registered {
-		respond(s, i, messages.NotRegisteredMessage)
+		respondNotRegistered(s, i)
 		return
 	}
 

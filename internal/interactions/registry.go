@@ -95,6 +95,9 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// Navigation (all "nav:*" CustomIDs go through the view router).
 		&navHandler{db: db},
 
+		// Quick registration button (shown on all "not registered" surfaces).
+		&quickRegisterHandler{db: db},
+
 		// New campaign config (post-modal)
 		&newCampaignBookHandler{db: db},
 		&newCampaignFormatHandler{db: db},
