@@ -133,6 +133,11 @@ func (h *tokenGallerySelectHandler) HandleComponents(s *discordgo.Session, i *di
 						CustomID: fmt.Sprintf("%s:%s", messages.TokenGalleryAssignPrefix, mediaID),
 					},
 					discordgo.Button{
+						Label:    messages.TokenDownloadLabel,
+						Style:    discordgo.SecondaryButton,
+						CustomID: fmt.Sprintf("%s:%s", messages.TokenDownloadPrefix, mediaID),
+					},
+					discordgo.Button{
 						Label:    messages.TokenDeleteLabel,
 						Style:    discordgo.DangerButton,
 						CustomID: fmt.Sprintf("%s:%s", messages.TokenDeletePromptPrefix, mediaID),
@@ -355,4 +360,56 @@ func (h *tokenDeleteConfirmHandler) HandleComponents(s *discordgo.Session, i *di
 	}
 
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenDeleteSuccess, name))
+}
+
+/*
+tokenDownloadHandler sends a single token file as an ephemeral attachment.
+
+CustomID: token_download:<mediaID>
+*/
+type tokenDownloadHandler struct {
+	db *bun.DB
+}
+
+func (h *tokenDownloadHandler) CustomIDPrefix() string { return messages.TokenDownloadPrefix }
+
+func (h *tokenDownloadHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	mediaID := parts[1]
+
+	media, err := db.GetByID[models.Media](h.db, mediaID)
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
+	f, err := os.Open(media.Path)
+	if err != nil {
+		log.Printf("token_download: open %s: %v", media.Path, err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	defer f.Close()
+
+	name := media.Name
+	if name == "" {
+		name = media.ID[:8]
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf(messages.PlayerDownloadContent, 1),
+			Embeds:  []*discordgo.MessageEmbed{},
+			Files: []*discordgo.File{{
+				Name:        name + ".png",
+				ContentType: "image/png",
+				Reader:      f,
+			}},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
 }
