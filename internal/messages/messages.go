@@ -19,7 +19,7 @@ package messages
 // Generic
 const (
 	// identifiers
-	BotVersion = "v0.12.5"
+	BotVersion = "v0.12.6"
 )
 const (
 	// user-facing
