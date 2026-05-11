@@ -103,11 +103,11 @@ var ascii2 = "```" + `
 var ascii = fmt.Sprintf(`
 %s
 %s
-
-Copyright %s.
 -# Released under the %s license.
 -# %s
-
+---
+%s
+---
 -# %s
 -# 🐺 %s 🌕
 `, ascii2,
