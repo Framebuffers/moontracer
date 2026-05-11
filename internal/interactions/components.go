@@ -9,6 +9,35 @@ import (
 )
 
 /*
+	Flow:
+		Triggered indirectly: this file holds the shared SelectMenu builders
+		used by every list-style view (browse, /mycampaigns, /managecampaigns,
+		manage-campaign-bans, etc.). No handlers here: only construction.
+
+		1. BuildCampaignSelect(campaigns, customID, placeholder):
+			a. Iterates the input, capped at Discord's 25-option limit.
+			b. Each option: Label = truncated name (<=100), Value = campaign ID,
+			   Description = campaignOptionDescription (format + open/closed + slots).
+			c. Empty input -> single sentinel option {Value:"none", Default:true}
+			   so the menu still renders. Callers must ignore "none" selections.
+
+		2. BuildPlayerCampaignSelect(entries, customID, placeholder):
+			a. Same 25-cap + truncation rules.
+			b. Skips entries whose Campaign is nil or unapproved.
+			c. Description is "Role -- Status" (e.g. "DM -- Active").
+			d. Same "none" sentinel fallback for empty results.
+
+		3. campaignOptionDescription: format/status/slots line.
+		   truncate: "..." tail clipping at max chars.
+
+	Notes:
+		- The customID determines downstream routing: pass the same prefix the
+		  matching ComponentHandler expects (campaign_select, manage_select, ...).
+		- Slot wording: only suffixes "slots" when 1..10; everything else uses
+		  DisplaySlots() as-is (handles unlimited/closed/etc).
+*/
+
+/*
 BuildCampaignSelect builds a StringSelectMenu from a list of campaigns.
 
 customID determines routing (e.g. "campaign_select", "manage_select").
