@@ -52,6 +52,7 @@ const (
 	ViewMe              ViewID = "me"
 	ViewMeCampaigns     ViewID = "me_campaigns"
 	ViewMeConfig        ViewID = "me_config"
+	ViewMeTokens        ViewID = "me_tokens"
 	ViewMyCampaigns     ViewID = "mycampaigns"
 	ViewManage          ViewID = "manage"
 	ViewManageCampaign  ViewID = "manage_campaign"

@@ -36,9 +36,10 @@ type Campaign struct {
 	Schedule CampaignSchedule `bun:"embed:"` // Campaign schedule.
 
 	// Links and media
-	Links         []string `bun:",array,type:jsonb" json:"links,omitempty"`
-	VTTLink       string   `bun:",default:''" json:"vtt_link,omitempty"`
-	CampaignMedia []string `bun:",array,type:jsonb" json:"campaign_media,omitempty"`
+	Links          []string `bun:",array,type:jsonb" json:"links,omitempty"`
+	VTTLink        string   `bun:",default:''" json:"vtt_link,omitempty"`
+	PlayerSheetURL string   `bun:",default:''" json:"player_sheet_url,omitempty"`
+	CampaignMedia  []string `bun:",array,type:jsonb" json:"campaign_media,omitempty"`
 
 	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=campaign_id" json:"campaign_players,omitempty"` // Has-many relation.
 

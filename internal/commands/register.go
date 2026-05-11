@@ -90,3 +90,26 @@ func respond(s *discordgo.Session, i *discordgo.InteractionCreate, content strin
 		},
 	})
 }
+
+/*
+respondNotRegistered sends a fresh ephemeral with the "not registered" message and a
+Register button that registers the user and opens the /me hub in one click.
+*/
+func respondNotRegistered(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: messages.NotRegisteredMessage,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    messages.RegisterButtonLabel,
+						Style:    discordgo.SuccessButton,
+						CustomID: messages.QuickRegisterPrefix,
+					},
+				}},
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}

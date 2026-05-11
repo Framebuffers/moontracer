@@ -90,6 +90,22 @@ func RespondUpdate(s *discordgo.Session, i *discordgo.InteractionCreate, content
 }
 
 /*
+RespondNotRegistered updates the current message with the "not registered" prompt and a
+Register button that registers the user and opens the /me hub in one click.
+*/
+func RespondNotRegistered(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	RespondUpdate(s, i, messages.NotRegisteredMessage, []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.RegisterButtonLabel,
+				Style:    discordgo.SuccessButton,
+				CustomID: messages.QuickRegisterPrefix,
+			},
+		}},
+	})
+}
+
+/*
 RespondUpdateTerminal updates the current message with a terminal text response
 and a Home button. Use in component handlers for final success and error states
 that end the current flow.
@@ -97,7 +113,7 @@ that end the current flow.
 func RespondUpdateTerminal(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {
 	RespondUpdate(s, i, content, []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
+			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
 		}},
 	})
 }
@@ -111,12 +127,12 @@ func BackRow(target router.ViewID, args ...string) discordgo.ActionsRow {
 	if target == router.ViewMe {
 		// Back and Home are the same destination here; one button avoids a duplicate CustomID.
 		return discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
+			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
 		}}
 	}
 	return discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 		router.BackButton(messages.BackLabel, target, args...),
-		router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
+		router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
 	}}
 }
 

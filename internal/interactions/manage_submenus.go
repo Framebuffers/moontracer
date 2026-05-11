@@ -1,8 +1,10 @@
 package interactions
 
 import (
+	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -56,6 +58,11 @@ func RenderManagePlayersMenu(s *discordgo.Session, i *discordgo.InteractionCreat
 				Style:    discordgo.SecondaryButton,
 				CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
 			},
+			discordgo.Button{
+				Label:    messages.ManageDownloadTokensLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageDownloadTokensPrefix, campaignID),
+			},
 		}},
 		helpers.BackRow(router.ViewManageCampaign, campaignID),
 	})
@@ -80,7 +87,7 @@ func RenderManageSessionsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 			},
 			discordgo.Button{
 				Label:    messages.ManageAnnounceLabel,
-				Style:    discordgo.SecondaryButton,
+				Style:    discordgo.SuccessButton,
 				CustomID: fmt.Sprintf("manage_announce:%s", campaignID),
 			},
 		}},
@@ -94,6 +101,10 @@ func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 	if !ok {
 		return
 	}
+	toggleLabel := messages.ManageCloseLabel
+	if !campaign.IsOpen {
+		toggleLabel = messages.ManageOpenLabel
+	}
 	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageCampaignHeader, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
@@ -106,11 +117,112 @@ func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 				Style:    discordgo.SecondaryButton,
 				CustomID: fmt.Sprintf("%s:%s", messages.ManageSetRolePrefix, campaignID),
 			},
+			discordgo.Button{
+				Label:    messages.ManageLinksLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageLinksPrefix, campaignID),
+			},
+			discordgo.Button{
+				Label:    toggleLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("campaign_toggle:%s", campaignID),
+			},
 		}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			router.NavButton(messages.ManageDangerLabel, discordgo.DangerButton, router.ViewManageDanger, campaignID),
 		}},
 		helpers.BackRow(router.ViewManageCampaign, campaignID),
+	})
+}
+
+/*
+manageDownloadTokensHandler sends all player tokens for a campaign as file attachments.
+
+Only the DM can trigger this. Skips players with no token assigned.
+
+CustomID: manage_download_tokens:<campaignID>
+*/
+type manageDownloadTokensHandler struct {
+	db *bun.DB
+}
+
+func (h *manageDownloadTokensHandler) CustomIDPrefix() string {
+	return messages.ManageDownloadTokensPrefix
+}
+
+func (h *manageDownloadTokensHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+	userID := helpers.GetUserID(i)
+
+	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+	if authorized, _ := auth.Authorize(h.db, userID, auth.ScopeDM, campaignID); !authorized {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageNotAuthorized)
+		return
+	}
+
+	var players []models.CampaignPlayer
+	if err := h.db.NewSelect().Model(&players).
+		Relation("Media").
+		Where("campaign_player.campaign_id = ?", campaignID).
+		Where("campaign_player.media_id != ''").
+		Scan(context.Background()); err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	if len(players) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageDownloadTokensNone)
+		return
+	}
+
+	var handles []*os.File
+	defer func() {
+		for _, f := range handles {
+			f.Close()
+		}
+	}()
+
+	var files []*discordgo.File
+	for _, cp := range players {
+		if cp.Media == nil {
+			continue
+		}
+		f, err := os.Open(cp.Media.Path)
+		if err != nil {
+			log.Printf("manage_download_tokens: open %s: %v", cp.Media.Path, err)
+			continue
+		}
+		handles = append(handles, f)
+		name := cp.Media.Name
+		if name == "" {
+			name = cp.PlayerID[:8]
+		}
+		files = append(files, &discordgo.File{
+			Name:        name + ".png",
+			ContentType: "image/png",
+			Reader:      f,
+		})
+	}
+
+	if len(files) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageDownloadTokensNone)
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf(messages.ManageDownloadTokensContent, campaign.Name, len(files)),
+			Files:   files,
+			Flags:   discordgo.MessageFlagsEphemeral,
+		},
 	})
 }
 

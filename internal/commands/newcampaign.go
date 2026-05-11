@@ -1,17 +1,6 @@
-package interactions
-
-/*
-	New Campaign from button handler for the /me hub and /managecampaigns menu.
-
-	Flow:
-		1. Player clicks "New Campaign" button.
-		2. Auth check: must be a registered player.
-		3. Respond with InteractionResponseModal (same modal as /newcampaign slash command).
-		4. Modal submission is handled by the existing modalCampaignCreate handler.
-*/
+package commands
 
 import (
-	"moontracer/internal/interactions/helpers"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
@@ -21,25 +10,34 @@ import (
 	"moontracer/internal/messages"
 )
 
-type manageNewCampaignButton struct {
+// newCampaignCommand opens the campaign creation modal directly as a slash command.
+type newCampaignCommand struct {
 	db *bun.DB
 }
 
-func (h *manageNewCampaignButton) CustomIDPrefix() string {
-	return messages.ManageNewCampaignPrefix
+func (c *newCampaignCommand) Data() *discordgo.ApplicationCommand {
+	return &discordgo.ApplicationCommand{
+		Name:        messages.NewCampaignCommandName,
+		Description: messages.NewCampaignCommandDesc,
+	}
 }
 
-func (h *manageNewCampaignButton) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	userID := helpers.GetUserID(i)
+func (c *newCampaignCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	userID := ""
+	if i.Member != nil {
+		userID = i.Member.User.ID
+	} else if i.User != nil {
+		userID = i.User.ID
+	}
 
-	ok, err := auth.Authorize(h.db, userID, auth.ScopePlayer, "")
+	ok, err := auth.Authorize(c.db, userID, auth.ScopePlayer, "")
 	if err != nil {
-		log.Printf("manage_newcampaign: auth check failed: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		log.Printf("newcampaign: auth check failed: %v", err)
+		respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		helpers.RespondNotRegistered(s, i)
+		respondNotRegistered(s, i)
 		return
 	}
 

@@ -54,7 +54,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 	if !ok {
-		helpers.RespondUpdateTerminal(s, i, messages.NotRegisteredMessage)
+		helpers.RespondNotRegistered(s, i)
 		return
 	}
 
@@ -143,6 +143,20 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	if campaign.RoleID != "" {
 		if err := guard.GuildMemberRoleAdd(s, i.GuildID, userID, campaign.RoleID); err != nil {
 			log.Printf("campaign_join: failed to assign role %s to %s: %v", campaign.RoleID, userID, err)
+		}
+	}
+
+	// Auto-close when the last slot fills.
+	if !campaign.IsWestmarch && campaign.Slots > 0 && newActiveCount >= campaign.Slots && campaign.IsOpen {
+		campaign.IsOpen = false
+		if err := db.Update(h.db, campaign); err != nil {
+			log.Printf("campaign_join: auto-close failed for campaign %s: %v", campaign.ID, err)
+		} else {
+			h.dispatcher.Push(dispatch.DirectMessage{
+				ID:      uuid.NewString(),
+				Target:  campaign.DungeonMaster,
+				Content: fmt.Sprintf(messages.CampaignAutoClosedDM, campaign.Name, campaign.Slots),
+			})
 		}
 	}
 

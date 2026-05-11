@@ -88,32 +88,28 @@ func RenderAboutUpdate(s *discordgo.Session, i *discordgo.InteractionCreate) {
 }
 
 var ascii2 = "```" + `
-*		*	*  * 		*	*
+*		*	*  * 		*	🌕*
 	*	  *		*   *     *
 ┏┏ ┏━┃┏━┃┏━ ━┏┛┏━┃┏━┃┏━┛┏━┛┏━┃
 ┃┃┃┃ ┃┃ ┃┃ ┃ ┃ ┏┏┛┏━┃┃  ┏━┛┏┏┛
 ┛┛┛━━┛━━┛┛ ┛ ┛ ┛ ┛┛ ┛━━┛━━┛┛ ┛
-*		*	*	*      *
-	*     *			*    *  *
-` + "```"
+*	   *awoo*	*	*      *
+	🐺        *			*    *  
+` +
+	messages.AboutCommandBotDesc +
+	"```"
 
 var ascii = fmt.Sprintf(`
 %s
--# %s
-
-Copyright %s.
+%s
 -# Released under the %s license.
 -# %s
 
-Made with **<3** by **Framebuffer**
+%s
 
-## %s
-
-%s 
+-# %s
 -# 🐺 %s 🌕
-`,
-	ascii2,
-	messages.AboutCommandBotDesc,
+`, ascii2,
 	messages.AboutCommandCopyright,
 	messages.AboutCommandLicense,
 	messages.BotVersion,
