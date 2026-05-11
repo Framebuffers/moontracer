@@ -640,7 +640,7 @@ const (
 const (
 	MyCampaignsLabel     = "🏰 My Campaigns"
 	NextSessionsLabel    = "📅 Next Sessions"
-	NotificationsLabel   = "ℹ️ Notifications"
+	NotificationsLabel   = "🔔 Alerts"
 	BrowseCampaignsLabel = "📚 Browse Campaigns"
 	MyProfileLabel       = HomeLabel
 	NewCampaignLabel     = "📖 New Campaign"
@@ -790,7 +790,7 @@ const (
 )
 const (
 	// user-facing
-	NotificationsHeader     = "✉️ Notification settings:"
+	NotificationsHeader     = "🔔 Alert settings:"
 	NotificationsNone       = "ℹ️ No notification preferences configured yet."
 	NotifLabelAnnouncements = "🗣️ Announcements"
 	NotifLabelSessions      = "📅 Session Reminders"
@@ -828,7 +828,7 @@ const (
 	AdminBroadcastSuccess    = "✅ Broadcast sent."
 	AdminBroadcastSent       = "✅ Broadcast sent to %d players."
 	AdminBroadcastFailed     = "🚫 Failed to send broadcast."
-	AdminBroadcastDMContent  = "**🗣️ Broadcast from <@%s>:**\n\n%s"
+	AdminBroadcastDMContent  = "**🗣️ Broadcast from <@%s>:**\n\n%s\n\n-# _You can disable these in `/me` → Configuration → 🔔 Alerts._"
 )
 
 // Admin hub: Database viewer

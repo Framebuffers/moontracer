@@ -6,7 +6,7 @@ package interactions
 	Flow:
 		1. Staff clicks "Query Campaigns" on the /admin hub.
 		2. Auth: ScopeMod.
-		3. Load ALL campaigns (approved + unapproved, not archived).
+		3. Load ALL campaigns (approved, pending, archived).
 		4. Render a code block with name, status, open/closed, DM name, next session.
 		5. Selecting a campaign shows admin-level detail + Contact DM button.
 		6. Back button returns to /admin hub.
@@ -45,18 +45,11 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 		return
 	}
 
-	campaigns, err := db.GetAll[models.Campaign](h.db)
+	filtered, err := db.GetAll[models.Campaign](h.db)
 	if err != nil {
 		log.Printf("admin_campaigns: failed to load campaigns: %v", err)
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
-	}
-
-	var filtered []models.Campaign
-	for _, c := range campaigns {
-		if !c.IsArchived {
-			filtered = append(filtered, c)
-		}
 	}
 
 	if len(filtered) == 0 {
@@ -218,13 +211,13 @@ func (h *adminCampaignSelectHandler) HandleComponents(s *discordgo.Session, i *d
 			Embeds:  []*discordgo.MessageEmbed{embed},
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					router.BackButton(messages.BackLabel, router.ViewAdmin),
+					router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
 					discordgo.Button{
 						Label: messages.AdminContactDMLabel,
 						Style: discordgo.LinkButton,
 						URL:   fmt.Sprintf("discord://-/users/%s", campaign.DungeonMaster),
 					},
-					router.BackButton(messages.BackLabel, router.ViewAdmin),
-					router.NavButton(messages.HomeLabel, discordgo.SecondaryButton, router.ViewMe),
 				}},
 			},
 			Flags: discordgo.MessageFlagsEphemeral,
