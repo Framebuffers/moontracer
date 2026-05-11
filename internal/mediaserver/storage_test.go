@@ -111,24 +111,21 @@ Development Note (v0.12.6, 20260511):
 	Currently FAILS — io.Copy is unbounded.
 */
 func TestDownload_BoundsResponseSize(t *testing.T) {
-	const huge = 100 * 1024
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/png")
 		// PNG magic prefix so MIME detection passes.
 		w.Write([]byte("\x89PNG\r\n\x1a\n"))
-		w.Write(make([]byte, huge))
+		w.Write(make([]byte, MaxDownloadBytes+1024))
 	}))
 	t.Cleanup(srv.Close)
 
 	dst := filepath.Join(t.TempDir(), "big.png")
 	_, err := Download(srv.URL+"/x", dst)
 
-	if err == nil {
-		info, statErr := os.Stat(dst)
-		require.NoError(t, statErr)
-		assert.Less(t, info.Size(), int64(huge),
-			"Download wrote %d bytes from an unbounded stream — add MaxBytesReader", info.Size())
-	}
+	assert.Error(t, err, "Download must reject responses larger than MaxDownloadBytes")
+	_, statErr := os.Stat(dst)
+	assert.True(t, os.IsNotExist(statErr),
+		"oversize body was persisted to disk at %s", dst)
 }
 
 /*

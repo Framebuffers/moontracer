@@ -111,6 +111,11 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	}
 	guildID, playerID, token := parts[1], parts[2], parts[3]
 
+	if helpers.GetUserID(i) != playerID {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
 	var name string
 	for _, row := range i.ModalSubmitData().Components {
 		for _, comp := range row.(*discordgo.ActionsRow).Components {
@@ -235,7 +240,13 @@ func (h *playerTokenPostcreateSelectHandler) HandleComponents(s *discordgo.Sessi
 	}
 	campaignID := values[0]
 
-	_, err := h.db.NewUpdate().Model((*models.CampaignPlayer)(nil)).
+	media, err := db.GetByID[models.Media](h.db, mediaID)
+	if err != nil || media.OwnerID != userID {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
+	_, err = h.db.NewUpdate().Model((*models.CampaignPlayer)(nil)).
 		Set("media_id = ?", mediaID).
 		Where("player_id = ? AND campaign_id = ?", userID, campaignID).
 		Exec(context.Background())
@@ -286,6 +297,11 @@ func (h *tokenDiscardHandler) HandleComponents(s *discordgo.Session, i *discordg
 		return
 	}
 	guildID, playerID, token := parts[1], parts[2], parts[3]
+
+	if helpers.GetUserID(i) != playerID {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
 
 	for _, suffix := range []string{"src_", "frm_", "out_"} {
 		for _, ext := range []string{".jpg", ".jpeg", ".png", ".webp"} {
