@@ -97,17 +97,16 @@ var ascii2 = "```" + `
 	🐺        *			*    *  
 ` +
 	messages.AboutCommandBotDesc +
-
-	"```" + messages.AboutCommandHelp
+	"```"
 
 var ascii = fmt.Sprintf(`
 %s
 %s
 -# Released under the %s license.
 -# %s
----
+
 %s
----
+
 -# %s
 -# 🐺 %s 🌕
 `, ascii2,
