@@ -20,6 +20,61 @@ import (
 )
 
 /*
+	Flow:
+		Triggered from the campaign detail view (campaign_detail.go) and from
+		"My Campaigns". This file owns every per-campaign player-side action
+		that isn't Join/Leave-flow itself. Six sub-flows live here:
+
+		1. Set Sheet (player_set_sheet:<campaignID>): playerSetSheetHandler
+			a. Loads the viewer's CampaignPlayer.
+			b. Opens a modal pre-filled with current SheetURL.
+			c. Modal submit (player_set_sheet_modal:<campaignID>):
+			   playerSetSheetModal writes CP.SheetURL and replies with success.
+
+		2. Set Token (player_set_token:<campaignID>): playerSetTokenHandler
+			a. Loads the viewer's KindTokenPlayer media (newest first).
+			b. Empty 		-> PlayerNoTokens terminal.
+			c. Exactly one 	-> renders embed + single Assign button.
+			d. Many 		-> renders SelectMenu of tokens.
+			   [Back -> ViewMyCampaigns]
+		   Selection (player_token_select:<campaignID>) -> playerTokenSelectHandler:
+			   Renders a preview embed for the chosen token + Assign button.
+		   Assign click (player_token_assign:<campaignID>:<mediaID>) ->
+		   playerTokenAssignHandler updates CampaignPlayer.media_id.
+
+		3. Leave Campaign (player_leave_confirm:<campaignID>):
+		   playerLeaveConfirmPromptHandler
+			a. Rejects with MasterIsLeaving... if viewer is the DM (DM-of-self
+			   cannot leave; archive/delete via manage menu instead).
+			b. Renders Confirm/Cancel pair.
+		   Confirm (player_leave_do:<campaignID>) -> playerLeaveDoHandler:
+			a. Re-runs the DM guard (defence-in-depth against stale buttons).
+			b. RemoveCampaignPlayer + best-effort GuildMemberRoleRemove.
+
+		4. Contact DM (player_contact_dm:<campaignID>):
+		   playerContactDMHandler opens a paragraph-input modal.
+		   Modal submit (player_contact_dm_modal:<campaignID>):
+		   playerContactDMModal pushes the message to the DM via dispatch
+		   (rejects if the viewer IS the campaign DM -- can't contact yourself).
+
+		5. Download Tokens (player_download_tokens): playerDownloadTokensHandler
+			a. Lists all the viewer's campaigns that have a token assigned.
+			b. Renders SelectMenu with an "All" option + one per campaign.
+			c. [Back -> ViewMyCampaigns]
+		   Selection (player_download_select) -> playerDownloadSelectHandler:
+			a. "All" 		-> top 10 KindTokenPlayer media for the user (newest first).
+			b. campaignID 	-> single token assigned to that CampaignPlayer.
+			c. Opens each file, attaches them ephemerally, defers close until
+			   after response.
+
+	Notes:
+		- All flows are viewer-scoped (use helpers.GetUserID); none require
+		  DM-side authorization.
+		- Set Token here is the in-campaign assignment counterpart; the gallery
+		  in player_tokens.go is the cross-campaign manager.
+*/
+
+/*
 playerSetSheetHandler opens a modal for the player to set their character sheet URL.
 
 CustomID: player_set_sheet:<campaignID>

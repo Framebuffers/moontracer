@@ -13,6 +13,29 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		Triggered from /me -> Campaigns -> Browse, or any nav target landing on
+		ViewCampaignsBrowse. The view is a two-control screen: a format filter
+		dropdown above a campaign select.
+		1. RenderCampaignsBrowse(database, filter):
+			a. Loads every campaign, drops non-approved and archived ones.
+			b. Applies the format filter: "all" | "campaign" | "oneshot" | "westmarch".
+			   "campaign" means !IsOneshot && !IsWestmarch (plain long-form).
+			c. Renders the filter SelectMenu with the current value marked Default
+			   so the dropdown remembers the active filter across re-renders.
+			d. If any campaigns survived: appends a campaign-picker SelectMenu
+			   built by BuildCampaignSelect. Otherwise swaps the header for
+			   CampaignsNoneAvailable.
+			e. [Back -> ViewMeCampaigns]
+		2. Filter change (campaigns_filter): campaignsFilterHandler re-invokes
+		   RenderCampaignsBrowse with the new filter value (defaults to "all" if
+		   the menu returned nothing).
+		3. Campaign pick (campaign_select:...): campaignSelectHandler forwards
+		   to RenderCampaignDetail (campaign_detail.go). "none" sentinel is
+		   silently ignored (placeholder option from BuildCampaignSelect).
+*/
+
 // RenderCampaignsBrowse renders the campaign browse view with filter + select menu.
 func RenderCampaignsBrowse(s *discordgo.Session, i *discordgo.InteractionCreate, database *bun.DB, filter string) {
 	campaigns, err := db.GetAll[models.Campaign](database)

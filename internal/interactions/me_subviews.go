@@ -14,6 +14,29 @@ import (
 )
 
 /*
+	Flow:
+		Triggered from the /me hub by clicking Campaigns or Configuration.
+		Both render targets are reached via router nav (ViewMeCampaigns /
+		ViewMeConfig). This file owns the two sub-view layouts only.
+
+		1. RenderMeCampaigns (ViewMeCampaigns):
+			a. Fixed buttons: New Campaign (success), My Campaigns, Browse.
+			b. [Back -> ViewMe]
+		2. RenderMeConfig (ViewMeConfig):
+			a. Fixed buttons: Timezone, Notifications.
+			b. Conditional: Control Panel button appended if user DMs any
+			   campaign (via isDMOfAnyCampaign probe over GetPlayerCampaigns).
+			c. Conditional: Admin Panel (danger) appended if user has ScopeMod.
+			d. [Back -> ViewMe]
+
+	Notes:
+		- Conditional buttons mean the row width varies (2-4 buttons). Always
+		  fits Discord's 5-per-row limit because at most this adds 2 conditionals.
+		- isDMOfAnyCampaign swallows errors as "false" to fail-closed, because a glitchy
+		  probe shouldn't expose DM-only UI to non-DMs.
+*/
+
+/*
 RenderMeCampaigns renders the Campaigns sub-view of the /me hub.
 
 Buttons: My Campaigns (grey) | New Campaign (green) | Browse (grey) | Back -> ViewMe

@@ -10,6 +10,19 @@ import (
 )
 
 /*
+	Flow:
+		Triggered from the manage-campaign Settings sub-menu via the "Set Cover" button.
+		1. Button click (manage_setcover:<campaignID>): manageSetCover
+			a. Replies with an ephemeral instructions message pointing the DM
+			   at the /campaignupload slash command.
+			b. [Back -> ViewManageSettings]
+
+	Notes:
+		- The actual upload pipeline lives on /campaignupload (commands/campaign_upload.go);
+		  this file is purely a signpost so DMs discover the command from inside the menu.
+*/
+
+/*
 manageSetCover is a cosmetic entry point for setting a campaign cover.
 
 Clicking it just surfaces ephemeral instructions pointing at /campaignupload.

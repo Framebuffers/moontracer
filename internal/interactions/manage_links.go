@@ -13,6 +13,25 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		Triggered from the manage-campaign Settings sub-menu via the "Edit Links" button.
+		1. Button click (manage_links:<campaignID>): manageLinksHandler
+			a. Loads the campaign (DM-auth + mutable check).
+			b. Opens a modal pre-filled with current VTTLink and Links (newline-joined).
+			   Two fields: vtt_link (short) and resources (paragraph).
+		2. Modal submit (manage_links_modal:<campaignID>): manageLinksModal
+			a. Re-loads + re-checks DM auth + mutable.
+			b. Writes campaign.VTTLink (trimmed) and campaign.Links (parseLinks splits
+			   newlines, trims, drops blanks).
+			c. db.Update + terminal success reply.
+
+	Notes:
+		- PlayerSheetURL is set elsewhere (campaign_announce.go modal); this file
+		  only manages VTT + free-form resource links.
+		- parseLinks lives here because it's the only call site.
+*/
+
 type manageLinksHandler struct {
 	db *bun.DB
 }

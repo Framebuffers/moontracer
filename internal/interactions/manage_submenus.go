@@ -17,6 +17,43 @@ import (
 	"moontracer/internal/messages"
 )
 
+/*
+	Flow:
+		Triggered from the top-level manage-campaign menu (a per-campaign hub
+		reached from /managecampaigns -> select).
+
+		This file owns the four sub-menus below that hub, plus one action button.
+
+		Each Render* function is invoked by router.ViewManage* nav targets:
+		1. RenderManagePlayersMenu (ViewManagePlayers):
+			a. Buttons: Ban, Invite, Download Tokens.
+			b. [Back -> ViewManageCampaign]
+		2. RenderManageSessionsMenu (ViewManageSessions):
+			a. Button label flips Set/Reschedule based on Schedule.NextSession.
+			b. Buttons: Set/Reschedule Session, Announce.
+			c. [Back -> ViewManageCampaign]
+		3. RenderManageSettingsMenu (ViewManageSettings):
+			a. Buttons: Set Cover, Set Role, Edit Links, Open/Close toggle.
+			b. Second row: Spicy Zone (danger nav).
+			c. [Back -> ViewManageCampaign]
+		4. RenderManageDangerMenu (ViewManageDanger):
+			a. Buttons: Archive, Delete.
+			b. [Back -> ViewManageSettings]
+		5. manageDownloadTokensHandler (manage_download_tokens:<campaignID>):
+			a. DM-auth check (auth.ScopeDM).
+			b. Loads CampaignPlayers with media_id != '' and their Media relation.
+			c. Opens each file from disk and replies with all attached at once,
+			   deferred-cleanup via handles slice + defer.
+			d. Empty state -> ManageDownloadTokensNone terminal reply.
+
+	Notes:
+		- renderManageSubAuth centralizes the load-campaign + DM-auth + mutable
+		  triple-check used by every sub-menu render. Returns (campaign, false)
+		  and writes the error reply on any failure.
+		- Mutable check rejects archived campaigns: archived campaigns can be
+		  viewed but not managed.
+*/
+
 func renderManageSubAuth(s *discordgo.Session, i *discordgo.InteractionCreate, database *bun.DB, campaignID string) (*models.Campaign, bool) {
 	userID := helpers.GetUserID(i)
 	campaign, err := db.GetByID[models.Campaign](database, campaignID)
