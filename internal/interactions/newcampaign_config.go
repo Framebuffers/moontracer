@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"moontracer/internal/commands"
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/interactions/router"
@@ -253,6 +254,10 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 		},
 	}
 
+	players, _ := models.GetCampaignPlayers(h.db, c.ID)
+	coverURL := models.CoverURLForCampaign(h.db, c.ID)
+	campaignEmbed := commands.CampaignEmbed(*c, players, coverURL, "")
+
 	msgID := uuid.NewString()
 	for _, staff := range staffMembers {
 		h.dispatcher.Push(dispatch.DirectMessage{
@@ -261,6 +266,7 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 			Target:     staff.ID,
 			Content:    fmt.Sprintf(messages.CampaignApprovalRequestMessage, c.Name, userID),
 			Components: approvalButtons,
+			Embeds:     []*discordgo.MessageEmbed{campaignEmbed},
 		})
 	}
 

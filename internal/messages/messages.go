@@ -19,7 +19,7 @@ package messages
 // Generic
 const (
 	// identifiers
-	BotVersion = "v0.12.4"
+	BotVersion = "v0.12.5"
 )
 const (
 	// user-facing
@@ -958,7 +958,7 @@ const (
 	PlayerSetTokenLabel             = "🐺 Set Token"
 	PlayerTokenSelectPlaceholder    = "Select a token..."
 	PlayerTokenNewHint              = "Use `/newtoken` to create a new one."
-	PlayerTokenAssignLabel          = "Assign to this campaign"
+	PlayerTokenAssignLabel          = "🏰 Assign to a campaign"
 	PlayerTokenAssignSuccess        = "✅ Token assigned to **%s**."
 	PlayerNoTokens                  = "ℹ️ No tokens found. Create one first with `/newtoken`."
 	PlayerLeaveConfirmLabel         = "⬅️ Yes, Leave"
