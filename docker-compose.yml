@@ -25,4 +25,5 @@ services:
 
 networks:
   web_proxy:
-    external: true
+    name: ${MOONTRACER_PROXY_NETWORK:-moontracer_web_proxy}
+    external: ${MOONTRACER_PROXY_EXTERNAL:-false}
