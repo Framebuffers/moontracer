@@ -23,7 +23,7 @@ import (
 const defaultArchiveDuration = 10080
 
 // standardThreads are the threads auto-created in every approved campaign's channel.
-var standardThreads = []string{"announcements", "sessions", "general"}
+var standardThreads = []string{"announcements", "sessions", "dice-rolls", "general"}
 
 /*
 createCampaignChannels creates a role, a private text channel, and standard threads for a campaign,
@@ -42,7 +42,7 @@ func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Camp
 	}
 
 	role, err := guard.GuildRoleCreate(s, guildID, &discordgo.RoleParams{
-		Name: c.Name,
+		Name: channelName,
 	})
 	if err != nil {
 		log.Printf("campaign_threads: failed to create role for %s: %v", c.ID, err)
