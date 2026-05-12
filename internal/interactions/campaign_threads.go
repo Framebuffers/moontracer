@@ -26,13 +26,34 @@ const defaultArchiveDuration = 10080
 var standardThreads = []string{"announcements", "sessions", "general"}
 
 /*
-createCampaignChannels creates a text channel and standard threads for a campaign,
+createCampaignChannels creates a role, a private text channel, and standard threads for a campaign,
 grouped under a shared "Campaigns" category (found or created).
 
-On success, mutates the campaign in-place with CategoryID, ChannelID, and AnnouncementsThreadID.
+The channel is visible only to members of the campaign role (@everyone is denied ViewChannel).
+The DM is immediately assigned the role.
+
+On success, mutates the campaign in-place with RoleID, CategoryID, ChannelID, and AnnouncementsThreadID.
 Errors are logged but non-fatal — partial setup is better than none.
 */
 func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Campaign) {
+	channelName := c.Tag
+	if channelName == "" {
+		channelName = models.NormalizeTag(c.Name)
+	}
+
+	role, err := guard.GuildRoleCreate(s, guildID, &discordgo.RoleParams{
+		Name: c.Name,
+	})
+	if err != nil {
+		log.Printf("campaign_threads: failed to create role for %s: %v", c.ID, err)
+		return
+	}
+	c.RoleID = role.ID
+
+	if err := guard.GuildMemberRoleAdd(s, guildID, c.DungeonMaster, role.ID); err != nil {
+		log.Printf("campaign_threads: failed to assign role to DM for %s: %v", c.ID, err)
+	}
+
 	categoryID, err := findOrCreateCampaignsCategory(s, guildID)
 	if err != nil {
 		log.Printf("campaign_threads: failed to resolve campaigns category: %v", err)
@@ -40,14 +61,23 @@ func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Camp
 	}
 	c.CategoryID = categoryID
 
-	channelName := c.Tag
-	if channelName == "" {
-		channelName = models.NormalizeTag(c.Name)
-	}
 	ch, err := guard.GuildChannelCreateComplex(s, guildID, discordgo.GuildChannelCreateData{
 		Name:     channelName,
 		Type:     discordgo.ChannelTypeGuildText,
 		ParentID: categoryID,
+		PermissionOverwrites: []*discordgo.PermissionOverwrite{
+			{
+				// Deny @everyone view access (everyone role ID == guild ID in Discord).
+				ID:   guildID,
+				Type: discordgo.PermissionOverwriteTypeRole,
+				Deny: discordgo.PermissionViewChannel,
+			},
+			{
+				ID:    role.ID,
+				Type:  discordgo.PermissionOverwriteTypeRole,
+				Allow: discordgo.PermissionViewChannel,
+			},
+		},
 	})
 	if err != nil {
 		log.Printf("campaign_threads: failed to create channel for %s: %v", c.ID, err)
