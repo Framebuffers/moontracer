@@ -3,6 +3,7 @@
 
 # Go
 /moontracer
+/cmd/moontracer/moontracer
 /bin/
 
 # Secrets (CRITICAL - never commit)

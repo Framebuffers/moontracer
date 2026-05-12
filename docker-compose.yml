@@ -1,16 +1,14 @@
+# The built-in media server has no rate limiting. Front this with a reverse
+# proxy (Caddy/Traefik/nginx) for TLS termination and rate limiting in prod.
+
 services:
   moontracer:
     build: .
     image: moontracer:latest
     container_name: moontracer
     restart: unless-stopped
-      #secrets:
-        #- discord_bot_token
-        #- discord_guild_id
     environment:
-      API_SECRET_KEY: ${API_SECRET_KEY}
       DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
-      DISCORD_PUBLIC_KEY: ${DISCORD_PUBLIC_KEY}
       VERBOSE: ${VERBOSE}
       SAFE_MODE: ${SAFE_MODE}
       DEV_MODE: ${DEV_MODE}
@@ -21,17 +19,10 @@ services:
       MEDIA_BASE_URL: ${MEDIA_BASE_URL}
       MEDIA_PORT: ${MEDIA_PORT}
     volumes:
-      - /var/lib/moontracer/media-host/moontracer:/app/data
+      - ${MOONTRACER_DATA_DIR:-./data}:/app/data
     networks:
       - web_proxy
 
 networks:
   web_proxy:
     external: true
-
-      #secrets:
-      #discord_bot_token:
-      #file: /var/lib/moontracer/media-host/moontracer/secrets/discord_bot_token.txt
-      #  discord_guild_id:
-      #file: /var/lib/moontracer/media-host/moontracer/secrets/discord_guild_id.txt
-
