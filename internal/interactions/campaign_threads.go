@@ -77,6 +77,12 @@ func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Camp
 				Type:  discordgo.PermissionOverwriteTypeRole,
 				Allow: discordgo.PermissionViewChannel,
 			},
+			{
+				// Bot must explicitly retain access to the channel it just made so it can create threads.
+				ID:    s.State.User.ID,
+				Type:  discordgo.PermissionOverwriteTypeMember,
+				Allow: discordgo.PermissionViewChannel | discordgo.PermissionManageThreads | discordgo.PermissionSendMessages,
+			},
 		},
 	})
 	if err != nil {
