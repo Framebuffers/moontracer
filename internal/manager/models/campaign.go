@@ -157,6 +157,9 @@ func (s CampaignSchedule) HasSchedule() bool {
 "Curse of Strahd" -> "curse-of-strahd"
 */
 func NormalizeTag(name string) string {
+	if idx := strings.IndexByte(name, ':'); idx != -1 {
+		name = name[:idx]
+	}
 	tag := strings.ToLower(strings.TrimSpace(name))
 
 	// Replace non-alphanumeric characters with hyphens.

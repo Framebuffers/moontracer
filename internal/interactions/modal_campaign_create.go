@@ -110,15 +110,14 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.NewCampaignConfigMessage, created.Name))
-	_, err = s.FollowupMessageCreate(i.Interaction, true, &discordgo.WebhookParams{
-		Content:    fmt.Sprintf(messages.NewCampaignConfigHeader, created.Name),
-		Components: newCampaignConfigComponents(created.ID),
-		Flags:      discordgo.MessageFlagsEphemeral,
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content:    fmt.Sprintf(messages.NewCampaignConfigMessage, created.Name),
+			Components: newCampaignConfigComponents(created.ID),
+			Flags:      discordgo.MessageFlagsEphemeral,
+		},
 	})
-	if err != nil {
-		log.Printf("modal_campaign_create: failed to send config followup: %v", err)
-	}
 }
 
 // uniqueTag returns base unchanged if no campaign owns it; otherwise appends -2, -3, ...

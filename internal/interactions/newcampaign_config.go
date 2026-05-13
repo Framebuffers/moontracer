@@ -229,6 +229,11 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 		return
 	}
 
+	if c.Game.Edition == "" {
+		helpers.RespondUpdateTerminal(s, i, messages.NewCampaignMissingSystemMessage)
+		return
+	}
+
 	staffMembers, err := db.GetStaff(h.db)
 	if err != nil {
 		log.Printf("newcampaign_submit: failed to get staff: %v", err)

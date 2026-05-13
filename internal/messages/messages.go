@@ -734,11 +734,7 @@ const (
 	NewCampaignCancelLabel       = "❌ Cancel"
 	NewCampaignSubmittedMessage  = "✅ Campaign **%s** has been submitted for approval!"
 	NewCampaignCancelledMessage  = "ℹ️ Campaign creation cancelled."
-
-	// Headers shown above the configuration dropdowns
-	NewCampaignConfigHeader       = "Configure **%s**:"
-	NewCampaignConfigSystemHeader = "Configure **%s** — system: **%s**"
-	NewCampaignConfigFormatHeader = "Configure **%s** — format: **%s**"
+	NewCampaignMissingSystemMessage = "⚠️ Please select a game system before submitting."
 
 	// Book dropdown option labels
 	NewCampaignBookLabel5e    = "D&D 5e"
