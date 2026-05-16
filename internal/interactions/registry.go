@@ -101,6 +101,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// New campaign config (post-modal)
 		&newCampaignBookHandler{db: db},
 		&newCampaignFormatHandler{db: db},
+		&newCampaignFrequencyHandler{db: db},
 		&newCampaignSubmitHandler{db: db, dispatcher: d},
 		&newCampaignCancelHandler{db: db},
 
@@ -166,6 +167,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, dataDir, mediaBaseURL string) []ModalHandler {
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
+		&newCampaignScheduleModal{db: db, dispatcher: d},
 		&campaignDenyModal{db: db, dispatcher: d},
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},

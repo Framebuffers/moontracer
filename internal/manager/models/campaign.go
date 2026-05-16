@@ -196,6 +196,7 @@ const (
 	Quarterly CampaignFrequency = "quarterly"
 	Yearly    CampaignFrequency = "yearly"
 	Westmarch CampaignFrequency = "westmarch"
+	Irregular CampaignFrequency = "irregular"
 )
 
 func (c *Campaign) CreateCampaign(

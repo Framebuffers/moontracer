@@ -7,6 +7,7 @@ import (
 	"math"
 	"moontracer/internal/interactions/helpers"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
@@ -37,7 +38,7 @@ import (
 */
 
 /*
-newCampaignConfigComponents builds the book/format dropdowns + submit/cancel buttons.
+newCampaignConfigComponents builds the book/format/frequency dropdowns + submit/cancel buttons.
 
 Reused by the modal create handler and any re-render path.
 */
@@ -64,9 +65,21 @@ func newCampaignConfigComponents(campaignID string) []discordgo.MessageComponent
 		},
 	}
 
+	freqSelect := discordgo.SelectMenu{
+		CustomID:    fmt.Sprintf("%s:%s", messages.NewCampaignFreqPrefix, campaignID),
+		Placeholder: messages.NewCampaignFreqPlaceholder,
+		Options: []discordgo.SelectMenuOption{
+			{Label: messages.NewCampaignFreqLabelWeekly, Value: string(models.Weekly)},
+			{Label: messages.NewCampaignFreqLabelBiweekly, Value: string(models.Biweekly)},
+			{Label: messages.NewCampaignFreqLabelMonthly, Value: string(models.Monthly)},
+			{Label: messages.NewCampaignFreqLabelIrregular, Value: string(models.Irregular)},
+		},
+	}
+
 	return []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{bookSelect}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{formatSelect}},
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{freqSelect}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
 				Label:    messages.NewCampaignSubmitLabel,
@@ -205,7 +218,46 @@ func (h *newCampaignFormatHandler) HandleComponents(s *discordgo.Session, i *dis
 }
 
 /*
-	Submit.
+	Frequency Select
+*/
+
+type newCampaignFrequencyHandler struct {
+	db *bun.DB
+}
+
+func (h *newCampaignFrequencyHandler) CustomIDPrefix() string { return messages.NewCampaignFreqPrefix }
+
+func (h *newCampaignFrequencyHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	campaignID, ok := parseConfigCustomID(i.MessageComponentData().CustomID)
+	if !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		return
+	}
+
+	c, err := loadCampaignForConfig(h.db, campaignID, helpers.GetUserID(i))
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	c.Schedule.Frequency = models.CampaignFrequency(values[0])
+	if err := db.Update(h.db, c); err != nil {
+		log.Printf("newcampaign_freq: update failed: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
+	})
+}
+
+/*
+	Submit: opens the schedule modal (date + time) before sending approval DMs.
 */
 
 type newCampaignSubmitHandler struct {
@@ -234,9 +286,131 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 		return
 	}
 
+	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
+	if err != nil {
+		log.Printf("newcampaign_submit: load settings for %s: %v", userID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	loc := settings.Location()
+	timeLabel := fmt.Sprintf(messages.NewCampaignScheduleTimeLabelFmt, helpers.TZLabel(loc))
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID: fmt.Sprintf("%s:%s", messages.NewCampaignScheduleModalID, campaignID),
+			Title:    messages.NewCampaignScheduleModalTitle,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignScheduleDateFieldID,
+						Label:       messages.NewCampaignScheduleDateLabel,
+						Style:       discordgo.TextInputShort,
+						Required:    false,
+						Placeholder: messages.NewCampaignScheduleDatePlaceholder,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignScheduleTimeFieldID,
+						Label:       timeLabel,
+						Style:       discordgo.TextInputShort,
+						Required:    false,
+						Placeholder: messages.NewCampaignScheduleTimePlaceholder,
+					},
+				}},
+			},
+		},
+	})
+}
+
+/*
+	Schedule Modal: parses optional date/time, saves to Campaign.Schedule.NextSession,
+	then sends approval DMs to staff.
+*/
+
+type newCampaignScheduleModal struct {
+	db         *bun.DB
+	dispatcher *dispatch.Dispatcher
+}
+
+func (h *newCampaignScheduleModal) CustomIDPrefix() string {
+	return messages.NewCampaignScheduleModalID
+}
+
+func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 2)
+	if len(parts) < 2 || parts[1] == "" {
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+	campaignID := parts[1]
+	userID := helpers.GetUserID(i)
+
+	c, err := loadCampaignForConfig(h.db, campaignID, userID)
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
+	if err != nil {
+		log.Printf("newcampaign_schedule: load settings for %s: %v", userID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	loc := settings.Location()
+
+	var dateStr, timeStr string
+	for _, row := range i.ModalSubmitData().Components {
+		for _, comp := range row.(*discordgo.ActionsRow).Components {
+			input := comp.(*discordgo.TextInput)
+			switch input.CustomID {
+			case messages.NewCampaignScheduleDateFieldID:
+				dateStr = strings.TrimSpace(input.Value)
+			case messages.NewCampaignScheduleTimeFieldID:
+				timeStr = strings.TrimSpace(input.Value)
+			}
+		}
+	}
+
+	if dateStr != "" || timeStr != "" {
+		if dateStr == "" || timeStr == "" {
+			msg := messages.NewCampaignScheduleInvalidDate
+			if dateStr != "" {
+				msg = messages.NewCampaignScheduleInvalidTime
+			}
+			helpers.RespondUpdateTerminal(s, i, msg)
+			return
+		}
+		if _, err := time.Parse(messages.DateInputFormat, dateStr); err != nil {
+			helpers.RespondUpdateTerminal(s, i, messages.NewCampaignScheduleInvalidDate)
+			return
+		}
+		if !isValidTime(timeStr) {
+			helpers.RespondUpdateTerminal(s, i, messages.NewCampaignScheduleInvalidTime)
+			return
+		}
+		when, err := time.ParseInLocation(messages.DateTimeInputFormat, dateStr+" "+timeStr, loc)
+		if err != nil {
+			helpers.RespondUpdateTerminal(s, i, messages.NewCampaignScheduleInvalidTime)
+			return
+		}
+		if !when.After(time.Now().UTC()) {
+			helpers.RespondUpdateTerminal(s, i, messages.NewCampaignScheduleInPast)
+			return
+		}
+		c.Schedule.NextSession = when.UTC()
+		if err := db.Update(h.db, c); err != nil {
+			log.Printf("newcampaign_schedule: update failed: %v", err)
+			helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+			return
+		}
+	}
+
 	staffMembers, err := db.GetStaff(h.db)
 	if err != nil {
-		log.Printf("newcampaign_submit: failed to get staff: %v", err)
+		log.Printf("newcampaign_schedule: failed to get staff: %v", err)
 		helpers.RespondUpdateTerminal(s, i, messages.CampaignStaffNotifyFailureMessage)
 		return
 	}
@@ -275,8 +449,15 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 		})
 	}
 
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.NewCampaignSubmittedMessage, c.Name), nil, []discordgo.MessageComponent{
-		helpers.BackRow(router.ViewManage),
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf(messages.NewCampaignSubmittedMessage, c.Name),
+			Components: []discordgo.MessageComponent{
+				helpers.BackRow(router.ViewManage),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
 	})
 }
 

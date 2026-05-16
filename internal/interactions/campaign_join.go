@@ -13,6 +13,7 @@ import (
 	"moontracer/internal/db"
 	"moontracer/internal/dispatch"
 	"moontracer/internal/guard"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/messages"
 )
@@ -174,5 +175,10 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.PlayerJoinedCampaignMessage, campaign.Name))
+	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.PlayerJoinedCampaignMessage, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			router.NavButton(messages.BrowseMoreLabel, discordgo.SecondaryButton, router.ViewCampaignsBrowse),
+			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
+		}},
+	})
 }

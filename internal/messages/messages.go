@@ -720,27 +720,52 @@ const (
 // New campaign config (post-modal dropdowns)
 const (
 	// identifiers
-	NewCampaignBookPrefix   = "newcampaign_book"
-	NewCampaignFormatPrefix = "newcampaign_format"
-	NewCampaignSubmitPrefix = "newcampaign_submit"
-	NewCampaignCancelPrefix = "newcampaign_cancel"
+	NewCampaignBookPrefix      = "newcampaign_book"
+	NewCampaignFormatPrefix    = "newcampaign_format"
+	NewCampaignFreqPrefix      = "newcampaign_freq"
+	NewCampaignSubmitPrefix    = "newcampaign_submit"
+	NewCampaignCancelPrefix    = "newcampaign_cancel"
+	NewCampaignScheduleModalID = "modal_newcampaign_schedule"
+
+	NewCampaignScheduleDateFieldID = "newcampaign_sched_date"
+	NewCampaignScheduleTimeFieldID = "newcampaign_sched_time"
 )
 const (
 	// user-facing
-	NewCampaignBookPlaceholder   = "Select a game system..."
+	NewCampaignBookPlaceholder  = "Select a game system..."
 	NewCampaignFormatPlaceholder = "Select a format..."
-	NewCampaignConfigMessage     = "ℹ️ Campaign **%s** created (pending setup).\n\nSelect a game system and format, then submit for approval. You can set a cover image and links from the campaign settings after approval."
-	NewCampaignSubmitLabel       = "✅ Submit for Approval"
-	NewCampaignCancelLabel       = "❌ Cancel"
-	NewCampaignSubmittedMessage  = "✅ Campaign **%s** has been submitted for approval!"
-	NewCampaignCancelledMessage  = "ℹ️ Campaign creation cancelled."
+	NewCampaignFreqPlaceholder  = "Select a schedule frequency..."
+	NewCampaignConfigMessage    = "ℹ️ Campaign **%s** created (pending setup).\n\nSelect a game system, format, and frequency, then submit for approval. You'll set the first session date in the next step."
+	NewCampaignSubmitLabel      = "✅ Submit for Approval"
+	NewCampaignCancelLabel      = "❌ Cancel"
+	NewCampaignSubmittedMessage = "✅ Campaign **%s** has been submitted for approval!"
+	NewCampaignCancelledMessage = "ℹ️ Campaign creation cancelled."
 	NewCampaignMissingConfigMessage = "⚠️ Please select a game system and format before submitting."
+
+	NewCampaignScheduleModalTitle       = "📅 When's your first session?"
+	NewCampaignScheduleDateLabel        = "Date (YYYY-MM-DD)"
+	NewCampaignScheduleTimeLabelFmt     = "Time (%s)"
+	NewCampaignScheduleDatePlaceholder  = "e.g. 2026-06-14"
+	NewCampaignScheduleTimePlaceholder  = "e.g. 19:00"
+	NewCampaignScheduleSkipHint        = "Leave blank to set a session later from campaign settings."
+	NewCampaignScheduleInvalidDate     = "⚠️ Invalid date format. Use YYYY-MM-DD (e.g. 2026-06-14)."
+	NewCampaignScheduleInvalidTime     = "⚠️ Invalid time format. Use HH:MM (e.g. 19:00)."
+	NewCampaignScheduleInPast          = "⚠️ That date/time is in the past. Please pick a future date."
 
 	// Book dropdown option labels
 	NewCampaignBookLabel5e    = "D&D 5e"
 	NewCampaignBookLabel55e   = "D&D 5.5e (2024)"
 	NewCampaignBookLabelPF2e  = "Pathfinder 2e"
 	NewCampaignBookLabelOther = "Other / Homebrew"
+
+	// Frequency dropdown option labels
+	NewCampaignFreqLabelWeekly    = "Weekly"
+	NewCampaignFreqLabelBiweekly  = "Bi-weekly"
+	NewCampaignFreqLabelMonthly   = "Monthly"
+	NewCampaignFreqLabelIrregular = "Irregular / As-needed"
+
+	// Browse more after joining
+	BrowseMoreLabel = "🔍 Browse more campaigns"
 )
 
 // Campaign Modal (all user-facing)
