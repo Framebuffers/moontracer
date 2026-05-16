@@ -253,5 +253,5 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 		Content: fmt.Sprintf(messages.CampaignDeniedDMMessage, campaign.Name, reason),
 	})
 
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.CampaignDeniedMessage, campaign.Name))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.CampaignDeniedStatusMessage, campaign.Name, reason))
 }
