@@ -119,7 +119,7 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
 	if err != nil {
 		log.Printf("new_session_modal: load settings %s: %v", userID, err)
-		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	loc := settings.Location()
@@ -140,16 +140,16 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	}
 
 	if _, err := time.Parse(messages.DateInputFormat, dateStr); err != nil {
-		helpers.RespondUpdateTerminal(s, i, messages.NewCampaignScheduleInvalidDate)
+		helpers.Respond(s, i, messages.NewCampaignScheduleInvalidDate)
 		return
 	}
 	if !isValidTime(timeStr) {
-		helpers.RespondUpdateTerminal(s, i, messages.NewCampaignScheduleInvalidTime)
+		helpers.Respond(s, i, messages.NewCampaignScheduleInvalidTime)
 		return
 	}
 	when, err := time.ParseInLocation(messages.DateTimeInputFormat, dateStr+" "+timeStr, loc)
 	if err != nil || !when.After(time.Now().UTC()) {
-		helpers.RespondUpdateTerminal(s, i, messages.NewCampaignScheduleInPast)
+		helpers.Respond(s, i, messages.NewCampaignScheduleInPast)
 		return
 	}
 	when = when.UTC()
@@ -157,7 +157,7 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	session := models.NewSession(campaignID, when, notes, 0)
 	if _, err := h.db.NewInsert().Model(session).Exec(context.Background()); err != nil {
 		log.Printf("new_session_modal: insert session for %s: %v", campaignID, err)
-		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -171,7 +171,7 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 		channelID = campaign.ChannelID
 	}
 	if channelID == "" {
-		helpers.RespondUpdateTerminal(s, i, messages.NewSessionNoChannel)
+		helpers.Respond(s, i, messages.NewSessionNoChannel)
 		return
 	}
 
@@ -181,7 +181,7 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	})
 	if err != nil {
 		log.Printf("new_session_modal: post to channel %s: %v", channelID, err)
-		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		helpers.Respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
@@ -244,8 +244,7 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	}
 	h.sched.ScheduleSession(guildID, session)
 
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.NewSessionAnnouncedFmt, campaign.Name, sent),
-		[]*discordgo.MessageEmbed{}, nil)
+	helpers.Respond(s, i, fmt.Sprintf(messages.NewSessionAnnouncedFmt, campaign.Name, sent))
 }
 
 /*
