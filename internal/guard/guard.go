@@ -144,3 +144,12 @@ func ChannelMessageSend(s *discordgo.Session, channelID, content string) (*disco
 	}
 	return s.ChannelMessageSend(channelID, content)
 }
+
+// ChannelMessageSendComplex sends a rich message (embeds, components) to a channel, or logs in safe mode.
+func ChannelMessageSendComplex(s *discordgo.Session, channelID string, data *discordgo.MessageSend) (*discordgo.Message, error) {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would send complex message to channel %s", channelID)
+		return &discordgo.Message{ID: "safe-mode-message"}, nil
+	}
+	return s.ChannelMessageSendComplex(channelID, data)
+}

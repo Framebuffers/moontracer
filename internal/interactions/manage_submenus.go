@@ -105,27 +105,19 @@ func RenderManagePlayersMenu(s *discordgo.Session, i *discordgo.InteractionCreat
 	})
 }
 
-// RenderManageSessionsMenu renders the Sessions sub-menu (Set/Reschedule, Announce).
+// RenderManageSessionsMenu renders the Sessions sub-menu (New Session).
 func RenderManageSessionsMenu(s *discordgo.Session, i *discordgo.InteractionCreate, database *bun.DB, campaignID string) {
 	campaign, ok := renderManageSubAuth(s, i, database, campaignID)
 	if !ok {
 		return
 	}
-	sessionLabel := messages.ManageSetSessionLabel
-	if !campaign.Schedule.NextSession.IsZero() {
-		sessionLabel = messages.ManageRescheduleSessionLabel
-	}
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageCampaignHeader, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+	_ = campaign // loaded for auth; not needed for the static menu
+	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageCampaignHeader, "Sessions"), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
-				Label:    sessionLabel,
-				Style:    discordgo.SecondaryButton,
-				CustomID: fmt.Sprintf("%s:%s", messages.ManageSetSessionPrefix, campaignID),
-			},
-			discordgo.Button{
-				Label:    messages.ManageAnnounceLabel,
+				Label:    messages.ManageNewSessionLabel,
 				Style:    discordgo.SuccessButton,
-				CustomID: fmt.Sprintf("manage_announce:%s", campaignID),
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageNewSessionPrefix, campaignID),
 			},
 		}},
 		helpers.BackRow(router.ViewManageCampaign, campaignID),

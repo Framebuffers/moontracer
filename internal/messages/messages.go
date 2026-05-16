@@ -19,7 +19,7 @@ package messages
 // Generic
 const (
 	// identifiers
-	BotVersion = "v0.13.0-RC2"
+	BotVersion = "v0.13.1-RC2"
 )
 const (
 	// user-facing
@@ -933,7 +933,7 @@ const (
 	InviteCampaignFull     = "⚠️ Cannot invite — campaign **%s** is full."
 )
 
-// Session RSVP (buttons on reminder DMs)
+// Session RSVP — legacy (campaign-level, reminder DMs only)
 const (
 	// identifiers
 	RSVPAcceptPrefix  = "rsvp_accept"
@@ -949,6 +949,56 @@ const (
 	RSVPDMNotifyDecline  = "❌ <@%s> won't be coming for **%s**:\n%s."
 	RSVPAlreadyResponded = "ℹ️ You've already responded for this session. If you changed your mind, talk to your DM."
 	RSVPCampaignGone     = "ℹ️ This campaign is no longer active."
+)
+
+// New Session command + per-session RSVP (sessions table)
+const (
+	// identifiers
+	NewSessionCommandName  = "newsession"
+	NewSessionOptionName   = "campaign"
+	NewSessionModalID      = "modal_new_session"
+	NewSessionDateFieldID  = "new_session_date"
+	NewSessionTimeFieldID  = "new_session_time"
+	NewSessionNotesFieldID = "new_session_notes"
+	ManageNewSessionPrefix = "manage_new_session"
+
+	SessionRSVPAcceptPrefix  = "session_rsvp_accept"
+	SessionRSVPDeclinePrefix = "session_rsvp_decline"
+	SessionRSVPConfirmPrefix = "session_rsvp_confirm"
+	SessionRSVPCancelPrefix  = "session_rsvp_cancel"
+)
+const (
+	// user-facing
+	NewSessionCommandDesc      = "Schedule and announce a new session for your campaign."
+	NewSessionOptionDesc       = "Campaign to schedule a session for"
+	NewSessionModalTitle       = "📅 Schedule a New Session"
+	NewSessionNotesLabel       = "What to expect (optional)"
+	NewSessionNotesPlaceholder = "e.g. Picking up from last time — don't forget your character sheet!"
+	ManageNewSessionLabel      = "📅 New Session"
+
+	SessionEmbedGoingFmt = "✅ Going: %d  ·  ❌ Not Going: %d"
+
+	SessionRSVPAcceptLabel  = "✅ Going"
+	SessionRSVPDeclineLabel = "❌ Not Going"
+
+	SessionRSVPAcceptedMsg   = "✅ You're in! The DM has been notified."
+	SessionRSVPDeclinedMsg   = "❌ Can't make it — the DM has been notified."
+	SessionRSVPWaitlistedMsg = "⏳ Session is full — you're on the waitlist. The DM will confirm the final roster."
+	SessionRSVPConflictFmt   = "⚠️ You already have a session at this time: **%s** on %s.\nConfirm anyway?"
+	SessionRSVPConfirmLabel  = "Confirm anyway"
+	SessionRSVPCancelLabel   = "Cancel"
+	SessionRSVPAlreadySet    = "ℹ️ You've already responded to this session."
+	SessionRSVPNotMember     = "⚠️ Join this campaign before RSVPing to its sessions."
+	SessionRSVPGone          = "ℹ️ This session is no longer active."
+
+	SessionRSVPDMNotifyAccept   = "✅ <@%s> is going to **%s** · %s"
+	SessionRSVPDMNotifyDecline  = "❌ <@%s> can't make it for **%s** · %s"
+	SessionRSVPDMNotifyWaitlist = "⏳ <@%s> is on the waitlist for **%s** · %s (session full)"
+
+	NewSessionAnnouncedFmt    = "✅ Session for **%s** announced — %d member(s) notified."
+	NewSessionNoChannel       = "⚠️ This campaign has no channel. Set one up in campaign settings first."
+	NewSessionDMContentFmt    = "📅 **%s** — New Session!\n<t:%d:F> · <t:%d:R>%s"
+	SessionReminderContentFmt = "⏰ Reminder: **%s** starts in ~1 hour!\n<t:%d:F>%s"
 )
 
 // Player campaign card (player self-service)

@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -99,6 +100,81 @@ func fireReminder(s *Scheduler, guildID, campaignID string) {
 
 	log.Printf("scheduler: fired reminder for %s (%s, guild %s) — %d DM(s) queued",
 		campaign.Name, campaignID, guildID, sent)
+}
+
+// fireSessionReminder sends RSVP reminder DMs for a session-table session.
+func fireSessionReminder(s *Scheduler, guildID, sessionID string) {
+	gdb, err := s.guildDBM.GetOrCreate(guildID)
+	if err != nil {
+		log.Printf("scheduler: session fire: get db for guild %s: %v", guildID, err)
+		return
+	}
+
+	session := &models.Session{}
+	if err := gdb.NewSelect().Model(session).Where("id = ?", sessionID).Scan(context.Background()); err != nil {
+		log.Printf("scheduler: session fire: load session %s: %v", sessionID, err)
+		return
+	}
+	if session.AlertSent || session.Status != models.SessionUpcoming || !session.ScheduledAt.After(time.Now().UTC()) {
+		return
+	}
+
+	session.AlertSent = true
+	if _, err := gdb.NewUpdate().Model(session).Column("alert_sent").WherePK().Exec(context.Background()); err != nil {
+		log.Printf("scheduler: session fire: mark alert_sent for %s: %v", sessionID, err)
+		return
+	}
+
+	campaign, err := db.GetByID[models.Campaign](gdb, session.CampaignID)
+	if err != nil {
+		log.Printf("scheduler: session fire: load campaign %s: %v", session.CampaignID, err)
+		return
+	}
+
+	players, err := models.GetCampaignPlayers(gdb, session.CampaignID)
+	if err != nil {
+		log.Printf("scheduler: session fire: load players for campaign %s: %v", session.CampaignID, err)
+		return
+	}
+
+	sent := 0
+	for _, p := range players {
+		if p.Status != models.StatusActive && p.Status != models.StatusPending && p.Status != models.StatusHiatus {
+			continue
+		}
+		settings, err := models.GetOrCreatePlayerSettings(gdb, p.PlayerID)
+		if err != nil || !settings.NotifySessionRemind {
+			continue
+		}
+		displayTime := helpers.FormatInLocation(session.ScheduledAt, messages.SessionTimeFormat, settings.Location())
+		content := fmt.Sprintf(messages.SessionReminderContentFmt,
+			campaign.Name,
+			session.ScheduledAt.Unix(),
+			formatReminderLinks(campaign, p.SheetURL),
+		)
+		_ = displayTime // shown via Discord <t:> timestamp in content
+		s.dispatcher.Push(dispatch.DirectMessage{
+			ID:     fmt.Sprintf("session-reminder:%s:%s", sessionID, p.PlayerID),
+			Target: p.PlayerID,
+			Content: content,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{
+						Label:    messages.SessionRSVPAcceptLabel,
+						Style:    discordgo.SuccessButton,
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.SessionRSVPAcceptPrefix, guildID, sessionID),
+					},
+					discordgo.Button{
+						Label:    messages.SessionRSVPDeclineLabel,
+						Style:    discordgo.DangerButton,
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.SessionRSVPDeclinePrefix, guildID, sessionID),
+					},
+				}},
+			},
+		})
+		sent++
+	}
+	log.Printf("scheduler: fired session reminder for %s (guild %s) — %d DM(s) queued", sessionID, guildID, sent)
 }
 
 func formatReminderLinks(c *models.Campaign, sheetURL string) string {

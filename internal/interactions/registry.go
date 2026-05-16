@@ -98,6 +98,13 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// Quick registration button (shown on all "not registered" surfaces).
 		&quickRegisterHandler{db: db},
 
+		// Session announce + RSVP
+		&manageNewSessionButton{db: db},
+		&sessionRSVPAcceptHandler{db: db, dispatcher: d},
+		&sessionRSVPDeclineHandler{db: db, dispatcher: d},
+		&sessionRSVPConfirmHandler{db: db, dispatcher: d},
+		&sessionRSVPCancelHandler{},
+
 		// New campaign config (post-modal)
 		&newCampaignBookHandler{db: db},
 		&newCampaignFormatHandler{db: db},
@@ -168,6 +175,7 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, d
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
 		&newCampaignScheduleModal{db: db, dispatcher: d},
+		&newSessionModal{db: db, dispatcher: d, sched: sched},
 		&campaignDenyModal{db: db, dispatcher: d},
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},
