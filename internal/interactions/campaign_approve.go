@@ -1,10 +1,10 @@
 package interactions
 
 import (
-	"moontracer/internal/interactions/helpers"
 	"context"
 	"fmt"
 	"log"
+	"moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -64,6 +64,10 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		return
 	}
 
+	/*
+		Auth + DB load are fast; handle errors here before the defer so we can still
+		call InteractionRespond without conflicting with a deferred response.
+	*/
 	campaign, ok := helpers.LoadModCampaign(s, i, c.db, campaignID)
 	if !ok {
 		return
@@ -76,26 +80,37 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		return
 	}
 
+	/*
+		Defer now: createCampaignChannels makes 6+ sequential Discord API calls
+		and will exceed the 3-second interaction window without a deferred response.
+	*/
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
+	})
+
 	createCampaignChannels(s, guildID, campaign)
 	if err := db.Update(c.db, campaign); err != nil {
 		log.Printf("campaign_approve: failed to save channel IDs for %s: %v", campaignID, err)
 	}
 
-	msgApproved := &dispatch.DirectMessage{
+	var senderID string
+	if i.User != nil {
+		senderID = i.User.ID
+	} else if i.Member != nil {
+		senderID = i.Member.User.ID
+	}
+	c.dispatcher.Push(dispatch.DirectMessage{
 		ID:      campaignID,
-		Sender:  i.User.ID,
+		Sender:  senderID,
 		Target:  campaign.DungeonMaster,
 		Content: fmt.Sprintf(messages.CampaignApprovedDMMessage, campaign.Name),
-	}
+	})
 
-	c.dispatcher.Push(*msgApproved)
-
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseUpdateMessage,
-		Data: &discordgo.InteractionResponseData{
-			Content:    fmt.Sprintf(messages.CampaignApprovedStatusMessage, campaign.Name),
-			Components: []discordgo.MessageComponent{},
-		},
+	content := fmt.Sprintf(messages.CampaignApprovedStatusMessage, campaign.Name)
+	empty := []discordgo.MessageComponent{}
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content:    &content,
+		Components: &empty,
 	})
 }
 

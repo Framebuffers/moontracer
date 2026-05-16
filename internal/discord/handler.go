@@ -31,6 +31,10 @@ import (
 /*
 NewHandler returns a discordgo event handler that resolves the guild's
 database per interaction, then dispatches slash commands, component interactions (buttons), and modal submissions.
+
+NOTE:
+
+	discordgo (at leasy )
 */
 func NewHandler(
 	guildDBM *db.GuildDBManager,
@@ -41,6 +45,13 @@ func NewHandler(
 ) func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 
 	return func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		defer func() {
+			if r := recover(); r != nil {
+				log.Printf("handler: panic recovered: %v", r)
+				respondEphemeral(s, i, "An unexpected error occurred. Please try again.")
+			}
+		}()
+
 		guildID := i.GuildID
 
 		/*

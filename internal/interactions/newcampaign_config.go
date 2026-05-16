@@ -229,8 +229,8 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 		return
 	}
 
-	if c.Game.Edition == "" {
-		helpers.RespondUpdateTerminal(s, i, messages.NewCampaignMissingSystemMessage)
+	if c.Game.Edition == "" || c.Schedule.Frequency == "" {
+		helpers.RespondUpdate(s, i, messages.NewCampaignMissingConfigMessage, []*discordgo.MessageEmbed{}, newCampaignConfigComponents(campaignID))
 		return
 	}
 

@@ -81,7 +81,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 	}
 
 	conf := &models.GameConfig{}
-	schedule := &models.CampaignSchedule{Frequency: models.Weekly}
+	schedule := &models.CampaignSchedule{}
 
 	campaign := &models.Campaign{}
 	created, err := campaign.CreateCampaign(
