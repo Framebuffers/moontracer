@@ -54,14 +54,14 @@ func (c *newSessionCommand) Execute(s *discordgo.Session, i *discordgo.Interacti
 		userID = i.User.ID
 	}
 
-	ok, err := auth.Authorize(c.db, userID, auth.ScopeDM, "")
+	ok, err := auth.Authorize(c.db, userID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("newsession: auth check failed: %v", err)
 		respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		respond(s, i, messages.ManageNotAuthorized)
+		respondNotRegistered(s, i)
 		return
 	}
 
