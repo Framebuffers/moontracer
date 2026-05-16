@@ -81,6 +81,25 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
+	// Pending campaigns are awaiting staff approval — only show the danger zone.
+	if !campaign.IsApproved {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseUpdateMessage,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("⏳ **%s** is awaiting staff approval. You can cancel it below.", campaign.Name),
+				Embeds:  []*discordgo.MessageEmbed{},
+				Components: []discordgo.MessageComponent{
+					discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+						router.NavButton(messages.ManageSettingsLabel, discordgo.PrimaryButton, router.ViewManageSettings, campaignID),
+					}},
+					helpers.BackRow(router.ViewManage),
+				},
+				Flags: discordgo.MessageFlagsEphemeral,
+			},
+		})
+		return
+	}
+
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{

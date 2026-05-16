@@ -34,8 +34,8 @@ package interactions
 */
 
 import (
-	"moontracer/internal/interactions/helpers"
 	"fmt"
+	"moontracer/internal/interactions/helpers"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -106,13 +106,46 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 		return
 	}
 
-	selectMenu := BuildPlayerCampaignSelect(dmEntries, messages.ManageSelectPrefix, messages.ManageCampaignsPlaceholder)
+	// Build select including pending campaigns so DMs can enter and delete them.
+	var options []discordgo.SelectMenuOption
+	for _, e := range dmEntries {
+		if e.Campaign == nil || len(options) >= 25 {
+			continue
+		}
+		label := e.Campaign.Name
+		desc := "DM"
+		if !e.Campaign.IsApproved {
+			desc = "Pending approval — enter to cancel"
+		} else if e.Campaign.IsArchived {
+			desc = "Archived"
+		}
+		options = append(options, discordgo.SelectMenuOption{
+			Label:       truncate(label, 100),
+			Value:       e.CampaignID,
+			Description: truncate(desc, 100),
+		})
+	}
+	if len(options) == 0 {
+		options = []discordgo.SelectMenuOption{{Label: "No campaigns", Value: "none", Default: true}}
+	}
+	selectMenu := discordgo.SelectMenu{
+		CustomID:    messages.ManageSelectPrefix,
+		Placeholder: messages.ManageCampaignsPlaceholder,
+		Options:     options,
+	}
 
 	var lines []string
 	for _, e := range dmEntries {
-		if e.Campaign != nil {
-			lines = append(lines, fmt.Sprintf(messages.ManageCampaignListLine, e.Campaign.Name, e.Status))
+		if e.Campaign == nil {
+			continue
 		}
+		status := "Active"
+		if !e.Campaign.IsApproved {
+			status = "Pending"
+		} else if e.Campaign.IsArchived {
+			status = "Archived"
+		}
+		lines = append(lines, fmt.Sprintf(messages.ManageCampaignListLine, e.Campaign.Name, status))
 	}
 	content := messages.ManageCampaignsListHeader + strings.Join(lines, "\n")
 
@@ -128,4 +161,3 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 		}},
 	})
 }
-

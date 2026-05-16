@@ -87,7 +87,18 @@ func Authorize(database *bun.DB, userID string, required Scope, campaignID strin
 		return player.IsMemberOf(campaignID), nil
 
 	case ScopeDM:
-		return player.IsDMOf(campaignID), nil
+		if player.IsDMOf(campaignID) {
+			return true, nil
+		}
+		/*
+			Fallback: check Campaign.DungeonMaster directly.
+			Covers campaigns where the campaign_players row is missing (e.g. legacy data).
+		*/
+		campaign, err := db.GetByID[models.Campaign](database, campaignID)
+		if err != nil {
+			return false, nil
+		}
+		return campaign.DungeonMaster == userID, nil
 
 	case ScopeMod:
 		return player.IsMod(), nil
