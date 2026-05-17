@@ -212,10 +212,8 @@ func (b *Bot) registerCommands(appID string) error {
 	}
 
 	/*
-		When scoped to a single guild, clear any stale global registrations
-		left over from earlier runs. Otherwise Discord keeps serving the old
-		global commands in every server the bot is in, even though we are
-		only registering to the debug guild this run.
+		When scoped to a single guild (dev mode), clear any stale global registrations
+		left over from earlier runs so Discord doesn't serve them in other servers.
 	*/
 	if b.guildID != "" {
 		existing, err := b.session.ApplicationCommands(appID, "")
@@ -232,17 +230,30 @@ func (b *Bot) registerCommands(appID string) error {
 		}
 	}
 
-	for _, cmd := range commands.All(bunDB, b.dispatcher, b.dataDir, b.mediaBaseURL) {
-		created, err := b.session.ApplicationCommandCreate(appID, b.guildID, cmd.Data())
-		if err != nil {
-			return err
-		}
-		b.registered = append(b.registered, created)
-		if b.guildID != "" {
-			log.Printf("bot: registered /%s (guild %s)", created.Name, b.guildID)
-		} else {
-			log.Printf("bot: registered /%s (global)", created.Name)
-		}
+	/*
+		BulkOverwrite atomically replaces all registered commands with the current list.
+		Any command previously registered but absent from All() is automatically removed.
+
+		No manual cleanup needed when a command is retired.
+	*/
+	all := commands.All(bunDB, b.dispatcher, b.dataDir, b.mediaBaseURL)
+	cmdData := make([]*discordgo.ApplicationCommand, len(all))
+	for i, cmd := range all {
+		cmdData[i] = cmd.Data()
+	}
+
+	registered, err := b.session.ApplicationCommandBulkOverwrite(appID, b.guildID, cmdData)
+	if err != nil {
+		return err
+	}
+	b.registered = registered
+
+	scope := "global"
+	if b.guildID != "" {
+		scope = "guild " + b.guildID
+	}
+	for _, cmd := range registered {
+		log.Printf("bot: registered /%s (%s)", cmd.Name, scope)
 	}
 	return nil
 }
