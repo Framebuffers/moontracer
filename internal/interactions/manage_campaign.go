@@ -217,6 +217,7 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		return
 	}
 
+	RetireChannel(s, i.GuildID, campaign)
 	log.Printf("manage_delete_confirm: %s deleted campaign %s (%s)", userID, campaign.Name, campaignID)
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
 }

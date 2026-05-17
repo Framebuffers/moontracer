@@ -10,6 +10,7 @@ package interactions
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
@@ -23,7 +24,15 @@ import (
 const defaultArchiveDuration = 10080
 
 // standardThreads are the threads auto-created in every approved campaign's channel.
-var standardThreads = []string{"announcements", "sessions", "dice-rolls", "general"}
+var standardThreads = []string{"welcome", "announcements", "sessions", "dice-rolls", "general"}
+
+// threadInitMessages is the pinned welcome message sent to each standard thread on creation.
+var threadInitMessages = map[string]string{
+	"announcements": messages.ThreadInitMsgAnnouncements,
+	"sessions":      messages.ThreadInitMsgSessions,
+	"dice-rolls":    messages.ThreadInitMsgDiceRolls,
+	"general":       messages.ThreadInitMsgGeneral,
+}
 
 /*
 EnsureCampaignRole creates the campaign's Discord role (named after the tag) and assigns it
@@ -134,6 +143,30 @@ func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, 
 		if name == "announcements" {
 			c.AnnouncementsThreadID = thread.ID
 		}
+
+		// Resolve init message: welcome uses the campaign name; others use the static map.
+		var initMsg string
+		if name == "welcome" {
+			initMsg = fmt.Sprintf(messages.ThreadInitMsgWelcomeFmt, c.Name)
+		} else if msg, ok := threadInitMessages[name]; ok {
+			initMsg = msg
+		}
+
+		if initMsg != "" {
+			msg, err := guard.ChannelMessageSend(s, thread.ID, initMsg)
+			if err != nil {
+				log.Printf("campaign_threads: send init message to %s: %v", threadName, err)
+				continue
+			}
+			if err := guard.ChannelMessagePin(s, thread.ID, msg.ID); err != nil {
+				log.Printf("campaign_threads: pin init message in %s: %v", threadName, err)
+			}
+			if name == "welcome" {
+				if err := guard.LockThread(s, thread.ID); err != nil {
+					log.Printf("campaign_threads: lock welcome thread %s: %v", threadName, err)
+				}
+			}
+		}
 	}
 }
 
@@ -172,4 +205,63 @@ func findOrCreateCampaignsCategory(s *discordgo.Session, guildID string) (string
 		return "", fmt.Errorf("create campaigns category: %w", err)
 	}
 	return cat.ID, nil
+}
+
+/*
+RetireChannel locks down a campaign's Discord channel when the campaign is archived or deleted.
+
+Permission changes applied to the channel:
+  - @everyone: deny ViewChannel
+  - Campaign role (if set): deny ViewChannel
+  - Mod/admin Discord roles (from ADMIN_ROLE_NAME / MOD_ROLE_NAME env): allow ViewChannel
+
+This makes the channel invisible to regular members while keeping it accessible to staff.
+Errors are logged but non-fatal; the DB operation that triggered retirement already succeeded.
+*/
+func RetireChannel(s *discordgo.Session, guildID string, campaign *models.Campaign) {
+	channelID := campaign.ChannelID
+	if channelID == "" {
+		return
+	}
+
+	// Resolve mod/admin Discord role IDs from env-configured names.
+	adminRoleName := os.Getenv("ADMIN_ROLE_NAME")
+	modRoleName := os.Getenv("MOD_ROLE_NAME")
+
+	var staffRoleIDs []string
+	if adminRoleName != "" || modRoleName != "" {
+		roles, err := s.GuildRoles(guildID)
+		if err != nil {
+			log.Printf("campaign_threads: retire channel %s: fetch roles: %v", channelID, err)
+		} else {
+			for _, r := range roles {
+				if (adminRoleName != "" && strings.EqualFold(r.Name, adminRoleName)) ||
+					(modRoleName != "" && strings.EqualFold(r.Name, modRoleName)) {
+					staffRoleIDs = append(staffRoleIDs, r.ID)
+				}
+			}
+		}
+	}
+
+	// Deny @everyone.
+	if err := guard.ChannelPermissionSet(s, channelID, guildID,
+		discordgo.PermissionOverwriteTypeRole, 0, discordgo.PermissionViewChannel); err != nil {
+		log.Printf("campaign_threads: retire channel %s: deny everyone: %v", channelID, err)
+	}
+
+	// Deny campaign role.
+	if campaign.RoleID != "" {
+		if err := guard.ChannelPermissionSet(s, channelID, campaign.RoleID,
+			discordgo.PermissionOverwriteTypeRole, 0, discordgo.PermissionViewChannel); err != nil {
+			log.Printf("campaign_threads: retire channel %s: deny campaign role: %v", channelID, err)
+		}
+	}
+
+	// Allow staff roles.
+	for _, roleID := range staffRoleIDs {
+		if err := guard.ChannelPermissionSet(s, channelID, roleID,
+			discordgo.PermissionOverwriteTypeRole, discordgo.PermissionViewChannel, 0); err != nil {
+			log.Printf("campaign_threads: retire channel %s: allow staff role %s: %v", channelID, roleID, err)
+		}
+	}
 }

@@ -46,9 +46,9 @@ NOTE:
 */
 const (
 	// input format contracts. changing these breaks modal parsing
-	DateInputFormat     = "2006-01-02"       // YYYY-MM-DD (ISO 8601 date)
+	DateInputFormat     = "02/01/2006"       // DD/MM/YYYY
 	TimeInputFormat     = "15:04"            // HH:MM (24h)
-	DateTimeInputFormat = "2006-01-02 15:04" // combined for ParseInLocation
+	DateTimeInputFormat = "02/01/2006 15:04" // combined for ParseInLocation
 )
 const (
 	// user-facing display formats. swap per locale for localized day/month names
@@ -484,6 +484,16 @@ const (
 // CampaignsCategoryName is the shared Discord category all campaign channels are grouped under.
 const CampaignsCategoryName = "Campaigns"
 
+// Thread initial pinned messages, keyed by standard thread name.
+const (
+	ThreadInitMsgAnnouncements = "📣 Campaign announcements and session news will be posted here."
+	ThreadInitMsgSessions      = "📅 Session schedules and notes will be posted here."
+	ThreadInitMsgDiceRolls     = "🎲 Roll your dice and share your results here!"
+	ThreadInitMsgGeneral       = "💬 General campaign discussion."
+	// ThreadInitMsgWelcomeFmt takes the campaign name as its argument.
+	ThreadInitMsgWelcomeFmt = "🐺 Welcome to **%s**! This is your campaign channel. \nCheck the other threads for announcements, sessions, dice rolls, and general discussion."
+)
+
 // DayOfWeekInput maps accepted day-name inputs (lower-cased) to 0-based weekday index (Mon=0).
 var DayOfWeekInput = map[string]int{
 	"mon": 0, "monday": 0,
@@ -743,12 +753,12 @@ const (
 	NewCampaignMissingConfigMessage = "⚠️ Please select a game system and format before submitting."
 
 	NewCampaignScheduleModalTitle      = "📅 When's your first session?"
-	NewCampaignScheduleDateLabel       = "Date (YYYY-MM-DD)"
+	NewCampaignScheduleDateLabel       = "Date (DD/MM/YYYY)"
 	NewCampaignScheduleTimeLabelFmt    = "Time (%s)"
-	NewCampaignScheduleDatePlaceholder = "e.g. 2026-06-14"
+	NewCampaignScheduleDatePlaceholder = "e.g. 14/06/2026"
 	NewCampaignScheduleTimePlaceholder = "e.g. 19:00"
 	NewCampaignScheduleSkipHint        = "Leave blank to set a session later from campaign settings."
-	NewCampaignScheduleInvalidDate     = "⚠️ Invalid date format. Use YYYY-MM-DD (e.g. 2026-06-14)."
+	NewCampaignScheduleInvalidDate     = "⚠️ Invalid date format. Use DD/MM/YYYY (e.g. 14/06/2026)."
 	NewCampaignScheduleInvalidTime     = "⚠️ Invalid time format. Use HH:MM (e.g. 19:00)."
 	NewCampaignScheduleInPast          = "⚠️ That date/time is in the past. Please pick a future date."
 
@@ -905,11 +915,11 @@ const (
 	ManageSetSessionLabel           = "📅 Set Session"
 	ManageRescheduleSessionLabel    = "⌚ Reschedule"
 	ManageSetSessionModalTitle      = "🏰 Set Next Session"
-	ManageSetSessionDateLabel       = "Date (YYYY-MM-DD)"
-	ManageSetSessionDatePlaceholder = "2026-05-08"
+	ManageSetSessionDateLabel       = "Date (DD/MM/YYYY)"
+	ManageSetSessionDatePlaceholder = "08/05/2026"
 	ManageSetSessionTimeLabel       = "Time UTC (HH:MM, 24h)"
 	ManageSetSessionTimePlaceholder = "19:00"
-	ManageSetSessionInvalidDate     = "⚠️ Invalid date format. Use YYYY-MM-DD."
+	ManageSetSessionInvalidDate     = "⚠️ Invalid date format. Use DD/MM/YYYY."
 	ManageSetSessionInvalidTime     = "⚠️ Invalid time format. Use HH:MM (24h)."
 	ManageSetSessionInPast          = "⚠️ Cannot set a session in the past."
 	ManageSetSessionSuccess         = "✅ Next session for **%s** set to **%s** — %s."
@@ -1000,14 +1010,14 @@ const (
 	NewSessionDMContentFmt    = "📅 **%s** — New Session!\n<t:%d:F> · <t:%d:R>%s"
 	SessionReminderContentFmt = "⏰ Reminder: **%s** starts in ~1 hour!\n<t:%d:F>%s"
 
-	SessionEmbedTitleFmt       = "📅 New Session — %s"
-	SessionEmbedGoingLabel     = "✅ Going"
-	SessionEmbedNotGoingLabel  = "❌ Not Going"
+	SessionEmbedTitleFmt        = "📅 New Session — %s"
+	SessionEmbedGoingLabel      = "✅ Going"
+	SessionEmbedNotGoingLabel   = "❌ Not Going"
 	SessionEmbedWaitlistedLabel = "⏳ Waitlisted"
-	SessionRSVPCancelledMsg    = "ℹ️ RSVP cancelled."
-	SessionRSVPLineEmptyFmt    = "%s (0): —"
-	SessionRSVPLineFmt         = "%s (%d): %s"
-	SessionRSVPLineOverflowFmt = " +%d more"
+	SessionRSVPCancelledMsg     = "ℹ️ RSVP cancelled."
+	SessionRSVPLineEmptyFmt     = "%s (0): —"
+	SessionRSVPLineFmt          = "%s (%d): %s"
+	SessionRSVPLineOverflowFmt  = " +%d more"
 )
 
 // Player campaign card (player self-service)

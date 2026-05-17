@@ -175,7 +175,12 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 		return
 	}
 
+	var roleMention string
+	if campaign.RoleID != "" {
+		roleMention = fmt.Sprintf("<@&%s>", campaign.RoleID)
+	}
 	msg, err := guard.ChannelMessageSendComplex(s, channelID, &discordgo.MessageSend{
+		Content:    roleMention,
 		Embeds:     []*discordgo.MessageEmbed{embed},
 		Components: []discordgo.MessageComponent{rsvpButtons},
 	})

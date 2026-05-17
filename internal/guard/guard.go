@@ -153,3 +153,32 @@ func ChannelMessageSendComplex(s *discordgo.Session, channelID string, data *dis
 	}
 	return s.ChannelMessageSendComplex(channelID, data)
 }
+
+// ChannelMessagePin pins a message in a channel, or logs in safe mode.
+func ChannelMessagePin(s *discordgo.Session, channelID, messageID string) error {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would pin message %s in channel %s", messageID, channelID)
+		return nil
+	}
+	return s.ChannelMessagePin(channelID, messageID)
+}
+
+// LockThread locks a thread so only members with Manage Threads can send messages in it, or logs in safe mode.
+func LockThread(s *discordgo.Session, threadID string) error {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would lock thread %s", threadID)
+		return nil
+	}
+	locked := true
+	_, err := s.ChannelEdit(threadID, &discordgo.ChannelEdit{Locked: &locked})
+	return err
+}
+
+// ChannelPermissionSet sets a permission overwrite on a channel, or logs in safe mode.
+func ChannelPermissionSet(s *discordgo.Session, channelID, targetID string, targetType discordgo.PermissionOverwriteType, allow, deny int64) error {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would set permission on channel %s target %s allow=%d deny=%d", channelID, targetID, allow, deny)
+		return nil
+	}
+	return s.ChannelPermissionSet(channelID, targetID, targetType, allow, deny)
+}

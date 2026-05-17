@@ -6,6 +6,7 @@ import (
 	"math"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -163,11 +164,11 @@ func NormalizeTag(name string) string {
 	}
 	tag := strings.ToLower(strings.TrimSpace(name))
 
-	// Replace non-alphanumeric characters with hyphens.
+	// Replace non-alphanumeric characters with hyphens; allow unicode letters (e.g. ñ, é).
 	var b strings.Builder
 	prevHyphen := false
 	for _, r := range tag {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			b.WriteRune(r)
 			prevHyphen = false
 		} else if !prevHyphen {
