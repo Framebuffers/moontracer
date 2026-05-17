@@ -16,10 +16,20 @@ import (
 )
 
 /*
-nextSessionsCommand shows the invoking player's upcoming sessions as a slash command.
 
-The same data is available via the /me hub -> Next Sessions button.
-This command offers a direct shortcut without navigating the hub.
+Flow:
+ 1. Player types /nextsessions.
+ 2. Bot loads all CampaignPlayer rows for the user, filters to active memberships in approved
+    campaigns with a future NextSession set, and sorts ascending by scheduled time.
+ 3. Responds ephemerally with a formatted list of upcoming sessions in the player's timezone.
+    If none are found, shows NextSessionsNone.
+*/
+
+/*
+nextSessionsCommand shows the invoking player's upcoming sessions directly via slash command.
+
+The same data is also reachable via /me -> Next Sessions button (interactions/next_sessions.go).
+This command provides a direct entry point without navigating the hub first.
 */
 type nextSessionsCommand struct {
 	db *bun.DB

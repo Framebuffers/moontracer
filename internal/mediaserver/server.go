@@ -21,9 +21,12 @@ This server runs in a background goroutine; does not block the Dispatcher or oth
 func Serve(dataDir, addr string) {
 	mux := http.NewServeMux()
 	mux.Handle("/api/v1/cdn/", http.StripPrefix("/api/v1/cdn/", filesOnlyHandler(dataDir)))
+	mux.Handle("/dl/", http.StripPrefix("/dl/", http.HandlerFunc(dlHandler)))
+
+	startSweep()
 
 	go func() {
-		log.Printf("mediaserver: listening on %s: /api/v1/cdn/", addr)
+		log.Printf("mediaserver: listening on %s: /api/v1/cdn/ /dl/", addr)
 		if err := http.ListenAndServe(addr, mux); err != nil {
 			log.Fatalf("mediaserver: %v", err)
 		}

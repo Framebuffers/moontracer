@@ -61,6 +61,11 @@ func main() {
 		mediaBaseURL = "http://localhost:" + mediaPort + "/api/v1/cdn"
 	}
 
+	downloadURL := os.Getenv("MEDIA_DOWNLOAD_URL")
+	if downloadURL == "" {
+		downloadURL = "http://localhost:" + mediaPort
+	}
+	mediaserver.SetDownloadBase(downloadURL)
 	mediaserver.Serve(dbDir, ":"+mediaPort)
 	mediaserver.Probe(":" + mediaPort)
 

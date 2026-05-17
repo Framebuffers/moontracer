@@ -15,12 +15,22 @@ import (
 )
 
 /*
-manageCommand is a shortcut to the campaign management hub.
+Flow (slash command):
+ 1. DM types /manage and starts typing a campaign name.
+ 2. Autocomplete (below) filters to their active, approved, non-archived DM campaigns.
+ 3. DM selects a campaign; bot responds with the management hub (Players / Sessions / Settings rows).
+ 4. All subsequent button interactions are handled by the existing manage_* handlers in the interactions package
 
-Flow:
- 1. DM types /manage and selects a campaign via autocomplete (only their non-archived DM campaigns appear).
- 2. Bot opens the campaign management menu directly, without needing the /me hub as a waypoint.
+Flow (autocomplete):
+ 1. Queries CampaignPlayer rows where role = DM for the invoking user.
+ 2. Filters to approved, non-archived campaigns matching the current search string.
+ 3. Returns up to 25 choices (name -> campaign ID).
 */
+
+/*
+manageCommand opens the campaign management hub for one of the DM's campaigns.
+*/
+
 type manageCommand struct {
 	db *bun.DB
 }

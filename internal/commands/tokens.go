@@ -13,15 +13,22 @@ import (
 )
 
 /*
+Flow:
+ 1. Player types /tokens.
+ 2. Bot queries their Media rows (KindTokenPlayer), most-recent-first, up to 10.
+ 3. If none exist: ephemeral empty-state message with a Home button.
+ 4. Otherwise: ephemeral response with one embed per token (title + image) and a
+    select menu (token_gallery_select) below for managing individual tokens.
+ 5. All subsequent select / button interactions are handled by the existing
+    token gallery handlers in interactions/player_tokens.go.
+*/
+
+/*
 tokensCommand opens the player's token gallery directly via slash command.
 
-Mirrors the token gallery rendered by the /me hub -> Tokens button
-(interactions/player_tokens.go RenderMeTokens), but uses
-InteractionResponseChannelMessageWithSource instead of UpdateMessage so it
-works as a standalone command entry point.
-
-The select menu and all subsequent button interactions are handled
-by the existing token gallery handlers.
+Mirrors the gallery rendered by the /me hub -> Tokens button (interactions/player_tokens.go
+RenderMeTokens), but uses InteractionResponseChannelMessageWithSource instead of
+InteractionResponseUpdateMessage so it works as a standalone entry point.
 */
 type tokensCommand struct {
 	db *bun.DB

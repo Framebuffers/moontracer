@@ -157,8 +157,9 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	log.Printf("token_apply_modal: token %q saved for player %s, media %s", name, playerID, media.ID)
 
 	// Load campaigns where the player is an active non-DM member.
+	downloadURL := mediaserver.Register(outDisk, name)
 	downloadRow := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: outURL},
+		discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: downloadURL},
 		router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
 	}}
 
@@ -205,7 +206,7 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 					},
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: outURL},
+					discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: downloadURL},
 					discordgo.Button{
 						Label:    messages.TokenSkipLabel,
 						Style:    discordgo.SecondaryButton,
@@ -264,7 +265,7 @@ func (h *playerTokenPostcreateSelectHandler) HandleComponents(s *discordgo.Sessi
 	}
 
 	downloadRow := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: media.URL},
+		discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: mediaserver.Register(media.Path, media.Name)},
 		router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
 	}}
 
@@ -299,7 +300,7 @@ func (h *playerTokenSkipHandler) HandleComponents(s *discordgo.Session, i *disco
 	}
 	helpers.RespondUpdate(s, i, messages.TokenSavedNoAssign, []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: media.URL},
+			discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: mediaserver.Register(media.Path, media.Name)},
 			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
 		}},
 	})
