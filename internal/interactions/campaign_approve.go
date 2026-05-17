@@ -81,16 +81,13 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 	}
 
 	/*
-		Defer now: createCampaignChannels makes 6+ sequential Discord API calls
-		and will exceed the 3-second interaction window without a deferred response.
+	 Create the campaign role now (fast, single API call) so players can be assigned it on join.
+	 Channel setup is deferred to the DM: they pick new or existing from campaign settings.
 	*/
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseDeferredMessageUpdate,
-	})
-
-	createCampaignChannels(s, guildID, campaign)
-	if err := db.Update(c.db, campaign); err != nil {
-		log.Printf("campaign_approve: failed to save channel IDs for %s: %v", campaignID, err)
+	if err := EnsureCampaignRole(s, guildID, campaign); err != nil {
+		log.Printf("campaign_approve: role for %s: %v", campaignID, err)
+	} else if err := db.Update(c.db, campaign); err != nil {
+		log.Printf("campaign_approve: save role for %s: %v", campaignID, err)
 	}
 
 	var senderID string
@@ -108,10 +105,15 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 
 	content := fmt.Sprintf(messages.CampaignApprovedStatusMessage, campaign.Name)
 	empty := []discordgo.MessageComponent{}
-	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
-		Content:    &content,
-		Components: &empty,
+	// Use InteractionResponseUpdateMessage (sync) since we no longer make slow Discord API calls.
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content:    content,
+			Components: []discordgo.MessageComponent{},
+		},
 	})
+	_ = empty
 }
 
 /*

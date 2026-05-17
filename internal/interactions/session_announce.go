@@ -286,7 +286,7 @@ type sessionRSVPCancelHandler struct{}
 
 func (h *sessionRSVPCancelHandler) CustomIDPrefix() string { return messages.SessionRSVPCancelPrefix }
 func (h *sessionRSVPCancelHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	helpers.RespondUpdate(s, i, "ℹ️ RSVP cancelled.", []*discordgo.MessageEmbed{}, nil)
+	helpers.RespondUpdate(s, i, messages.SessionRSVPCancelledMsg, []*discordgo.MessageEmbed{}, nil)
 }
 
 /*
@@ -310,39 +310,57 @@ func handleSessionRSVP(
 	playerID := helpers.GetUserID(i)
 	fromDM := i.GuildID == ""
 
+	/*
+		For channel interactions, errors must be ephemeral so the embed stays intact.
+		For DM interactions, update the DM message in place.
+	*/
+	rsvpError := func(msg string) {
+		if fromDM {
+			helpers.RespondUpdate(s, i, msg, []*discordgo.MessageEmbed{}, nil)
+		} else {
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: msg,
+					Flags:   discordgo.MessageFlagsEphemeral,
+				},
+			})
+		}
+	}
+
 	ctx := context.Background()
 
 	// 1. Load session.
 	session := &models.Session{}
 	if err := guildDB.NewSelect().Model(session).Where("id = ?", sessionID).Scan(ctx); err != nil {
-		helpers.RespondUpdate(s, i, messages.SessionRSVPGone, []*discordgo.MessageEmbed{}, nil)
+		rsvpError(messages.SessionRSVPGone)
 		return
 	}
 	if session.Status != models.SessionUpcoming {
-		helpers.RespondUpdate(s, i, messages.SessionRSVPGone, []*discordgo.MessageEmbed{}, nil)
+		rsvpError(messages.SessionRSVPGone)
 		return
 	}
 
 	// 2. Load campaign.
 	campaign, err := db.GetByID[models.Campaign](guildDB, session.CampaignID)
 	if err != nil || campaign.IsArchived {
-		helpers.RespondUpdate(s, i, messages.RSVPCampaignGone, []*discordgo.MessageEmbed{}, nil)
+		rsvpError(messages.RSVPCampaignGone)
 		return
 	}
 
-	// 3. check if it is an active campaign member.
+	// 3. Must be an active campaign member.
 	cp := &models.CampaignPlayer{}
 	if err := guildDB.NewSelect().Model(cp).
 		Where("player_id = ? AND campaign_id = ?", playerID, session.CampaignID).
 		Scan(ctx); err != nil || cp.Status != models.StatusActive {
-		helpers.RespondUpdate(s, i, messages.SessionRSVPNotMember, []*discordgo.MessageEmbed{}, nil)
+		rsvpError(messages.SessionRSVPNotMember)
 		return
 	}
 
-	// 4. check idempotency: has the player responded?
+	// 4. Idempotency: already responded?
 	existing, _ := models.GetPlayerSessionRSVP(guildDB, sessionID, playerID)
 	if existing != nil && existing.Status != models.RSVPPending {
-		helpers.RespondUpdate(s, i, messages.SessionRSVPAlreadySet, []*discordgo.MessageEmbed{}, nil)
+		rsvpError(messages.SessionRSVPAlreadySet)
 		return
 	}
 
@@ -408,44 +426,33 @@ func handleSessionRSVP(
 	// 6. Write RSVP.
 	if err := models.UpsertSessionRSVP(guildDB, sessionID, playerID, finalStatus); err != nil {
 		log.Printf("session_rsvp: upsert for %s/%s: %v", playerID, sessionID, err)
-		helpers.RespondUpdate(s, i, messages.GenericErrorMessage, []*discordgo.MessageEmbed{}, nil)
+		rsvpError(messages.GenericErrorMessage)
 		return
 	}
 
-	// 7. Player confirmation text.
-	var confirmMsg string
-	switch finalStatus {
-	case models.RSVPAccepted:
-		confirmMsg = messages.SessionRSVPAcceptedMsg
-	case models.RSVPDeclined:
-		confirmMsg = messages.SessionRSVPDeclinedMsg
-	default:
-		confirmMsg = messages.SessionRSVPWaitlistedMsg
-	}
-
-	// 8. Update channel announcement embed with new RSVP counts.
+	// 7. Rebuild embed with updated player list.
 	rsvps, _ := models.GetSessionRSVPs(guildDB, sessionID)
 	newEmbed := buildSessionEmbed(session, campaign, rsvps)
 	guildID := parts[1]
+	rsvpRow := sessionRSVPButtons(guildID, sessionID)
+
 	channelID := campaign.AnnouncementsThreadID
 	if channelID == "" {
 		channelID = campaign.ChannelID
 	}
-	if channelID != "" && session.ChannelMsgID != "" {
-		if _, err := s.ChannelMessageEditComplex(&discordgo.MessageEdit{
-			ID:      session.ChannelMsgID,
-			Channel: channelID,
-			Embeds:  &[]*discordgo.MessageEmbed{newEmbed},
-			Components: &[]discordgo.MessageComponent{
-				sessionRSVPButtons(guildID, sessionID),
-			},
-		}); err != nil {
-			log.Printf("session_rsvp: edit channel embed %s: %v", session.ChannelMsgID, err)
-		}
-	}
 
-	// 9. Respond: if from DM, update the DM message; if from channel, update the embed in-place.
+	// 8. Respond based on context.
 	if fromDM {
+		// Update the DM message (remove buttons, show confirmation).
+		var confirmMsg string
+		switch finalStatus {
+		case models.RSVPAccepted:
+			confirmMsg = messages.SessionRSVPAcceptedMsg
+		case models.RSVPDeclined:
+			confirmMsg = messages.SessionRSVPDeclinedMsg
+		default:
+			confirmMsg = messages.SessionRSVPWaitlistedMsg
+		}
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseUpdateMessage,
 			Data: &discordgo.InteractionResponseData{
@@ -453,16 +460,24 @@ func handleSessionRSVP(
 				Components: []discordgo.MessageComponent{},
 			},
 		})
+		// Also update the channel embed so everyone sees the new list.
+		if channelID != "" && session.ChannelMsgID != "" {
+			if _, err := s.ChannelMessageEditComplex(&discordgo.MessageEdit{
+				ID:         session.ChannelMsgID,
+				Channel:    channelID,
+				Embeds:     &[]*discordgo.MessageEmbed{newEmbed},
+				Components: &[]discordgo.MessageComponent{rsvpRow},
+			}); err != nil {
+				log.Printf("session_rsvp: edit channel embed %s: %v", session.ChannelMsgID, err)
+			}
+		}
 	} else {
-		/*
-			Update the channel embed in-place (the edit above already updated counts).
-			Then, show a brief ephemeral confirmation to the player.
-		*/
+		// Update the channel embed in-place — the updated player list is the confirmation.
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Type: discordgo.InteractionResponseUpdateMessage,
 			Data: &discordgo.InteractionResponseData{
-				Content: confirmMsg,
-				Flags:   discordgo.MessageFlagsEphemeral,
+				Embeds:     []*discordgo.MessageEmbed{newEmbed},
+				Components: []discordgo.MessageComponent{rsvpRow},
 			},
 		})
 	}
@@ -476,13 +491,18 @@ func handleSessionRSVP(
 */
 
 func buildSessionEmbed(session *models.Session, campaign *models.Campaign, rsvps []models.SessionRSVP) *discordgo.MessageEmbed {
-	accepted, declined := 0, 0
+	const maxNames = 10
+
+	var going, notGoing, waitlisted []string
 	for _, r := range rsvps {
+		mention := "<@" + r.PlayerID + ">"
 		switch r.Status {
 		case models.RSVPAccepted:
-			accepted++
+			going = append(going, mention)
 		case models.RSVPDeclined:
-			declined++
+			notGoing = append(notGoing, mention)
+		case models.RSVPWaitlisted:
+			waitlisted = append(waitlisted, mention)
 		}
 	}
 
@@ -490,13 +510,36 @@ func buildSessionEmbed(session *models.Session, campaign *models.Campaign, rsvps
 	if session.Title != "" {
 		desc += "\n" + session.Title
 	}
-	desc += "\n\n" + fmt.Sprintf(messages.SessionEmbedGoingFmt, accepted, declined)
+
+	desc += "\n\n" + rsvpLine(messages.SessionEmbedGoingLabel, going, maxNames)
+	desc += "\n" + rsvpLine(messages.SessionEmbedNotGoingLabel, notGoing, maxNames)
+	if len(waitlisted) > 0 {
+		desc += "\n" + rsvpLine(messages.SessionEmbedWaitlistedLabel, waitlisted, maxNames)
+	}
 
 	return &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("📅 New Session — %s", campaign.Name),
+		Title:       fmt.Sprintf(messages.SessionEmbedTitleFmt, campaign.Name),
 		Description: desc,
 		Color:       messages.EmbedColor,
 	}
+}
+
+// rsvpLine formats "Label (N): @A, @B, +X more" or "Label (0): —".
+func rsvpLine(label string, names []string, max int) string {
+	if len(names) == 0 {
+		return fmt.Sprintf(messages.SessionRSVPLineEmptyFmt, label)
+	}
+	shown := names
+	overflow := 0
+	if len(names) > max {
+		shown = names[:max]
+		overflow = len(names) - max
+	}
+	line := fmt.Sprintf(messages.SessionRSVPLineFmt, label, len(names), strings.Join(shown, ", "))
+	if overflow > 0 {
+		line += fmt.Sprintf(messages.SessionRSVPLineOverflowFmt, overflow)
+	}
+	return line
 }
 
 func sessionRSVPButtons(guildID, sessionID string) discordgo.ActionsRow {

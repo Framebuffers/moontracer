@@ -26,81 +26,126 @@ const defaultArchiveDuration = 10080
 var standardThreads = []string{"announcements", "sessions", "dice-rolls", "general"}
 
 /*
-createCampaignChannels creates a role, a private text channel, and standard threads for a campaign,
-grouped under a shared "Campaigns" category (found or created).
+EnsureCampaignRole creates the campaign's Discord role (named after the tag) and assigns it
+to the DM. Idempotent: if RoleID is already set it skips creation.
 
-The channel is visible only to members of the campaign role (@everyone is denied ViewChannel).
-The DM is immediately assigned the role.
-
-On success, mutates the campaign in-place with RoleID, CategoryID, ChannelID, and AnnouncementsThreadID.
-Errors are logged but non-fatal — partial setup is better than none.
+Exported so the approval handler can call it independently of channel setup.
 */
-func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Campaign) {
+func EnsureCampaignRole(s *discordgo.Session, guildID string, c *models.Campaign) error {
+	if c.RoleID != "" {
+		return nil
+	}
+	channelName := c.Tag
+	if channelName == "" {
+		channelName = models.NormalizeTag(c.Name)
+	}
+	role, err := guard.GuildRoleCreate(s, guildID, &discordgo.RoleParams{Name: channelName})
+	if err != nil {
+		return fmt.Errorf("create role: %w", err)
+	}
+	c.RoleID = role.ID
+	if err := guard.GuildMemberRoleAdd(s, guildID, c.DungeonMaster, role.ID); err != nil {
+		log.Printf("campaign_threads: assign role to DM %s: %v", c.DungeonMaster, err)
+	}
+	return nil
+}
+
+/*
+SetupNewChannel creates a private text channel for the campaign under the shared Campaigns
+category, then creates the standard threads inside it.
+
+Mutates campaign in-place with CategoryID, ChannelID, AnnouncementsThreadID.
+*/
+func SetupNewChannel(s *discordgo.Session, guildID string, c *models.Campaign) error {
 	channelName := c.Tag
 	if channelName == "" {
 		channelName = models.NormalizeTag(c.Name)
 	}
 
-	role, err := guard.GuildRoleCreate(s, guildID, &discordgo.RoleParams{
-		Name: channelName,
-	})
-	if err != nil {
-		log.Printf("campaign_threads: failed to create role for %s: %v", c.ID, err)
-		return
-	}
-	c.RoleID = role.ID
-
-	if err := guard.GuildMemberRoleAdd(s, guildID, c.DungeonMaster, role.ID); err != nil {
-		log.Printf("campaign_threads: failed to assign role to DM for %s: %v", c.ID, err)
+	// Ensure role exists before setting channel permissions.
+	if err := EnsureCampaignRole(s, guildID, c); err != nil {
+		log.Printf("campaign_threads: role for new channel: %v", err)
 	}
 
 	categoryID, err := findOrCreateCampaignsCategory(s, guildID)
 	if err != nil {
-		log.Printf("campaign_threads: failed to resolve campaigns category: %v", err)
-		return
+		return fmt.Errorf("resolve category: %w", err)
 	}
 	c.CategoryID = categoryID
 
-	ch, err := guard.GuildChannelCreateComplex(s, guildID, discordgo.GuildChannelCreateData{
-		Name:     channelName,
-		Type:     discordgo.ChannelTypeGuildText,
-		ParentID: categoryID,
-		PermissionOverwrites: []*discordgo.PermissionOverwrite{
-			{
-				// Deny @everyone view access (everyone role ID == guild ID in Discord).
-				ID:   guildID,
-				Type: discordgo.PermissionOverwriteTypeRole,
-				Deny: discordgo.PermissionViewChannel,
-			},
-			{
-				ID:    role.ID,
-				Type:  discordgo.PermissionOverwriteTypeRole,
-				Allow: discordgo.PermissionViewChannel,
-			},
-			{
-				// Bot must explicitly retain access to the channel it just made so it can create threads.
-				ID:    s.State.User.ID,
-				Type:  discordgo.PermissionOverwriteTypeMember,
-				Allow: discordgo.PermissionViewChannel | discordgo.PermissionManageThreads | discordgo.PermissionSendMessages,
-			},
+	overwrites := []*discordgo.PermissionOverwrite{
+		{
+			ID:   guildID,
+			Type: discordgo.PermissionOverwriteTypeRole,
+			Deny: discordgo.PermissionViewChannel,
 		},
+		{
+			ID:    s.State.User.ID,
+			Type:  discordgo.PermissionOverwriteTypeMember,
+			Allow: discordgo.PermissionViewChannel | discordgo.PermissionManageThreads | discordgo.PermissionSendMessages,
+		},
+	}
+	if c.RoleID != "" {
+		overwrites = append(overwrites, &discordgo.PermissionOverwrite{
+			ID:    c.RoleID,
+			Type:  discordgo.PermissionOverwriteTypeRole,
+			Allow: discordgo.PermissionViewChannel,
+		})
+	}
+
+	ch, err := guard.GuildChannelCreateComplex(s, guildID, discordgo.GuildChannelCreateData{
+		Name:                 channelName,
+		Type:                 discordgo.ChannelTypeGuildText,
+		ParentID:             categoryID,
+		PermissionOverwrites: overwrites,
 	})
 	if err != nil {
-		log.Printf("campaign_threads: failed to create channel for %s: %v", c.ID, err)
-		return
+		return fmt.Errorf("create channel: %w", err)
 	}
 	c.ChannelID = ch.ID
+	createStandardThreads(s, c, ch.ID, channelName)
+	return nil
+}
 
+/*
+SetupExistingChannel links the campaign to an already-existing Discord channel and creates
+the standard threads inside it.
+
+Mutates campaign in-place with ChannelID and AnnouncementsThreadID.
+*/
+func SetupExistingChannel(s *discordgo.Session, c *models.Campaign, channelID string) {
+	channelName := c.Tag
+	if channelName == "" {
+		channelName = models.NormalizeTag(c.Name)
+	}
+	c.ChannelID = channelID
+	createStandardThreads(s, c, channelID, channelName)
+}
+
+// createStandardThreads creates the standard threads in channelID and sets AnnouncementsThreadID.
+func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, channelName string) {
 	for _, name := range standardThreads {
 		threadName := fmt.Sprintf("%s-%s", channelName, name)
-		thread, err := guard.ThreadStart(s, ch.ID, threadName, defaultArchiveDuration)
+		thread, err := guard.ThreadStart(s, channelID, threadName, defaultArchiveDuration)
 		if err != nil {
-			log.Printf("campaign_threads: failed to create thread %s: %v", threadName, err)
+			log.Printf("campaign_threads: create thread %s: %v", threadName, err)
 			continue
 		}
 		if name == "announcements" {
 			c.AnnouncementsThreadID = thread.ID
 		}
+	}
+}
+
+// createCampaignChannels is kept for backward compatibility with any remaining call sites.
+// New code should call EnsureCampaignRole + SetupNewChannel separately.
+func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Campaign) {
+	if err := EnsureCampaignRole(s, guildID, c); err != nil {
+		log.Printf("campaign_threads: %v", err)
+		return
+	}
+	if err := SetupNewChannel(s, guildID, c); err != nil {
+		log.Printf("campaign_threads: %v", err)
 	}
 }
 

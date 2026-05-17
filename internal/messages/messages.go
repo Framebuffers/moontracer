@@ -999,6 +999,15 @@ const (
 	NewSessionNoChannel       = "⚠️ This campaign has no channel. Set one up in campaign settings first."
 	NewSessionDMContentFmt    = "📅 **%s** — New Session!\n<t:%d:F> · <t:%d:R>%s"
 	SessionReminderContentFmt = "⏰ Reminder: **%s** starts in ~1 hour!\n<t:%d:F>%s"
+
+	SessionEmbedTitleFmt       = "📅 New Session — %s"
+	SessionEmbedGoingLabel     = "✅ Going"
+	SessionEmbedNotGoingLabel  = "❌ Not Going"
+	SessionEmbedWaitlistedLabel = "⏳ Waitlisted"
+	SessionRSVPCancelledMsg    = "ℹ️ RSVP cancelled."
+	SessionRSVPLineEmptyFmt    = "%s (0): —"
+	SessionRSVPLineFmt         = "%s (%d): %s"
+	SessionRSVPLineOverflowFmt = " +%d more"
 )
 
 // Player campaign card (player self-service)
