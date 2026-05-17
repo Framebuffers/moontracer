@@ -320,6 +320,7 @@ const (
 // Token upload
 const (
 	// identifiers — token gallery
+	TokensCommandName              = "tokens"
 	TokenGallerySelectPrefix       = "token_gallery_select"
 	TokenGalleryAssignPrefix       = "token_gallery_assign"
 	TokenGalleryAssignSelectPrefix = "token_gallery_assign_select"
@@ -329,6 +330,7 @@ const (
 )
 const (
 	// user-facing — token gallery
+	TokensCommandDesc                   = "Browse and manage your tokens."
 	TokensLabel                         = "🐺 Tokens"
 	TokenGalleryHeader                  = "Your tokens:"
 	TokenGalleryNone                    = "ℹ️ You have no tokens yet! Use `/newtoken` to create one."

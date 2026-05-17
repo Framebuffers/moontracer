@@ -55,6 +55,7 @@ func All(db *bun.DB, d *dispatch.Dispatcher, dataDir, mediaBaseURL string) []Com
 		&helpCommand{db: *db, d: d},
 		&registerCommand{db: db},
 		&meCommand{db: db},
+		&tokensCommand{db: db},
 		&manageCommand{db: db},
 		&nextSessionsCommand{db: db},
 		&campaignsCommand{db: db},
