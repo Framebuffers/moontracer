@@ -15,6 +15,7 @@ import (
 
 	"moontracer/internal/db"
 	"moontracer/internal/interactions/helpers"
+	"moontracer/internal/interactions/router"
 	"moontracer/internal/manager/models"
 	"moontracer/internal/mediaserver"
 	"moontracer/internal/messages"
@@ -156,9 +157,14 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	log.Printf("token_apply_modal: token %q saved for player %s, media %s", name, playerID, media.ID)
 
 	// Load campaigns where the player is an active non-DM member.
+	downloadRow := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+		discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: outURL},
+		router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
+	}}
+
 	allCPs, err := models.GetPlayerCampaigns(h.db, playerID)
 	if err != nil {
-		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenApplySuccess, name))
+		helpers.RespondUpdate(s, i, fmt.Sprintf(messages.TokenApplySuccess, name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{downloadRow})
 		return
 	}
 	var activeCPs []models.CampaignPlayer
@@ -168,7 +174,7 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 		}
 	}
 	if len(activeCPs) == 0 {
-		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenApplySuccess, name))
+		helpers.RespondUpdate(s, i, fmt.Sprintf(messages.TokenApplySuccess, name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{downloadRow})
 		return
 	}
 
@@ -199,6 +205,7 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 					},
 				}},
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: outURL},
 					discordgo.Button{
 						Label:    messages.TokenSkipLabel,
 						Style:    discordgo.SecondaryButton,
@@ -256,12 +263,17 @@ func (h *playerTokenPostcreateSelectHandler) HandleComponents(s *discordgo.Sessi
 		return
 	}
 
+	downloadRow := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+		discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: media.URL},
+		router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
+	}}
+
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err != nil {
-		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenPostcreateAssigned, campaignID))
+		helpers.RespondUpdate(s, i, fmt.Sprintf(messages.TokenPostcreateAssigned, campaignID), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{downloadRow})
 		return
 	}
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.TokenPostcreateAssigned, campaign.Name))
+	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.TokenPostcreateAssigned, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{downloadRow})
 }
 
 /*
@@ -269,12 +281,28 @@ playerTokenSkipHandler dismisses the post-create assignment prompt.
 
 CustomID: player_token_skip:{mediaID}
 */
-type playerTokenSkipHandler struct{}
+type playerTokenSkipHandler struct {
+	db *bun.DB
+}
 
 func (h *playerTokenSkipHandler) CustomIDPrefix() string { return messages.TokenSkipPrefix }
 
 func (h *playerTokenSkipHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	helpers.RespondUpdateTerminal(s, i, messages.TokenSavedNoAssign)
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	media, err := db.GetByID[models.Media](h.db, parts[1])
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.TokenSavedNoAssign)
+		return
+	}
+	helpers.RespondUpdate(s, i, messages.TokenSavedNoAssign, []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: media.URL},
+			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
+		}},
+	})
 }
 
 /*

@@ -136,7 +136,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&tokenApplyHandler{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&tokenDiscardHandler{dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&playerTokenPostcreateSelectHandler{db: db},
-		&playerTokenSkipHandler{},
+		&playerTokenSkipHandler{db: db},
 		&manageSetSession{db: db},
 
 		// Token gallery (/me -> Tokens)
