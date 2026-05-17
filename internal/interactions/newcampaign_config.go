@@ -435,7 +435,7 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 
 	players, _ := models.GetCampaignPlayers(h.db, c.ID)
 	coverURL := models.CoverURLForCampaign(h.db, c.ID)
-	campaignEmbed := commands.CampaignEmbed(*c, players, coverURL, "")
+	campaignEmbed := commands.CampaignEmbed(*c, players, coverURL, "", userID)
 
 	msgID := uuid.NewString()
 	for _, staff := range staffMembers {

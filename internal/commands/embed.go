@@ -18,7 +18,7 @@ thumbnail (top-right).
 
 This is used to display the viewing player's character token.
 */
-func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL, viewerTokenURL string) *discordgo.MessageEmbed {
+func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL, viewerTokenURL, callerID string) *discordgo.MessageEmbed {
 	status := messages.ClosedStatusLabel
 	if c.IsArchived {
 		status = messages.ArchivedStatusLabel
@@ -67,7 +67,7 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL,
 	if c.Game.VTT != "" {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "VTT", Value: c.Game.VTT, Inline: true})
 	}
-	if c.ChannelID != "" {
+	if c.ChannelID != "" && callerIsMember(callerID, c, players) {
 		fields = append(fields, &discordgo.MessageEmbedField{Name: "Channel", Value: fmt.Sprintf("<#%s>", c.ChannelID), Inline: true})
 	}
 
@@ -187,6 +187,22 @@ func CampaignButtons(callerID string, c models.Campaign, players []models.Campai
 	}
 
 	return nil
+}
+
+// callerIsMember returns true if callerID is the DM or an active player of the campaign.
+func callerIsMember(callerID string, c models.Campaign, players []models.CampaignPlayer) bool {
+	if callerID == "" {
+		return false
+	}
+	if c.DungeonMaster == callerID {
+		return true
+	}
+	for _, p := range players {
+		if p.PlayerID == callerID && p.Status == models.StatusActive {
+			return true
+		}
+	}
+	return false
 }
 
 func formatEmbedLinks(c models.Campaign) string {

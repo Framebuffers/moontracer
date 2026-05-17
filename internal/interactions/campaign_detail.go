@@ -77,7 +77,7 @@ func RenderCampaignDetail(s *discordgo.Session, i *discordgo.InteractionCreate, 
 		}
 	}
 
-	embed := commands.CampaignEmbed(*campaign, players, coverURL, viewerTokenURL)
+	embed := commands.CampaignEmbed(*campaign, players, coverURL, viewerTokenURL, userID)
 	if campaign.IsArchived {
 		embed.Footer = &discordgo.MessageEmbedFooter{Text: messages.CampaignArchivedFooter}
 	}
