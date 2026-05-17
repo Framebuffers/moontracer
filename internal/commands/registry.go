@@ -51,11 +51,12 @@ Note:
 */
 func All(db *bun.DB, d *dispatch.Dispatcher, dataDir, mediaBaseURL string) []Command {
 	cmds := []Command{
-		&pingCommand{},
 		&awooCommand{db: db},
 		&helpCommand{db: *db, d: d},
 		&registerCommand{db: db},
 		&meCommand{db: db},
+		&manageCommand{db: db},
+		&nextSessionsCommand{db: db},
 		&campaignsCommand{db: db},
 		&searchCommand{db: db},
 		&banCommand{db: db},

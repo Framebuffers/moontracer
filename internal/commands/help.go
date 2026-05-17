@@ -65,6 +65,9 @@ func helpResponseData(db *bun.DB, d *dispatch.Dispatcher) *discordgo.Interaction
 	var helpText strings.Builder
 	helpText.WriteString("**Available Commands: **\n")
 	for _, cmd := range commands {
+		if h, ok := cmd.(HiddenCommand); ok && h.Hidden() {
+			continue
+		}
 		data := cmd.Data()
 		fmt.Fprintf(&helpText, "**/%s** - %s\n", data.Name, data.Description)
 	}

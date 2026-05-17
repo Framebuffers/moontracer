@@ -19,7 +19,7 @@ package messages
 // Generic
 const (
 	// identifiers
-	BotVersion = "v0.13.2-RC2"
+	BotVersion = "v0.13.3-RC2"
 )
 const (
 	// user-facing
@@ -292,10 +292,14 @@ const (
 const (
 	// identifiers
 	ManageCampaignsCommandName = "managecampaigns"
+	ManageCommandName          = "manage"
+	ManageCommandOptionName    = "campaign"
 )
 const (
 	// user-facing
 	ManageCampaignsCommandDesc = "Manage campaigns you run as DM."
+	ManageCommandDesc          = "Manage one of your campaigns."
+	ManageCommandOptionDesc    = "Campaign to manage."
 	ManageCampaignsLabel       = "Manage Campaigns"
 	ManageNoDMCampaigns        = "⚠️ You are not the DM of any campaigns."
 	ManageNotAuthorized        = "ℹ️ You must be the DM of this campaign to manage it."
@@ -384,7 +388,7 @@ const (
 // Campaign cover / upload
 const (
 	// identifiers
-	CampaignUploadCommandName     = "campaignupload"
+	CampaignUploadCommandName     = "uploadcover"
 	CampaignUploadKindOptName     = "kind"
 	CampaignUploadKindCoverChoice = "Cover"
 	CampaignUploadCampaignOptName = "campaign"
@@ -392,7 +396,7 @@ const (
 )
 const (
 	// user-facing
-	CampaignUploadCommandDesc     = "Upload an image for one of your campaigns."
+	CampaignUploadCommandDesc     = "Upload a cover image for one of your campaigns."
 	CampaignUploadKindOptDesc     = "What kind of image to upload."
 	CampaignUploadCampaignOptDesc = "The campaign to upload an image for."
 	CampaignUploadImageOptDesc    = "Image file (JPEG/PNG/WebP, up to 8 MiB)."
@@ -403,7 +407,7 @@ const (
 	CampaignUploadFailure         = "⚠️ Failed to save cover. Please try again."
 	CampaignUploadSuccess         = "✅ Cover set for **%s**. [View](%s)"
 	SetCoverButtonLabel           = "Set Cover"
-	SetCoverInstructions          = "Use `/campaignupload kind:Cover campaign:<name> image:<file>` to set a cover for this campaign."
+	SetCoverInstructions          = "Use `/uploadcover campaign:<name> image:<file>` to set a cover for this campaign."
 )
 
 // Manage campaigns: button labels (all user-facing)
@@ -804,12 +808,14 @@ const (
 // Player hub: Next Sessions
 const (
 	// identifiers
-	NextSessionsPrefix = "next_sessions"
+	NextSessionsPrefix      = "next_sessions"
+	NextSessionsCommandName = "nextsessions"
 )
 const (
 	// user-facing
-	NextSessionsHeader = "Upcoming sessions:"
-	NextSessionsNone   = "ℹ️ You have no upcoming sessions."
+	NextSessionsHeader      = "Upcoming sessions:"
+	NextSessionsNone        = "ℹ️ You have no upcoming sessions."
+	NextSessionsCommandDesc = "Show your upcoming sessions."
 )
 
 // Player hub: Notifications

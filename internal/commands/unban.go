@@ -86,3 +86,5 @@ func (u *unbanCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 	log.Printf("unban: %s unbanned %s", invokerID, target.ID)
 	respond(s, i, fmt.Sprintf(messages.UnbanSuccessMessage, targetUser.ID))
 }
+
+func (u *unbanCommand) Hidden() bool { return true }

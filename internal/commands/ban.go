@@ -148,3 +148,5 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 		respond(s, i, fmt.Sprintf(messages.BanSuccessReasonMessage, targetUser.ID, reason))
 	}
 }
+
+func (r *banCommand) Hidden() bool { return true }

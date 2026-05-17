@@ -318,3 +318,5 @@ func diagBlock(s *discordgo.Session, guildDB *bun.DB, guildID string) string {
 
 	return b.String()
 }
+
+func (a *adminCommand) Hidden() bool { return true }

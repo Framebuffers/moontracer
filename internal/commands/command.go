@@ -13,3 +13,12 @@ type AutocompleteCommand interface {
 	Command
 	Autocomplete(s *discordgo.Session, i *discordgo.InteractionCreate)
 }
+
+/*
+HiddenCommand is an optional marker for commands that should be omitted from /help output.
+Use for staff-only or low-signal commands that clutter the help list for regular users.
+*/
+type HiddenCommand interface {
+	Command
+	Hidden() bool
+}
