@@ -3,7 +3,6 @@ package commands
 import (
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 	"time"
 
@@ -19,9 +18,9 @@ import (
 
 Flow:
  1. Player types /nextsessions.
- 2. Bot loads all CampaignPlayer rows for the user, filters to active memberships in approved
-    campaigns with a future NextSession set, and sorts ascending by scheduled time.
- 3. Responds ephemerally with a formatted list of upcoming sessions in the player's timezone.
+ 2. Bot loads all upcoming sessions the player is a member of, across all approved
+    campaigns, sorted ascending by scheduled time.
+ 3. Responds ephemerally with a formatted list in the player's timezone.
     If none are found, shows NextSessionsNone.
 */
 
@@ -50,42 +49,17 @@ func (c *nextSessionsCommand) Execute(s *discordgo.Session, i *discordgo.Interac
 		userID = i.User.ID
 	}
 
-	entries, err := models.GetPlayerCampaigns(c.db, userID)
+	sessions, err := models.GetAllUpcomingSessionsForPlayer(c.db, userID)
 	if err != nil {
-		log.Printf("nextsessions: load campaigns for %s: %v", userID, err)
+		log.Printf("nextsessions: load sessions for %s: %v", userID, err)
 		respond(s, i, messages.GenericErrorMessage)
 		return
 	}
 
-	now := time.Now().UTC()
-
-	type upcoming struct {
-		Name string
-		When time.Time
-	}
-	var list []upcoming
-	for _, e := range entries {
-		if e.Status != models.StatusActive {
-			continue
-		}
-		if e.Campaign == nil || !e.Campaign.IsApproved {
-			continue
-		}
-		if e.Campaign.Schedule.NextSession.IsZero() || !e.Campaign.Schedule.NextSession.After(now) {
-			continue
-		}
-		list = append(list, upcoming{
-			Name: e.Campaign.Name,
-			When: e.Campaign.Schedule.NextSession.UTC(),
-		})
-	}
-
-	if len(list) == 0 {
+	if len(sessions) == 0 {
 		respond(s, i, messages.NextSessionsNone)
 		return
 	}
-
-	sort.Slice(list, func(a, b int) bool { return list[a].When.Before(list[b].When) })
 
 	settings, err := models.GetOrCreatePlayerSettings(c.db, userID)
 	if err != nil {
@@ -97,9 +71,13 @@ func (c *nextSessionsCommand) Execute(s *discordgo.Session, i *discordgo.Interac
 	}
 
 	var lines []string
-	for _, e := range list {
-		formatted := helpers.FormatInLocation(e.When, messages.SessionListFormat, loc) + " " + helpers.TZLabel(loc)
-		lines = append(lines, fmt.Sprintf("• **%s** — %s · %s", e.Name, formatted, helpers.TimeRemaining(e.When)))
+	for _, sess := range sessions {
+		campaignName := ""
+		if sess.Campaign != nil {
+			campaignName = sess.Campaign.Name
+		}
+		formatted := helpers.FormatInLocation(sess.ScheduledAt, messages.SessionListFormat, loc) + " " + helpers.TZLabel(loc)
+		lines = append(lines, fmt.Sprintf("• **%s** — %s · %s", campaignName, formatted, helpers.TimeRemaining(sess.ScheduledAt)))
 	}
 	content := messages.NextSessionsHeader + "\n" + strings.Join(lines, "\n")
 

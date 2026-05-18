@@ -5,18 +5,15 @@ package interactions
 
 	Flow:
 		1. User clicks "Next Sessions" button on the /me hub.
-		2. Load all CampaignPlayer rows for the user.
-		3. Filter to active memberships in approved campaigns whose NextSession
-		   is set and in the future.
-		4. Sort by NextSession ascending.
-		5. Render a list with campaign name, day, and time UTC.
-		6. Back button returns to /me hub.
+		2. Load all upcoming sessions the player is a member of, across all approved campaigns.
+		3. Sort by scheduled_at ascending (done by the query).
+		4. Render a list with campaign name, date/time, and time remaining.
+		5. Back button returns to /me hub.
 */
 
 import (
 	"fmt"
 	"log"
-	"sort"
 	"strings"
 	"time"
 
@@ -40,46 +37,21 @@ func (h *nextSessionsHandler) CustomIDPrefix() string {
 func (h *nextSessionsHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	userID := helpers.GetUserID(i)
 
-	entries, err := models.GetPlayerCampaigns(h.db, userID)
+	sessions, err := models.GetAllUpcomingSessionsForPlayer(h.db, userID)
 	if err != nil {
-		log.Printf("next_sessions: failed to load campaigns for %s: %v", userID, err)
+		log.Printf("next_sessions: failed to load sessions for %s: %v", userID, err)
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
-	}
-
-	now := time.Now().UTC()
-
-	type upcoming struct {
-		Name string
-		When time.Time
-	}
-	var list []upcoming
-	for _, e := range entries {
-		if e.Status != models.StatusActive {
-			continue
-		}
-		if e.Campaign == nil || !e.Campaign.IsApproved {
-			continue
-		}
-		if e.Campaign.Schedule.NextSession.IsZero() || !e.Campaign.Schedule.NextSession.After(now) {
-			continue
-		}
-		list = append(list, upcoming{
-			Name: e.Campaign.Name,
-			When: e.Campaign.Schedule.NextSession.UTC(),
-		})
 	}
 
 	backRow := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 		router.BackButton(messages.BackLabel, router.ViewMe),
 	}}
 
-	if len(list) == 0 {
+	if len(sessions) == 0 {
 		helpers.RespondUpdate(s, i, messages.NextSessionsNone, nil, []discordgo.MessageComponent{backRow})
 		return
 	}
-
-	sort.Slice(list, func(a, b int) bool { return list[a].When.Before(list[b].When) })
 
 	settings, err := models.GetOrCreatePlayerSettings(h.db, userID)
 	if err != nil {
@@ -91,9 +63,13 @@ func (h *nextSessionsHandler) HandleComponents(s *discordgo.Session, i *discordg
 	}
 
 	var lines []string
-	for _, e := range list {
-		formatted := helpers.FormatInLocation(e.When, messages.SessionListFormat, loc) + " " + helpers.TZLabel(loc)
-		lines = append(lines, fmt.Sprintf("• **%s** — %s · %s", e.Name, formatted, helpers.TimeRemaining(e.When)))
+	for _, sess := range sessions {
+		campaignName := ""
+		if sess.Campaign != nil {
+			campaignName = sess.Campaign.Name
+		}
+		formatted := helpers.FormatInLocation(sess.ScheduledAt, messages.SessionListFormat, loc) + " " + helpers.TZLabel(loc)
+		lines = append(lines, fmt.Sprintf("• **%s** — %s · %s", campaignName, formatted, helpers.TimeRemaining(sess.ScheduledAt)))
 	}
 	content := messages.NextSessionsHeader + "\n" + strings.Join(lines, "\n")
 

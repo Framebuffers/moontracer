@@ -79,8 +79,11 @@ func GetAllUpcomingSessionsForPlayer(db *bun.DB, playerID string) ([]Session, er
 	ctx := context.Background()
 	var sessions []Session
 	err := db.NewSelect().Model(&sessions).
-		Join("JOIN campaign_players cp ON cp.campaign_id = session.campaign_id").
+		Relation("Campaign").
+		Join("JOIN campaign_players AS cp ON cp.campaign_id = session.campaign_id").
+		Join("JOIN campaigns AS cam ON cam.id = session.campaign_id").
 		Where("cp.player_id = ? AND cp.status = ?", playerID, StatusActive).
+		Where("cam.is_approved = ?", true).
 		Where("session.status = ? AND session.scheduled_at > ?", SessionUpcoming, time.Now().UTC()).
 		OrderExpr("session.scheduled_at ASC").
 		Scan(ctx)
