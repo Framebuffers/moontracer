@@ -1,47 +1,19 @@
-FROM oven/bun:1-alpine AS base
-
-FROM base AS deps
-RUN apk add --no-cache libc6-compat
-WORKDIR /app
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
-
-FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+FROM golang:1-alpine AS build
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-RUN bun run build
+RUN BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) && \
+    CGO_ENABLED=0 go build \
+    -ldflags "-X moontracer/internal/commands.BuildTime=${BUILD_TIME}" \
+    -o /moontracer ./cmd/moontracer
 
-FROM base AS runner
+FROM alpine:3.21
+RUN apk add --no-cache ca-certificates
+
+RUN mkdir -p /app/data
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+COPY --from=build /moontracer /app/moontracer
 
-# Install runtime dependencies
-RUN apk add --no-cache dumb-init su-exec
-
-COPY --from=builder --chown=bun:bun /app/public ./public
-COPY --from=builder --chown=bun:bun /app/.next/standalone ./
-COPY --from=builder --chown=bun:bun /app/.next/static ./.next/static
-
-# Create entrypoint
-COPY <<'EOF' /docker-entrypoint.sh
-#!/bin/sh
-set -e
-
-if [ -d /run/secrets ]; then
-  chmod 644 /run/secrets/* 2>/dev/null || true
-fi
-
-exec su-exec bun bun server.js "$@"
-EOF
-
-RUN chmod +x /docker-entrypoint.sh
-
-EXPOSE 3000
-
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/docker-entrypoint.sh"]
+ENTRYPOINT ["/app/moontracer"]
