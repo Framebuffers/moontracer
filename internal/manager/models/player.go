@@ -7,9 +7,12 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// ServerRole represents a player's guild-wide role (not campaign-specific).
-// Roles are hierarchical: Admin > Mod > Player.
-// Admin implies Mod. Mod can also be a DM of campaigns (roles are additive).
+/*
+ServerRole represents a player's guild-wide role (not campaign-specific).
+
+Roles are hierarchical: Admin > Mod > Player.
+Admin implies Mod. Mod can also be a DM of campaigns (roles are additive).
+*/
 type ServerRole string
 
 const (
@@ -18,9 +21,12 @@ const (
 	ServerRoleAdmin  ServerRole = "admin"
 )
 
-// Weight returns the numeric rank of a ServerRole for hierarchy comparisons.
-// Higher weight = higher authority. Used by ban protection to ensure
-// a user can only ban someone with a strictly lower role.
+/*
+Weight returns the numeric rank of a ServerRole for hierarchy comparisons.
+
+Higher weight = higher authority. Used by ban protection to ensure
+a user can only ban someone with a strictly lower role.
+*/
 func (r ServerRole) Weight() int {
 	switch r {
 	case ServerRoleAdmin:
@@ -36,9 +42,9 @@ func (r ServerRole) Weight() int {
 type AuditAction string
 
 const (
-	AuditBan             AuditAction = "ban"
-	AuditUnban           AuditAction = "unban"
-	AuditCampaignBan     AuditAction = "campaign_ban"
+	AuditBan               AuditAction = "ban"
+	AuditUnban             AuditAction = "unban"
+	AuditCampaignBan       AuditAction = "campaign_ban"
 	AuditCampaignArchive   AuditAction = "campaign_archive"
 	AuditSessionReschedule AuditAction = "session_reschedule"
 )
@@ -71,9 +77,12 @@ func InsertAuditEntry(db *bun.DB, playerID, authorID string, action AuditAction,
 	return err
 }
 
-// GetPlayerWithCampaigns loads a Player by ID with its CampaignPlayers relation.
-// This is required for Player methods that inspect campaign memberships
-// (IsDMOf, IsMemberOf, IsBannedFromCampaign, etc.).
+/*
+GetPlayerWithCampaigns loads a Player by ID with its CampaignPlayers relation.
+
+This is required for Player methods that inspect campaign memberships
+(IsDMOf, IsMemberOf, IsBannedFromCampaign, etc.).
+*/
 func GetPlayerWithCampaigns(db *bun.DB, playerID string) (*Player, error) {
 	ctx := context.Background()
 	var player Player
@@ -88,9 +97,12 @@ func GetPlayerWithCampaigns(db *bun.DB, playerID string) (*Player, error) {
 	return &player, nil
 }
 
-// Player represents a Discord user participating in campaigns.
-// Player is the single owner of all role and permission data.
-// DM status is campaign-scoped via CampaignPlayer, while Mod/Admin are server-wide via Role.
+/*
+Player represents a Discord user participating in campaigns.
+Player is the single owner of all role and permission data.
+
+DM status is campaign-scoped via CampaignPlayer, while Mod/Admin are server-wide via Role.
+*/
 type Player struct {
 	bun.BaseModel `bun:"table:players"`
 
@@ -113,8 +125,10 @@ func (p *Player) IsMod() bool {
 	return p.Role == ServerRoleMod || p.Role == ServerRoleAdmin
 }
 
-// IsDMOf returns true if the player is the DM of the given campaign.
-// Requires CampaignPlayers to be loaded (via Relation).
+/*
+IsDMOf returns true if the player is the DM of the given campaign.
+Requires CampaignPlayers to be loaded (via Relation).
+*/
 func (p *Player) IsDMOf(campaignID string) bool {
 	for _, cp := range p.CampaignPlayers {
 		if cp.CampaignID == campaignID && cp.Role == RoleDM {
@@ -124,8 +138,10 @@ func (p *Player) IsDMOf(campaignID string) bool {
 	return false
 }
 
-// IsMemberOf returns true if the player is an active member of the given campaign.
-// Requires CampaignPlayers to be loaded (via Relation).
+/*
+IsMemberOf returns true if the player is an active member of the given campaign.
+Requires CampaignPlayers to be loaded (via Relation).
+*/
 func (p *Player) IsMemberOf(campaignID string) bool {
 	for _, cp := range p.CampaignPlayers {
 		if cp.CampaignID == campaignID && cp.Status == StatusActive {
@@ -135,8 +151,10 @@ func (p *Player) IsMemberOf(campaignID string) bool {
 	return false
 }
 
-// DMCampaignIDs returns the IDs of all campaigns this player DMs.
-// Requires CampaignPlayers to be loaded (via Relation).
+/*
+DMCampaignIDs returns the IDs of all campaigns this player DMs.
+Requires CampaignPlayers to be loaded (via Relation).
+*/
 func (p *Player) DMCampaignIDs() []string {
 	var ids []string
 	for _, cp := range p.CampaignPlayers {
@@ -147,8 +165,10 @@ func (p *Player) DMCampaignIDs() []string {
 	return ids
 }
 
-// IsBannedFrom returns the CampaignPlayer relationships on which the Player is banned from.
-// Requires CampaignPlayers to be loaded (via Relation).
+/*
+IsBannedFrom returns the CampaignPlayer relationships on which the Player is banned from.
+Requires CampaignPlayers to be loaded (via Relation).
+*/
 func (p *Player) IsBannedFrom() []CampaignPlayer {
 	var bannedFromCampaigns []CampaignPlayer
 
@@ -161,8 +181,29 @@ func (p *Player) IsBannedFrom() []CampaignPlayer {
 	return bannedFromCampaigns
 }
 
-// IsBannedFromCampaign returns true if the player has a campaign-scoped ban on the given campaign.
-// Requires CampaignPlayers to be loaded (via Relation).
+/*
+BulkUpsertPlayers creates Player rows for each Discord user ID that doesn't already have one.
+Existing rows are left unchanged: ON CONFLICT DO NOTHING preserves role and ban state.
+*/
+func BulkUpsertPlayers(db *bun.DB, playerIDs []string) error {
+	if len(playerIDs) == 0 {
+		return nil
+	}
+	ctx := context.Background()
+	players := make([]Player, 0, len(playerIDs))
+	for _, id := range playerIDs {
+		players = append(players, Player{ID: id, Role: ServerRolePlayer})
+	}
+	_, err := db.NewInsert().Model(&players).
+		On("CONFLICT (id) DO NOTHING").
+		Exec(ctx)
+	return err
+}
+
+/*
+IsBannedFromCampaign returns true if the player has a campaign-scoped ban on the given campaign.
+Requires CampaignPlayers to be loaded (via Relation).
+*/
 func (p *Player) IsBannedFromCampaign(campaignID string) bool {
 	for _, cp := range p.CampaignPlayers {
 		if cp.CampaignID == campaignID && cp.BannedFromCampaign {

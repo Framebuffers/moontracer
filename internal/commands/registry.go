@@ -69,6 +69,7 @@ func All(db *bun.DB, d *dispatch.Dispatcher, dataDir, mediaBaseURL string) []Com
 		&newSessionCommand{db: db},
 		&campaignUploadCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&uploadTokenCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
+		&importCampaignCommand{db: db},
 	}
 
 	return cmds

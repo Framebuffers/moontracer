@@ -187,6 +187,30 @@ func BulkSetCampaignPlayerStatus(db *bun.DB, playerID string, campaigns []Campai
 }
 
 /*
+BulkAddCampaignMembers creates CampaignPlayer rows for each player ID, skipping any that already exist.
+
+Preserves existing membership data (role, ban state, etc.) via ON CONFLICT DO NOTHING.
+*/
+func BulkAddCampaignMembers(db *bun.DB, campaignID string, playerIDs []string) error {
+	if len(playerIDs) == 0 {
+		return nil
+	}
+	ctx := context.Background()
+	rows := make([]CampaignPlayer, 0, len(playerIDs))
+	for _, id := range playerIDs {
+		rows = append(rows, CampaignPlayer{
+			PlayerID:   id,
+			CampaignID: campaignID,
+			Status:     StatusActive,
+		})
+	}
+	_, err := db.NewInsert().Model(&rows).
+		On("CONFLICT (player_id, campaign_id) DO NOTHING").
+		Exec(ctx)
+	return err
+}
+
+/*
 ResetCampaignRSVPs clears the RSVP status for all players in a campaign.
 
 Call whenever NextSession is updated so responses from the previous session don't persist.

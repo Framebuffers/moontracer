@@ -1078,6 +1078,21 @@ const (
 	PlayerDownloadContent           = "ℹ️ Here are your %d token(s):"
 )
 
+// Campaign import
+const (
+	ImportCampaignCommandName = "importcampaign"
+	ImportCampaignCommandDesc = "Import an existing campaign channel and role into Moontracer"
+
+	ImportCampaignOptChannel = "channel"
+	ImportCampaignOptRole    = "role"
+	ImportCampaignOptDM      = "dm"
+
+	ImportCampaignProcessing = "⏳ Importing campaign, this may take a moment…"
+	ImportCampaignSuccess    = "✅ Imported **%s**: %d member(s) registered, %d thread(s) bound, %d thread(s) created."
+	ImportCampaignErrDB      = "❌ Failed to write campaign to the database."
+	ImportCampaignErrChannel = "❌ Could not read the channel. Make sure the bot has access to it."
+)
+
 // Timezone preference
 const (
 	// identifiers
