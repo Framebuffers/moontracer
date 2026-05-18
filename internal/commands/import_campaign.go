@@ -157,10 +157,23 @@ func (c *importCampaignCommand) Execute(s *discordgo.Session, i *discordgo.Inter
 			return
 		}
 
-		// 6. Wire up threads: bind existing, create missing.
+		/*
+			 6. Grant the bot the permissions it needs to create threads and pin messages
+				in the existing channel. Normal campaign creation does this via channel overwrites
+				at creation time; for imported channels we add the overwrite explicitly.
+		*/
+		if err := guard.ChannelPermissionSet(s, channelID, s.State.User.ID,
+			discordgo.PermissionOverwriteTypeMember,
+			discordgo.PermissionViewChannel|discordgo.PermissionManageThreads|discordgo.PermissionSendMessages|discordgo.PermissionManageMessages,
+			0,
+		); err != nil {
+			log.Printf("importcampaign: set bot permissions on %s: %v", channelID, err)
+		}
+
+		// 7. Wire up threads: bind existing, create missing.
 		created, bound := bindOrCreateImportThreads(s, guildID, campaign, channelID, channelName)
 
-		// 7. Persist AnnouncementsThreadID if it was resolved.
+		// 8. Persist AnnouncementsThreadID if it was resolved.
 		if campaign.AnnouncementsThreadID != "" {
 			if _, err := c.db.NewUpdate().Model(campaign).
 				Column("announcements_thread_id").
@@ -170,7 +183,7 @@ func (c *importCampaignCommand) Execute(s *discordgo.Session, i *discordgo.Inter
 			}
 		}
 
-		// 8. Create CampaignPlayer rows.
+		// 9. Create CampaignPlayer rows.
 		if err := models.BulkAddCampaignMembers(c.db, campaign.ID, memberIDs); err != nil {
 			log.Printf("importcampaign: bulk add members: %v", err)
 		}
