@@ -19,7 +19,8 @@ package messages
 // Generic
 const (
 	// identifiers
-	BotVersion = "v0.14.0-RC3"
+	BotVersion = "v1.0.0"
+	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
 )
 const (
 	// user-facing
