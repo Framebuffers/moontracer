@@ -11,14 +11,14 @@ package interactions
 */
 
 import (
-	"moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 type manageNewCampaignButton struct {

@@ -12,11 +12,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/db"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/mediaserver"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/mediaserver"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*

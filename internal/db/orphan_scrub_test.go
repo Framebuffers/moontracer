@@ -11,7 +11,7 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
 
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
 /*

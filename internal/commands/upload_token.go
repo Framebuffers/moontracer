@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/mediaserver"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/mediaserver"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*

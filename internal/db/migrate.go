@@ -7,7 +7,7 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
 // Migrate creates all tables if they don't already exist.

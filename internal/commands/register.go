@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"log"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/db"
-	"moontracer/internal/interactions/router"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"

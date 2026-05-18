@@ -9,12 +9,12 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/commands"
-	"moontracer/internal/db"
-	"moontracer/internal/dispatch"
-	"moontracer/internal/guard"
-	"moontracer/internal/scheduler"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/commands"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/scheduler"
 )
 
 /*

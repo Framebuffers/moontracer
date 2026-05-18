@@ -9,11 +9,11 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"moontracer/internal/db"
-	"moontracer/internal/dispatch"
-	"moontracer/internal/interactions/helpers"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 func fireReminder(s *Scheduler, guildID, campaignID string) {

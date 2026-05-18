@@ -7,9 +7,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/dispatch"
-	"moontracer/internal/interactions/router"
-	msg "moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
+	msg "github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*

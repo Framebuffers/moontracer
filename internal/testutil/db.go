@@ -8,11 +8,14 @@ import (
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
 
-	"moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/db"
 )
 
-// NewTestDB creates a fresh in-memory SQLite database with all migrations applied.
-// The database is automatically closed when the test completes.
+/*
+NewTestDB creates a fresh in-memory SQLite database with all migrations applied.
+
+The database is automatically closed when the test completes.
+*/
 func NewTestDB(t *testing.T) *bun.DB {
 	t.Helper()
 

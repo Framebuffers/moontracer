@@ -3,7 +3,7 @@ package messages
 import (
 	"strings"
 
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
 /*

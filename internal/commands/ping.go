@@ -3,7 +3,7 @@ package commands
 import (
 	"github.com/bwmarrin/discordgo"
 
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 // pingCommand tests the connectivity between client and server. Responds with 'pong!' when successful.

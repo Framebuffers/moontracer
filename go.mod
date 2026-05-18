@@ -1,4 +1,4 @@
-module moontracer
+module github.com/framebuffers/moontracer
 
 go 1.25.6
 

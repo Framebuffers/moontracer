@@ -3,8 +3,8 @@ package interactions
 import (
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/dispatch"
-	"moontracer/internal/scheduler"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/scheduler"
 )
 
 /*

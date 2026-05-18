@@ -13,12 +13,12 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"moontracer/internal/db"
-	"moontracer/internal/interactions/helpers"
-	"moontracer/internal/interactions/router"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/mediaserver"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/mediaserver"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*

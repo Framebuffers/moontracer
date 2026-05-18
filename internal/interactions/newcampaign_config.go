@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strings"
 	"time"
 
@@ -13,12 +13,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/commands"
-	"moontracer/internal/db"
-	"moontracer/internal/dispatch"
-	"moontracer/internal/interactions/router"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/commands"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*

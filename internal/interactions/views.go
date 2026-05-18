@@ -23,13 +23,13 @@ package interactions
 */
 
 import (
-	"moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/commands"
-	"moontracer/internal/dispatch"
-	"moontracer/internal/interactions/router"
+	"github.com/framebuffers/moontracer/internal/commands"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
 )
 
 /*

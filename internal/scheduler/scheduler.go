@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"moontracer/internal/db"
-	"moontracer/internal/dispatch"
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
 const DefaultLeadTime = time.Hour

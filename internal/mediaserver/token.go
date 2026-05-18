@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"moontracer/internal/tokengenerator"
+	"github.com/framebuffers/moontracer/internal/tokengenerator"
 )
 
 /*

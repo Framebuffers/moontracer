@@ -7,9 +7,9 @@ import (
 	// NOTE: this embeds the IANA timezone database so LoadLocation works without system tzdata
 	_ "time/tzdata"
 
-	"moontracer/internal/db"
-	"moontracer/internal/discord"
-	"moontracer/internal/mediaserver"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/discord"
+	"github.com/framebuffers/moontracer/internal/mediaserver"
 )
 
 /*
