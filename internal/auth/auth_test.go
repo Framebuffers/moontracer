@@ -7,8 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"moontracer/internal/manager/models"
-	"moontracer/internal/testutil"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/testutil"
 )
 
 /*

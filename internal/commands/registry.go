@@ -5,8 +5,8 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/dispatch"
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
 /*
@@ -51,11 +51,13 @@ Note:
 */
 func All(db *bun.DB, d *dispatch.Dispatcher, dataDir, mediaBaseURL string) []Command {
 	cmds := []Command{
-		&pingCommand{},
 		&awooCommand{db: db},
 		&helpCommand{db: *db, d: d},
 		&registerCommand{db: db},
 		&meCommand{db: db},
+		&tokensCommand{db: db},
+		&manageCommand{db: db},
+		&nextSessionsCommand{db: db},
 		&campaignsCommand{db: db},
 		&searchCommand{db: db},
 		&banCommand{db: db},
@@ -64,6 +66,7 @@ func All(db *bun.DB, d *dispatch.Dispatcher, dataDir, mediaBaseURL string) []Com
 		&aboutCommand{db: db},
 		&waosCommand{db: db},
 		&newCampaignCommand{db: db},
+		&newSessionCommand{db: db},
 		&campaignUploadCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&uploadTokenCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 	}

@@ -3,8 +3,8 @@ package helpers
 import (
 	"github.com/bwmarrin/discordgo"
 
-	"moontracer/internal/interactions/router"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*

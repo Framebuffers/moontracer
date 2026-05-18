@@ -3,18 +3,19 @@ package interactions
 import (
 	"fmt"
 	"log"
-	"moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/db"
-	"moontracer/internal/dispatch"
-	"moontracer/internal/guard"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*
@@ -174,5 +175,10 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		return
 	}
 
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.PlayerJoinedCampaignMessage, campaign.Name))
+	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.PlayerJoinedCampaignMessage, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			router.NavButton(messages.BrowseMoreLabel, discordgo.SecondaryButton, router.ViewCampaignsBrowse),
+			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
+		}},
+	})
 }

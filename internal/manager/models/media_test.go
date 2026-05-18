@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/manager/models"
-	"moontracer/internal/testutil"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/testutil"
 )
 
 func seedMedia(t *testing.T, db *bun.DB, id, ownerID, campaignID, path string, kind models.MediaKind) *models.Media {

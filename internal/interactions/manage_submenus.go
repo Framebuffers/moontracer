@@ -9,12 +9,12 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/db"
-	"moontracer/internal/interactions/helpers"
-	"moontracer/internal/interactions/router"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*
@@ -105,27 +105,19 @@ func RenderManagePlayersMenu(s *discordgo.Session, i *discordgo.InteractionCreat
 	})
 }
 
-// RenderManageSessionsMenu renders the Sessions sub-menu (Set/Reschedule, Announce).
+// RenderManageSessionsMenu renders the Sessions sub-menu (New Session).
 func RenderManageSessionsMenu(s *discordgo.Session, i *discordgo.InteractionCreate, database *bun.DB, campaignID string) {
 	campaign, ok := renderManageSubAuth(s, i, database, campaignID)
 	if !ok {
 		return
 	}
-	sessionLabel := messages.ManageSetSessionLabel
-	if !campaign.Schedule.NextSession.IsZero() {
-		sessionLabel = messages.ManageRescheduleSessionLabel
-	}
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageCampaignHeader, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+	_ = campaign // loaded for auth; not needed for the static menu
+	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageCampaignHeader, "Sessions"), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
-				Label:    sessionLabel,
-				Style:    discordgo.SecondaryButton,
-				CustomID: fmt.Sprintf("%s:%s", messages.ManageSetSessionPrefix, campaignID),
-			},
-			discordgo.Button{
-				Label:    messages.ManageAnnounceLabel,
+				Label:    messages.ManageNewSessionLabel,
 				Style:    discordgo.SuccessButton,
-				CustomID: fmt.Sprintf("manage_announce:%s", campaignID),
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageNewSessionPrefix, campaignID),
 			},
 		}},
 		helpers.BackRow(router.ViewManageCampaign, campaignID),

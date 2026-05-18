@@ -7,9 +7,9 @@ import (
 	// NOTE: this embeds the IANA timezone database so LoadLocation works without system tzdata
 	_ "time/tzdata"
 
-	"moontracer/internal/db"
-	"moontracer/internal/discord"
-	"moontracer/internal/mediaserver"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/discord"
+	"github.com/framebuffers/moontracer/internal/mediaserver"
 )
 
 /*
@@ -61,6 +61,11 @@ func main() {
 		mediaBaseURL = "http://localhost:" + mediaPort + "/api/v1/cdn"
 	}
 
+	downloadURL := os.Getenv("MEDIA_DOWNLOAD_URL")
+	if downloadURL == "" {
+		downloadURL = "http://localhost:" + mediaPort
+	}
+	mediaserver.SetDownloadBase(downloadURL)
 	mediaserver.Serve(dbDir, ":"+mediaPort)
 	mediaserver.Probe(":" + mediaPort)
 

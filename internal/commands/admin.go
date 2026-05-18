@@ -22,11 +22,11 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/guard"
-	"moontracer/internal/interactions/helpers"
-	"moontracer/internal/interactions/router"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*
@@ -318,3 +318,5 @@ func diagBlock(s *discordgo.Session, guildDB *bun.DB, guildID string) string {
 
 	return b.String()
 }
+
+func (a *adminCommand) Hidden() bool { return true }

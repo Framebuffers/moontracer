@@ -7,8 +7,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/guard"
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
 /*

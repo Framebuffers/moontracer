@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 )
+
+// blame ankhef for this one
 
 type waosCommand struct {
 	db *bun.DB

@@ -7,7 +7,7 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
 // Migrate creates all tables if they don't already exist.
@@ -22,6 +22,8 @@ func Migrate(db *bun.DB) error {
 		(*models.CampaignPlayer)(nil),
 		(*models.AuditEntry)(nil),
 		(*models.PlayerSettings)(nil),
+		(*models.Session)(nil),
+		(*models.SessionRSVP)(nil),
 	}
 
 	for _, model := range tables {
@@ -130,6 +132,30 @@ func Migrate(db *bun.DB) error {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
 			return err
 		}
+	}
+
+	// Unique index so the conflict-based seed below stays idempotent.
+	if _, err := db.ExecContext(ctx,
+		`CREATE UNIQUE INDEX IF NOT EXISTS sessions_campaign_scheduled_unique ON sessions (campaign_id, scheduled_at)`,
+	); err != nil {
+		return err
+	}
+
+	/*
+		Backfill one session row per approved, non-archived campaign that already has a
+		NextSession set and has no sessions in the new table yet.
+	*/
+	if _, err := db.ExecContext(ctx, `
+		INSERT OR IGNORE INTO sessions (id, campaign_id, scheduled_at, title, channel_msg_id, capacity, alert_sent, status, created_at)
+		SELECT lower(hex(randomblob(16))), c.id, c.next_session, '', '', 0, c.alert_sent, 'upcoming', datetime('now')
+		FROM campaigns c
+		WHERE c.next_session IS NOT NULL
+		  AND c.next_session > datetime('now')
+		  AND c.is_approved = 1
+		  AND c.is_archived = 0
+		  AND NOT EXISTS (SELECT 1 FROM sessions s WHERE s.campaign_id = c.id)
+	`); err != nil {
+		return err
 	}
 
 	log.Println("database migration complete")

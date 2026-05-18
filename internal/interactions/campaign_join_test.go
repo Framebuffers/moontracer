@@ -11,10 +11,10 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/dispatch"
-	"moontracer/internal/guard"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/testutil"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/testutil"
 )
 
 /*

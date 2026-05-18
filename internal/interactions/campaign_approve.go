@@ -1,19 +1,19 @@
 package interactions
 
 import (
-	"moontracer/internal/interactions/helpers"
 	"context"
 	"fmt"
 	"log"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/db"
-	"moontracer/internal/dispatch"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*
@@ -64,6 +64,10 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		return
 	}
 
+	/*
+		Auth + DB load are fast; handle errors here before the defer so we can still
+		call InteractionRespond without conflicting with a deferred response.
+	*/
 	campaign, ok := helpers.LoadModCampaign(s, i, c.db, campaignID)
 	if !ok {
 		return
@@ -76,27 +80,40 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		return
 	}
 
-	createCampaignChannels(s, guildID, campaign)
-	if err := db.Update(c.db, campaign); err != nil {
-		log.Printf("campaign_approve: failed to save channel IDs for %s: %v", campaignID, err)
+	/*
+	 Create the campaign role now (fast, single API call) so players can be assigned it on join.
+	 Channel setup is deferred to the DM: they pick new or existing from campaign settings.
+	*/
+	if err := EnsureCampaignRole(s, guildID, campaign); err != nil {
+		log.Printf("campaign_approve: role for %s: %v", campaignID, err)
+	} else if err := db.Update(c.db, campaign); err != nil {
+		log.Printf("campaign_approve: save role for %s: %v", campaignID, err)
 	}
 
-	msgApproved := &dispatch.DirectMessage{
+	var senderID string
+	if i.User != nil {
+		senderID = i.User.ID
+	} else if i.Member != nil {
+		senderID = i.Member.User.ID
+	}
+	c.dispatcher.Push(dispatch.DirectMessage{
 		ID:      campaignID,
-		Sender:  i.User.ID,
+		Sender:  senderID,
 		Target:  campaign.DungeonMaster,
 		Content: fmt.Sprintf(messages.CampaignApprovedDMMessage, campaign.Name),
-	}
+	})
 
-	c.dispatcher.Push(*msgApproved)
-
+	content := fmt.Sprintf(messages.CampaignApprovedStatusMessage, campaign.Name)
+	empty := []discordgo.MessageComponent{}
+	// Use InteractionResponseUpdateMessage (sync) since we no longer make slow Discord API calls.
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Content:    fmt.Sprintf(messages.CampaignApprovedStatusMessage, campaign.Name),
+			Content:    content,
 			Components: []discordgo.MessageComponent{},
 		},
 	})
+	_ = empty
 }
 
 /*
@@ -238,5 +255,5 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 		Content: fmt.Sprintf(messages.CampaignDeniedDMMessage, campaign.Name, reason),
 	})
 
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.CampaignDeniedMessage, campaign.Name))
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.CampaignDeniedStatusMessage, campaign.Name, reason))
 }

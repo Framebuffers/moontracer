@@ -6,8 +6,8 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/stretchr/testify/assert"
 
-	"moontracer/internal/guard"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*

@@ -19,7 +19,7 @@ package messages
 // Generic
 const (
 	// identifiers
-	BotVersion = "v0.13.0-RC2"
+	BotVersion = "v0.14.0-RC3"
 )
 const (
 	// user-facing
@@ -46,9 +46,9 @@ NOTE:
 */
 const (
 	// input format contracts. changing these breaks modal parsing
-	DateInputFormat     = "2006-01-02"       // YYYY-MM-DD (ISO 8601 date)
+	DateInputFormat     = "02/01/2006"       // DD/MM/YYYY
 	TimeInputFormat     = "15:04"            // HH:MM (24h)
-	DateTimeInputFormat = "2006-01-02 15:04" // combined for ParseInLocation
+	DateTimeInputFormat = "02/01/2006 15:04" // combined for ParseInLocation
 )
 const (
 	// user-facing display formats. swap per locale for localized day/month names
@@ -292,10 +292,14 @@ const (
 const (
 	// identifiers
 	ManageCampaignsCommandName = "managecampaigns"
+	ManageCommandName          = "manage"
+	ManageCommandOptionName    = "campaign"
 )
 const (
 	// user-facing
 	ManageCampaignsCommandDesc = "Manage campaigns you run as DM."
+	ManageCommandDesc          = "Manage one of your campaigns."
+	ManageCommandOptionDesc    = "Campaign to manage."
 	ManageCampaignsLabel       = "Manage Campaigns"
 	ManageNoDMCampaigns        = "⚠️ You are not the DM of any campaigns."
 	ManageNotAuthorized        = "ℹ️ You must be the DM of this campaign to manage it."
@@ -316,6 +320,7 @@ const (
 // Token upload
 const (
 	// identifiers — token gallery
+	TokensCommandName              = "tokens"
 	TokenGallerySelectPrefix       = "token_gallery_select"
 	TokenGalleryAssignPrefix       = "token_gallery_assign"
 	TokenGalleryAssignSelectPrefix = "token_gallery_assign_select"
@@ -325,6 +330,7 @@ const (
 )
 const (
 	// user-facing — token gallery
+	TokensCommandDesc                   = "Browse and manage your tokens."
 	TokensLabel                         = "🐺 Tokens"
 	TokenGalleryHeader                  = "Your tokens:"
 	TokenGalleryNone                    = "ℹ️ You have no tokens yet! Use `/newtoken` to create one."
@@ -384,7 +390,7 @@ const (
 // Campaign cover / upload
 const (
 	// identifiers
-	CampaignUploadCommandName     = "campaignupload"
+	CampaignUploadCommandName     = "uploadcover"
 	CampaignUploadKindOptName     = "kind"
 	CampaignUploadKindCoverChoice = "Cover"
 	CampaignUploadCampaignOptName = "campaign"
@@ -392,7 +398,7 @@ const (
 )
 const (
 	// user-facing
-	CampaignUploadCommandDesc     = "Upload an image for one of your campaigns."
+	CampaignUploadCommandDesc     = "Upload a cover image for one of your campaigns."
 	CampaignUploadKindOptDesc     = "What kind of image to upload."
 	CampaignUploadCampaignOptDesc = "The campaign to upload an image for."
 	CampaignUploadImageOptDesc    = "Image file (JPEG/PNG/WebP, up to 8 MiB)."
@@ -403,7 +409,7 @@ const (
 	CampaignUploadFailure         = "⚠️ Failed to save cover. Please try again."
 	CampaignUploadSuccess         = "✅ Cover set for **%s**. [View](%s)"
 	SetCoverButtonLabel           = "Set Cover"
-	SetCoverInstructions          = "Use `/campaignupload kind:Cover campaign:<name> image:<file>` to set a cover for this campaign."
+	SetCoverInstructions          = "Use `/uploadcover campaign:<name> image:<file>` to set a cover for this campaign."
 )
 
 // Manage campaigns: button labels (all user-facing)
@@ -456,8 +462,8 @@ const (
 	CampaignDenyReasonPlaceholder = "Why is this campaign being denied?"
 	CampaignDeniedDMMessage       = "🚫 Your campaign **%s** has been denied. Reason: %s"
 	CampaignApprovedDMMessage     = "🐺 Your campaign **%s** has been approved!"
-	CampaignApprovedStatusMessage = "✅ Approved campaign **%s**."
-	CampaignDeniedStatusMessage   = "🚫 Denied campaign **%s**. Reason: %s"
+	CampaignApprovedStatusMessage = "✅ **%s** approved. Channels set up and DM notified."
+	CampaignDeniedStatusMessage   = "🚫 **%s** denied and removed. DM notified with reason: _%s_"
 	CampaignDenyPendingMessage    = "ℹ️ Campaign **%s**: denial in progress..."
 )
 
@@ -483,6 +489,16 @@ const (
 
 // CampaignsCategoryName is the shared Discord category all campaign channels are grouped under.
 const CampaignsCategoryName = "Campaigns"
+
+// Thread initial pinned messages, keyed by standard thread name.
+const (
+	ThreadInitMsgAnnouncements = "📣 Campaign announcements and session news will be posted here."
+	ThreadInitMsgSessions      = "📅 Session schedules and notes will be posted here."
+	ThreadInitMsgDiceRolls     = "🎲 Roll your dice and share your results here!"
+	ThreadInitMsgGeneral       = "💬 General campaign discussion."
+	// ThreadInitMsgWelcomeFmt takes the campaign name as its argument.
+	ThreadInitMsgWelcomeFmt = "🐺 Welcome to **%s**! This is your campaign channel. \nCheck the other threads for announcements, sessions, dice rolls, and general discussion."
+)
 
 // DayOfWeekInput maps accepted day-name inputs (lower-cased) to 0-based weekday index (Mon=0).
 var DayOfWeekInput = map[string]int{
@@ -720,27 +736,52 @@ const (
 // New campaign config (post-modal dropdowns)
 const (
 	// identifiers
-	NewCampaignBookPrefix   = "newcampaign_book"
-	NewCampaignFormatPrefix = "newcampaign_format"
-	NewCampaignSubmitPrefix = "newcampaign_submit"
-	NewCampaignCancelPrefix = "newcampaign_cancel"
+	NewCampaignBookPrefix      = "newcampaign_book"
+	NewCampaignFormatPrefix    = "newcampaign_format"
+	NewCampaignFreqPrefix      = "newcampaign_freq"
+	NewCampaignSubmitPrefix    = "newcampaign_submit"
+	NewCampaignCancelPrefix    = "newcampaign_cancel"
+	NewCampaignScheduleModalID = "modal_newcampaign_schedule"
+
+	NewCampaignScheduleDateFieldID = "newcampaign_sched_date"
+	NewCampaignScheduleTimeFieldID = "newcampaign_sched_time"
 )
 const (
 	// user-facing
-	NewCampaignBookPlaceholder   = "Select a game system..."
-	NewCampaignFormatPlaceholder = "Select a format..."
-	NewCampaignConfigMessage     = "ℹ️ Campaign **%s** created (pending setup).\n\nSelect a game system and format, then submit for approval. You can set a cover image and links from the campaign settings after approval."
-	NewCampaignSubmitLabel       = "✅ Submit for Approval"
-	NewCampaignCancelLabel       = "❌ Cancel"
-	NewCampaignSubmittedMessage  = "✅ Campaign **%s** has been submitted for approval!"
-	NewCampaignCancelledMessage  = "ℹ️ Campaign creation cancelled."
-	NewCampaignMissingSystemMessage = "⚠️ Please select a game system before submitting."
+	NewCampaignBookPlaceholder      = "Select a game system..."
+	NewCampaignFormatPlaceholder    = "Select a format..."
+	NewCampaignFreqPlaceholder      = "Select a schedule frequency..."
+	NewCampaignConfigMessage        = "ℹ️ Campaign **%s** created (pending setup).\n\nSelect a game system, format, and frequency, then submit for approval. You'll set the first session date in the next step."
+	NewCampaignSubmitLabel          = "✅ Submit for Approval"
+	NewCampaignCancelLabel          = "❌ Cancel"
+	NewCampaignSubmittedMessage     = "✅ Campaign **%s** has been submitted for approval!"
+	NewCampaignCancelledMessage     = "ℹ️ Campaign creation cancelled."
+	NewCampaignMissingConfigMessage = "⚠️ Please select a game system and format before submitting."
+
+	NewCampaignScheduleModalTitle      = "📅 When's your first session?"
+	NewCampaignScheduleDateLabel       = "Date (DD/MM/YYYY)"
+	NewCampaignScheduleTimeLabelFmt    = "Time (%s)"
+	NewCampaignScheduleDatePlaceholder = "e.g. 14/06/2026"
+	NewCampaignScheduleTimePlaceholder = "e.g. 19:00"
+	NewCampaignScheduleSkipHint        = "Leave blank to set a session later from campaign settings."
+	NewCampaignScheduleInvalidDate     = "⚠️ Invalid date format. Use DD/MM/YYYY (e.g. 14/06/2026)."
+	NewCampaignScheduleInvalidTime     = "⚠️ Invalid time format. Use HH:MM (e.g. 19:00)."
+	NewCampaignScheduleInPast          = "⚠️ That date/time is in the past. Please pick a future date."
 
 	// Book dropdown option labels
 	NewCampaignBookLabel5e    = "D&D 5e"
 	NewCampaignBookLabel55e   = "D&D 5.5e (2024)"
 	NewCampaignBookLabelPF2e  = "Pathfinder 2e"
 	NewCampaignBookLabelOther = "Other / Homebrew"
+
+	// Frequency dropdown option labels
+	NewCampaignFreqLabelWeekly    = "Weekly"
+	NewCampaignFreqLabelBiweekly  = "Bi-weekly"
+	NewCampaignFreqLabelMonthly   = "Monthly"
+	NewCampaignFreqLabelIrregular = "Irregular / As-needed"
+
+	// Browse more after joining
+	BrowseMoreLabel = "🔍 Browse more campaigns"
 )
 
 // Campaign Modal (all user-facing)
@@ -769,12 +810,14 @@ const (
 // Player hub: Next Sessions
 const (
 	// identifiers
-	NextSessionsPrefix = "next_sessions"
+	NextSessionsPrefix      = "next_sessions"
+	NextSessionsCommandName = "nextsessions"
 )
 const (
 	// user-facing
-	NextSessionsHeader = "Upcoming sessions:"
-	NextSessionsNone   = "ℹ️ You have no upcoming sessions."
+	NextSessionsHeader      = "Upcoming sessions:"
+	NextSessionsNone        = "ℹ️ You have no upcoming sessions."
+	NextSessionsCommandDesc = "Show your upcoming sessions."
 )
 
 // Player hub: Notifications
@@ -880,11 +923,11 @@ const (
 	ManageSetSessionLabel           = "📅 Set Session"
 	ManageRescheduleSessionLabel    = "⌚ Reschedule"
 	ManageSetSessionModalTitle      = "🏰 Set Next Session"
-	ManageSetSessionDateLabel       = "Date (YYYY-MM-DD)"
-	ManageSetSessionDatePlaceholder = "2026-05-08"
+	ManageSetSessionDateLabel       = "Date (DD/MM/YYYY)"
+	ManageSetSessionDatePlaceholder = "08/05/2026"
 	ManageSetSessionTimeLabel       = "Time UTC (HH:MM, 24h)"
 	ManageSetSessionTimePlaceholder = "19:00"
-	ManageSetSessionInvalidDate     = "⚠️ Invalid date format. Use YYYY-MM-DD."
+	ManageSetSessionInvalidDate     = "⚠️ Invalid date format. Use DD/MM/YYYY."
 	ManageSetSessionInvalidTime     = "⚠️ Invalid time format. Use HH:MM (24h)."
 	ManageSetSessionInPast          = "⚠️ Cannot set a session in the past."
 	ManageSetSessionSuccess         = "✅ Next session for **%s** set to **%s** — %s."
@@ -908,7 +951,7 @@ const (
 	InviteCampaignFull     = "⚠️ Cannot invite — campaign **%s** is full."
 )
 
-// Session RSVP (buttons on reminder DMs)
+// Session RSVP — legacy (campaign-level, reminder DMs only)
 const (
 	// identifiers
 	RSVPAcceptPrefix  = "rsvp_accept"
@@ -924,6 +967,65 @@ const (
 	RSVPDMNotifyDecline  = "❌ <@%s> won't be coming for **%s**:\n%s."
 	RSVPAlreadyResponded = "ℹ️ You've already responded for this session. If you changed your mind, talk to your DM."
 	RSVPCampaignGone     = "ℹ️ This campaign is no longer active."
+)
+
+// New Session command + per-session RSVP (sessions table)
+const (
+	// identifiers
+	NewSessionCommandName  = "newsession"
+	NewSessionOptionName   = "campaign"
+	NewSessionModalID      = "modal_new_session"
+	NewSessionDateFieldID  = "new_session_date"
+	NewSessionTimeFieldID  = "new_session_time"
+	NewSessionNotesFieldID = "new_session_notes"
+	ManageNewSessionPrefix = "manage_new_session"
+
+	SessionRSVPAcceptPrefix  = "session_rsvp_accept"
+	SessionRSVPDeclinePrefix = "session_rsvp_decline"
+	SessionRSVPConfirmPrefix = "session_rsvp_confirm"
+	SessionRSVPCancelPrefix  = "session_rsvp_cancel"
+)
+const (
+	// user-facing
+	NewSessionCommandDesc      = "Schedule and announce a new session for your campaign."
+	NewSessionOptionDesc       = "Campaign to schedule a session for"
+	NewSessionModalTitle       = "📅 Schedule a New Session"
+	NewSessionNotesLabel       = "What to expect (optional)"
+	NewSessionNotesPlaceholder = "e.g. Picking up from last time — don't forget your character sheet!"
+	ManageNewSessionLabel      = "📅 New Session"
+
+	SessionEmbedGoingFmt = "✅ Going: %d  ·  ❌ Not Going: %d"
+
+	SessionRSVPAcceptLabel  = "✅ Going"
+	SessionRSVPDeclineLabel = "❌ Not Going"
+
+	SessionRSVPAcceptedMsg   = "✅ You're in! The DM has been notified."
+	SessionRSVPDeclinedMsg   = "❌ Can't make it — the DM has been notified."
+	SessionRSVPWaitlistedMsg = "⏳ Session is full — you're on the waitlist. The DM will confirm the final roster."
+	SessionRSVPConflictFmt   = "⚠️ You already have a session at this time: **%s** on %s.\nConfirm anyway?"
+	SessionRSVPConfirmLabel  = "Confirm anyway"
+	SessionRSVPCancelLabel   = "Cancel"
+	SessionRSVPAlreadySet    = "ℹ️ You've already responded to this session."
+	SessionRSVPNotMember     = "⚠️ Join this campaign before RSVPing to its sessions."
+	SessionRSVPGone          = "ℹ️ This session is no longer active."
+
+	SessionRSVPDMNotifyAccept   = "✅ <@%s> is going to **%s** · %s"
+	SessionRSVPDMNotifyDecline  = "❌ <@%s> can't make it for **%s** · %s"
+	SessionRSVPDMNotifyWaitlist = "⏳ <@%s> is on the waitlist for **%s** · %s (session full)"
+
+	NewSessionAnnouncedFmt    = "✅ Session for **%s** announced — %d member(s) notified."
+	NewSessionNoChannel       = "⚠️ This campaign has no channel. Set one up in campaign settings first."
+	NewSessionDMContentFmt    = "📅 **%s** — New Session!\n<t:%d:F> · <t:%d:R>%s"
+	SessionReminderContentFmt = "⏰ Reminder: **%s** starts in ~1 hour!\n<t:%d:F>%s"
+
+	SessionEmbedTitleFmt        = "📅 New Session — %s"
+	SessionEmbedGoingLabel      = "✅ Going"
+	SessionEmbedNotGoingLabel   = "❌ Not Going"
+	SessionEmbedWaitlistedLabel = "⏳ Waitlisted"
+	SessionRSVPCancelledMsg     = "ℹ️ RSVP cancelled."
+	SessionRSVPLineEmptyFmt     = "%s (0): —"
+	SessionRSVPLineFmt          = "%s (%d): %s"
+	SessionRSVPLineOverflowFmt  = " +%d more"
 )
 
 // Player campaign card (player self-service)

@@ -67,9 +67,10 @@ Reset to RSVPPending whenever NextSession changes.
 type RSVPStatus string
 
 const (
-	RSVPPending  RSVPStatus = ""
-	RSVPAccepted RSVPStatus = "accepted"
-	RSVPDeclined RSVPStatus = "declined"
+	RSVPPending    RSVPStatus = ""
+	RSVPAccepted   RSVPStatus = "accepted"
+	RSVPDeclined   RSVPStatus = "declined"
+	RSVPWaitlisted RSVPStatus = "waitlisted"
 )
 
 /*

@@ -8,7 +8,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/guard"
 )
 
 type DirectMessage struct {

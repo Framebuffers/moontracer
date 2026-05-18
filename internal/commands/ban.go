@@ -7,10 +7,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/db"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*
@@ -148,3 +148,5 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 		respond(s, i, fmt.Sprintf(messages.BanSuccessReasonMessage, targetUser.ID, reason))
 	}
 }
+
+func (r *banCommand) Hidden() bool { return true }

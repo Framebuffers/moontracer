@@ -1,13 +1,14 @@
 package scheduler
 
 import (
+	"context"
 	"log"
 	"sync"
 	"time"
 
-	"moontracer/internal/db"
-	"moontracer/internal/dispatch"
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
 const DefaultLeadTime = time.Hour
@@ -29,13 +30,11 @@ func New(guildDBM *db.GuildDBManager, dispatcher *dispatch.Dispatcher) *Schedule
 	}
 }
 
-func timerKey(guildID, campaignID string) string {
-	return guildID + "/" + campaignID
-}
+func timerKey(guildID, id string) string { return guildID + "/" + id }
 
 /*
-BootScan re-schedules reminders for any campaign where NextSession is in the
-future and AlertSent is false.
+BootScan re-schedules reminders for upcoming sessions (sessions table) and any
+legacy campaigns that still have NextSession set outside the sessions table.
 
 Call once after all guild DBs are initialised.
 */
@@ -48,9 +47,27 @@ func (s *Scheduler) BootScan(guildIDs []string) {
 			log.Printf("scheduler: boot scan: get db for guild %s: %v", guildID, err)
 			continue
 		}
+
+		// Session-table reminders (new path).
+		var sessions []models.Session
+		if err := gdb.NewSelect().Model(&sessions).
+			Where("status = ? AND scheduled_at > ? AND alert_sent = 0", models.SessionUpcoming, now).
+			Scan(context.Background()); err != nil {
+			log.Printf("scheduler: boot scan sessions for guild %s: %v", guildID, err)
+		}
+		for i := range sessions {
+			s.ScheduleSession(guildID, &sessions[i])
+			total++
+		}
+
+		/*
+			LEGACY CODE:
+			Legacy campaign-level reminders (campaigns that have NextSession set but
+			no corresponding session row yet: they were not seeded by migration).
+		*/
 		campaigns, err := db.GetAll[models.Campaign](gdb)
 		if err != nil {
-			log.Printf("scheduler: boot scan: query guild %s: %v", guildID, err)
+			log.Printf("scheduler: boot scan campaigns for guild %s: %v", guildID, err)
 			continue
 		}
 		for i := range campaigns {
@@ -59,6 +76,15 @@ func (s *Scheduler) BootScan(guildIDs []string) {
 				continue
 			}
 			if !c.Schedule.NextSession.After(now) {
+				continue
+			}
+			// Skip if a session row covers this (to avoid duplicate reminders).
+			var count int
+			count, _ = gdb.NewSelect().Model((*models.Session)(nil)).
+				Where("campaign_id = ? AND scheduled_at = ? AND status = ?",
+					c.ID, c.Schedule.NextSession, models.SessionUpcoming).
+				Count(context.Background())
+			if count > 0 {
 				continue
 			}
 			s.Schedule(guildID, c)
@@ -107,6 +133,46 @@ func (s *Scheduler) Schedule(guildID string, campaign *models.Campaign) {
 	s.mu.Unlock()
 
 	log.Printf("scheduler: reminder for campaign %s (guild %s) in %v", campaignID, guildID, delay.Truncate(time.Second))
+}
+
+/*
+ScheduleSession sets a session-level reminder timer.
+
+Uses timerKey(guildID, session.ID) so it never collides with campaign-level timers.
+*/
+func (s *Scheduler) ScheduleSession(guildID string, session *models.Session) {
+	if s == nil {
+		return
+	}
+	if session.AlertSent || session.Status != models.SessionUpcoming {
+		return
+	}
+	now := time.Now().UTC()
+	if !session.ScheduledAt.After(now) {
+		return
+	}
+
+	delay := time.Until(session.ScheduledAt.Add(-DefaultLeadTime))
+	if delay < 0 {
+		delay = 0
+	}
+
+	key := timerKey(guildID, session.ID)
+	sessionID := session.ID
+
+	s.mu.Lock()
+	if existing, ok := s.timers[key]; ok {
+		existing.Stop()
+	}
+	s.timers[key] = time.AfterFunc(delay, func() {
+		s.mu.Lock()
+		delete(s.timers, key)
+		s.mu.Unlock()
+		fireSessionReminder(s, guildID, sessionID)
+	})
+	s.mu.Unlock()
+
+	log.Printf("scheduler: session reminder for %s (guild %s) in %v", sessionID, guildID, delay.Truncate(time.Second))
 }
 
 /*

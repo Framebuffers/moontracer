@@ -12,18 +12,18 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/db"
-	"moontracer/internal/guard"
-	"moontracer/internal/interactions/router"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/interactions/router"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*
@@ -78,6 +78,25 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 
 	if !helpers.IsCampaignMutable(s, i, campaign) {
+		return
+	}
+
+	// Pending campaigns are awaiting staff approval — only show the danger zone.
+	if !campaign.IsApproved {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseUpdateMessage,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("⏳ **%s** is awaiting staff approval. You can cancel it below.", campaign.Name),
+				Embeds:  []*discordgo.MessageEmbed{},
+				Components: []discordgo.MessageComponent{
+					discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+						router.NavButton(messages.ManageSettingsLabel, discordgo.PrimaryButton, router.ViewManageSettings, campaignID),
+					}},
+					helpers.BackRow(router.ViewManage),
+				},
+				Flags: discordgo.MessageFlagsEphemeral,
+			},
+		})
 		return
 	}
 
@@ -198,6 +217,7 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		return
 	}
 
+	RetireChannel(s, i.GuildID, campaign)
 	log.Printf("manage_delete_confirm: %s deleted campaign %s (%s)", userID, campaign.Name, campaignID)
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*

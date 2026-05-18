@@ -25,12 +25,12 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/db"
-	"moontracer/internal/guard"
-	"moontracer/internal/interactions/helpers"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
-	"moontracer/internal/scheduler"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/scheduler"
 )
 
 type manageSetSession struct {

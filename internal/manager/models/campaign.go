@@ -6,6 +6,7 @@ import (
 	"math"
 	"strings"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
@@ -41,7 +42,8 @@ type Campaign struct {
 	PlayerSheetURL string   `bun:",default:''" json:"player_sheet_url,omitempty"`
 	CampaignMedia  []string `bun:",array,type:jsonb" json:"campaign_media,omitempty"`
 
-	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=campaign_id" json:"campaign_players,omitempty"` // Has-many relation.
+	CampaignPlayers []CampaignPlayer `bun:"rel:has-many,join:id=campaign_id" json:"campaign_players,omitempty"`
+	Sessions        []Session        `bun:"rel:has-many,join:id=campaign_id" json:"sessions,omitempty"`
 
 	// Can you add a new player *even if* the Campaign is full?
 	CanOverflow bool `bun:",notnull,default:false" json:"can_overflow"`
@@ -162,11 +164,11 @@ func NormalizeTag(name string) string {
 	}
 	tag := strings.ToLower(strings.TrimSpace(name))
 
-	// Replace non-alphanumeric characters with hyphens.
+	// Replace non-alphanumeric characters with hyphens; allow unicode letters (e.g. ñ, é).
 	var b strings.Builder
 	prevHyphen := false
 	for _, r := range tag {
-		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			b.WriteRune(r)
 			prevHyphen = false
 		} else if !prevHyphen {
@@ -196,6 +198,7 @@ const (
 	Quarterly CampaignFrequency = "quarterly"
 	Yearly    CampaignFrequency = "yearly"
 	Westmarch CampaignFrequency = "westmarch"
+	Irregular CampaignFrequency = "irregular"
 )
 
 func (c *Campaign) CreateCampaign(
@@ -293,4 +296,29 @@ func (c *Campaign) CreateCampaign(
 	}
 
 	return campaign, nil
+}
+
+// RefreshNextSession updates Campaign.Schedule.NextSession to the earliest upcoming session
+// in the sessions table. Should be called after inserting or deleting a Session.
+func (c *Campaign) RefreshNextSession(db *bun.DB) error {
+	ctx := context.Background()
+	var earliest Session
+	err := db.NewSelect().Model(&earliest).
+		Where("campaign_id = ? AND status = ? AND scheduled_at > ?", c.ID, SessionUpcoming, time.Now().UTC()).
+		OrderExpr("scheduled_at ASC").
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		// No upcoming sessions — clear NextSession.
+		c.Schedule.NextSession = time.Time{}
+		c.Schedule.AlertSent = false
+	} else {
+		c.Schedule.NextSession = earliest.ScheduledAt
+		c.Schedule.AlertSent = earliest.AlertSent
+	}
+	_, err2 := db.NewUpdate().Model(c).
+		Column("next_session", "alert_sent").
+		Where("id = ?", c.ID).
+		Exec(ctx)
+	return err2
 }

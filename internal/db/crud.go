@@ -6,7 +6,7 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
 func GetByID[T any](db *bun.DB, id string) (*T, error) {

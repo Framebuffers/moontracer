@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/guard"
 )
 
 /*

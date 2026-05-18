@@ -3,8 +3,8 @@ package interactions
 import (
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/dispatch"
-	"moontracer/internal/scheduler"
+	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/scheduler"
 )
 
 /*
@@ -98,9 +98,17 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// Quick registration button (shown on all "not registered" surfaces).
 		&quickRegisterHandler{db: db},
 
+		// Session announce + RSVP
+		&manageNewSessionButton{db: db},
+		&sessionRSVPAcceptHandler{db: db, dispatcher: d},
+		&sessionRSVPDeclineHandler{db: db, dispatcher: d},
+		&sessionRSVPConfirmHandler{db: db, dispatcher: d},
+		&sessionRSVPCancelHandler{},
+
 		// New campaign config (post-modal)
 		&newCampaignBookHandler{db: db},
 		&newCampaignFormatHandler{db: db},
+		&newCampaignFrequencyHandler{db: db},
 		&newCampaignSubmitHandler{db: db, dispatcher: d},
 		&newCampaignCancelHandler{db: db},
 
@@ -128,7 +136,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&tokenApplyHandler{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&tokenDiscardHandler{dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&playerTokenPostcreateSelectHandler{db: db},
-		&playerTokenSkipHandler{},
+		&playerTokenSkipHandler{db: db},
 		&manageSetSession{db: db},
 
 		// Token gallery (/me -> Tokens)
@@ -166,6 +174,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, dataDir, mediaBaseURL string) []ModalHandler {
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
+		&newCampaignScheduleModal{db: db, dispatcher: d},
+		&newSessionModal{db: db, dispatcher: d, sched: sched},
 		&campaignDenyModal{db: db, dispatcher: d},
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},

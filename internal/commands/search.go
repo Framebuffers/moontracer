@@ -7,9 +7,9 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/db"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*
@@ -64,7 +64,7 @@ func (c *searchCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 
 	userID := i.Member.User.ID
 	coverURL := models.CoverURLForCampaign(c.db, campaign.ID)
-	embed := CampaignEmbed(*campaign, players, coverURL, "")
+	embed := CampaignEmbed(*campaign, players, coverURL, "", userID)
 	buttons := CampaignButtons(userID, *campaign, players, "")
 
 	resp := &discordgo.InteractionResponse{

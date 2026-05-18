@@ -7,10 +7,10 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"moontracer/internal/auth"
-	"moontracer/internal/db"
-	"moontracer/internal/manager/models"
-	"moontracer/internal/messages"
+	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/manager/models"
+	"github.com/framebuffers/moontracer/internal/messages"
 )
 
 /*
@@ -86,3 +86,5 @@ func (u *unbanCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 	log.Printf("unban: %s unbanned %s", invokerID, target.ID)
 	respond(s, i, fmt.Sprintf(messages.UnbanSuccessMessage, targetUser.ID))
 }
+
+func (u *unbanCommand) Hidden() bool { return true }
