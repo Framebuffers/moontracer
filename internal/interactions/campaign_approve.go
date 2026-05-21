@@ -80,10 +80,6 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		return
 	}
 
-	/*
-	 Create the campaign role now (fast, single API call) so players can be assigned it on join.
-	 Channel setup is deferred to the DM: they pick new or existing from campaign settings.
-	*/
 	if err := EnsureCampaignRole(s, guildID, campaign); err != nil {
 		log.Printf("campaign_approve: role for %s: %v", campaignID, err)
 	} else if err := db.Update(c.db, campaign); err != nil {
@@ -104,8 +100,6 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 	})
 
 	content := fmt.Sprintf(messages.CampaignApprovedStatusMessage, campaign.Name)
-	empty := []discordgo.MessageComponent{}
-	// Use InteractionResponseUpdateMessage (sync) since we no longer make slow Discord API calls.
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
@@ -113,7 +107,17 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 			Components: []discordgo.MessageComponent{},
 		},
 	})
-	_ = empty
+
+	// Channel + thread creation is slow; run after responding so the mod interaction resolves immediately.
+	go func() {
+		if err := SetupNewChannel(s, guildID, campaign); err != nil {
+			log.Printf("campaign_approve: channel setup for %s: %v", campaignID, err)
+			return
+		}
+		if err := db.Update(c.db, campaign); err != nil {
+			log.Printf("campaign_approve: save channel IDs for %s: %v", campaignID, err)
+		}
+	}()
 }
 
 /*
