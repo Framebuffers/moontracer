@@ -141,9 +141,16 @@ func (c *importCampaignCommand) Execute(s *discordgo.Session, i *discordgo.Inter
 		}
 
 		// 5. Build and insert the campaign record.
+		tag, err := models.UniqueTag(c.db, models.NormalizeTag(channelName))
+		if err != nil {
+			log.Printf("importcampaign: generate tag for %q: %v", channelName, err)
+			edit(messages.ImportCampaignErrDB)
+			return
+		}
 		campaign := &models.Campaign{
 			ID:            uuid.NewString(),
 			Name:          channelName,
+			Tag:           tag,
 			DungeonMaster: dmID,
 			ChannelID:     channelID,
 			CategoryID:    categoryID,

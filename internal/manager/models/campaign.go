@@ -187,6 +187,26 @@ func NormalizeTag(name string) string {
 	return tag
 }
 
+// UniqueTag returns base if no campaign owns it; otherwise appends -2, -3, … until one is free.
+func UniqueTag(database *bun.DB, base string) (string, error) {
+	if base == "" {
+		base = "campaign"
+	}
+	candidate := base
+	ctx := context.Background()
+	for n := 2; n < 1000; n++ {
+		exists, err := database.NewSelect().Model((*Campaign)(nil)).Where("tag = ?", candidate).Exists(ctx)
+		if err != nil {
+			return "", fmt.Errorf("checking tag %q: %w", candidate, err)
+		}
+		if !exists {
+			return candidate, nil
+		}
+		candidate = fmt.Sprintf("%s-%d", base, n)
+	}
+	return "", fmt.Errorf("could not find a unique tag for %q", base)
+}
+
 // CampaignFrequency defines how often will sessions in this Campaign will occur.
 type CampaignFrequency string
 
