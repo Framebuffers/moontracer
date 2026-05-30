@@ -21,6 +21,7 @@ var SafeMode = os.Getenv("SAFE_MODE") == "true"
 DevMode is true when DEV_MODE=true is set, OR when DISCORD_GUILD_ID is set.
 
 Rationale:
+
 	Setting DISCORD_GUILD_ID scopes the bot to a single test server,
 	which is only done during development/staging. Treating that as dev mode
 	means debug UI lights up automatically on that guild with no second flag.
@@ -127,8 +128,8 @@ func ChannelDelete(s *discordgo.Session, channelID string) (*discordgo.Channel, 
 	return s.ChannelDelete(channelID)
 }
 
-// ThreadStart starts a new thread on a channel (no parent message), or logs in safe mode.
-func ThreadStart(s *discordgo.Session, channelID, name string, archiveDuration int) (*discordgo.Channel, error) {
+// ThreadCreate starts a new thread on a channel (no parent message), or logs in safe mode.
+func ThreadCreate(s *discordgo.Session, channelID, name string, archiveDuration int) (*discordgo.Channel, error) {
 	if SafeMode {
 		log.Printf("guard: [SAFE_MODE] would start thread %q in channel %s", name, channelID)
 		return &discordgo.Channel{ID: "safe-mode-thread-" + name, Name: name}, nil

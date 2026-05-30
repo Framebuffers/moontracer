@@ -19,8 +19,9 @@ package messages
 // Generic
 const (
 	// identifiers
-	BotVersion = "v1.0.0"
+	BotVersion = "v1.0.1-adamantine"
 	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
+	// 2026-05-29: started implementing for real on my first big server
 )
 const (
 	// user-facing
@@ -496,7 +497,6 @@ const (
 	ThreadInitMsgAnnouncements = "📣 Campaign announcements and session news will be posted here."
 	ThreadInitMsgSessions      = "📅 Session schedules and notes will be posted here."
 	ThreadInitMsgDiceRolls     = "🎲 Roll your dice and share your results here!"
-	ThreadInitMsgGeneral       = "💬 General campaign discussion."
 	// ThreadInitMsgWelcomeFmt takes the campaign name as its argument.
 	ThreadInitMsgWelcomeFmt = "🐺 Welcome to **%s**! This is your campaign channel. \nCheck the other threads for announcements, sessions, dice rolls, and general discussion."
 )
@@ -870,7 +870,7 @@ const (
 	AdminBroadcastSuccess    = "✅ Broadcast sent."
 	AdminBroadcastSent       = "✅ Broadcast sent to %d players."
 	AdminBroadcastFailed     = "🚫 Failed to send broadcast."
-	AdminBroadcastDMContent  = "**🗣️ Broadcast from <@%s>:**\n\n%s\n\n-# _You can disable these in `/me` → Configuration → 🔔 Alerts._"
+	AdminBroadcastDMContent  = "**🗣️ Broadcast from <@%s>:**\n\n%s\n\n-# _You can disable these in `/me` -> Configuration -> 🔔 Alerts._"
 )
 
 // Admin hub: Database viewer
@@ -1088,10 +1088,43 @@ const (
 	ImportCampaignOptRole    = "role"
 	ImportCampaignOptDM      = "dm"
 
-	ImportCampaignProcessing = "⏳ Importing campaign, this may take a moment…"
+	// Custom-ID prefixes for the two-step thread-mapping flow.
+	ImportThreadSelPrefix = "import_thread_sel" // import_thread_sel:<sessionID>:<threadName>
+	ImportNextPrefix      = "import_next"       // import_next:<sessionID>
+	ImportBackPrefix      = "import_back"       // import_back:<sessionID>
+	ImportConfirmPrefix   = "import_confirm"    // import_confirm:<sessionID>
+	ImportCancelPrefix    = "import_cancel"     // import_cancel:<sessionID>
+
+	// Sentinel stored in a session mapping when the user wants the bot to create the thread.
+	ImportCreateNew = "new"
+
+	// Step headers.
+	ImportStep1Header = "**Map threads for #%s** (step 1 of 2)\nChoose an existing thread for each slot, or leave as **Create new**."
+	ImportStep2Header = "**Map threads for #%s** (step 2 of 2)\nChoose an existing thread for each slot, or leave as **Create new**."
+
+	// Select-menu placeholders.
+	ImportSelWelcome       = "Welcome thread…"
+	ImportSelAnnouncements = "Announcements thread…"
+	ImportSelSessions      = "Sessions thread…"
+	ImportSelDiceRolls = "Dice rolls thread…"
+
+	// "Create new" option shown at the top of every select menu.
+	ImportOptCreateNew      = "Create new"
+	ImportOptCreateNewDescr = "Bot will create this thread automatically."
+
+	// Button labels.
+	ImportNextLabel    = "Next ->"
+	ImportBackLabel    = "<- Back"
+	ImportConfirmLabel = "Confirm Import"
+	ImportCancelLabel  = "Cancel"
+
+	// Terminal messages.
+	ImportCampaignProcessing = "⏳ Fetching threads, just a moment…"
 	ImportCampaignSuccess    = "✅ Imported **%s**: %d member(s) registered, %d thread(s) bound, %d thread(s) created."
+	ImportCampaignCancelled  = "Import cancelled."
 	ImportCampaignErrDB      = "❌ Failed to write campaign to the database."
 	ImportCampaignErrChannel = "❌ Could not read the channel. Make sure the bot has access to it."
+	ImportCampaignErrSession = "❌ This import session has expired. Please run /importcampaign again."
 )
 
 // Timezone preference

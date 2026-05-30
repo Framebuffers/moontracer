@@ -4,11 +4,11 @@ package interactions
 	Player invitation flow.
 
 	Flow:
-		1. DM clicks "Invite Player" on manage menu → user select dropdown.
-		2. DM picks a user → validate (registered, not in campaign, campaign not full).
+		1. DM clicks "Invite Player" on manage menu -> user select dropdown.
+		2. DM picks a user -> validate (registered, not in campaign, campaign not full).
 		3. Create CampaignPlayer with StatusPending, send invitation DM with Accept/Decline.
-		4. Target clicks Accept → status becomes active, role assigned, DM message updated.
-		5. Target clicks Decline → CampaignPlayer removed, DM message updated.
+		4. Target clicks Accept -> status becomes active, role assigned, DM message updated.
+		5. Target clicks Decline -> CampaignPlayer removed, DM message updated.
 
 	CustomID formats:
 		manage_invite:<campaignID>
@@ -20,6 +20,7 @@ package interactions
 import (
 	"fmt"
 	"log"
+
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"

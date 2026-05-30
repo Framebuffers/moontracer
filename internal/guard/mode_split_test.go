@@ -28,10 +28,10 @@ Expected:
 
 	Package vars reflect the applied values exactly. Each flag is orthogonal:
 	setting one does not change the other. Each combo maps to a posture:
-	  (t,t) → dev            (mutations faked, debug UI visible)
-	  (t,f) → dev-no-debug   (mutations faked, debug UI hidden)
-	  (f,t) → staging        (mutations live, debug UI visible)
-	  (f,f) → production     (mutations live, debug UI hidden)
+	  (t,t) -> dev            (mutations faked, debug UI visible)
+	  (t,f) -> dev-no-debug   (mutations faked, debug UI hidden)
+	  (f,t) -> staging        (mutations live, debug UI visible)
+	  (f,f) -> production     (mutations live, debug UI hidden)
 */
 func TestModeSplit_MatrixCoversAllPostures(t *testing.T) {
 	cases := []struct {

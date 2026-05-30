@@ -163,7 +163,7 @@ BulkSetCampaignPlayerStatus updates campaign memberships for a player in bulk.
 
 skipLogic decides which entries to leave untouched. nil means skip nothing.
 
-Returns updated/skipped counts and a map of campaignID→error for any failures.
+Returns updated/skipped counts and a map of campaignID->error for any failures.
 */
 func BulkSetCampaignPlayerStatus(db *bun.DB, playerID string, campaigns []CampaignPlayer, to CampaignPlayerStatus, skipLogic func(CampaignPlayer) bool) (updated int, skipped int, errs map[string]error) {
 	errors := make(map[string]error)

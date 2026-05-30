@@ -149,5 +149,5 @@ Expected:
 */
 func TestDMCampaignIDs_Empty(t *testing.T) {
 	p := &Player{}
-	assert.Nil(t, p.DMCampaignIDs(), "no campaigns → nil")
+	assert.Nil(t, p.DMCampaignIDs(), "no campaigns -> nil")
 }

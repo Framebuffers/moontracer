@@ -19,7 +19,7 @@ import (
 		1. User clicks `/campaign tag:X` to view campaign details.
 		2. DM clicks "Set as Open/Closed Campaign" button, triggering `campaign_toggle:X`.
 		3. `campaignToggle` validates: campaign exists, user is the DM.
-		4. Toggles campaign.IsOpen (open → closed, closed → open).
+		4. Toggles campaign.IsOpen (open -> closed, closed -> open).
 		5. Updates campaign in DB.
 		6. Responds to DM ephemerally with the new status.
 */

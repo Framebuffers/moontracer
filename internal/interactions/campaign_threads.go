@@ -24,19 +24,18 @@ import (
 const defaultArchiveDuration = 10080
 
 // standardThreads are the threads auto-created in every approved campaign's channel.
-var standardThreads = []string{"welcome", "announcements", "sessions", "dice-rolls", "general"}
+var standardThreads = []string{"welcome", "announcements", "sessions", "dice-rolls"}
 
 // threadInitMessages is the pinned welcome message sent to each standard thread on creation.
 var threadInitMessages = map[string]string{
 	"announcements": messages.ThreadInitMsgAnnouncements,
 	"sessions":      messages.ThreadInitMsgSessions,
 	"dice-rolls":    messages.ThreadInitMsgDiceRolls,
-	"general":       messages.ThreadInitMsgGeneral,
 }
 
 /*
 EnsureCampaignRole creates the campaign's Discord role (named after the tag) and assigns it
-to the DM. Idempotent: if RoleID is already set it skips creation.
+to the DM. If RoleID is already set it skips creation.
 
 Exported so the approval handler can call it independently of channel setup.
 */
@@ -68,7 +67,7 @@ Mutates campaign in-place with CategoryID, ChannelID, AnnouncementsThreadID.
 func SetupNewChannel(s *discordgo.Session, guildID string, c *models.Campaign) error {
 	channelName := c.Tag
 	if channelName == "" {
-		channelName = models.NormalizeTag(c.Name)
+		channelName = models.NormalizeTag(c.Name) // The fix for the weird characters inside names.
 	}
 
 	// Ensure role exists before setting channel permissions.
@@ -83,11 +82,13 @@ func SetupNewChannel(s *discordgo.Session, guildID string, c *models.Campaign) e
 	c.CategoryID = categoryID
 
 	overwrites := []*discordgo.PermissionOverwrite{
+		// visibility
 		{
 			ID:   guildID,
 			Type: discordgo.PermissionOverwriteTypeRole,
 			Deny: discordgo.PermissionViewChannel,
 		},
+		// accesibility
 		{
 			ID:    s.State.User.ID,
 			Type:  discordgo.PermissionOverwriteTypeMember,
@@ -135,7 +136,7 @@ func SetupExistingChannel(s *discordgo.Session, c *models.Campaign, channelID st
 func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, channelName string) {
 	for _, name := range standardThreads {
 		threadName := fmt.Sprintf("%s-%s", channelName, name)
-		thread, err := guard.ThreadStart(s, channelID, threadName, defaultArchiveDuration)
+		thread, err := guard.ThreadCreate(s, channelID, threadName, defaultArchiveDuration)
 		if err != nil {
 			log.Printf("campaign_threads: create thread %s: %v", threadName, err)
 			continue
@@ -167,18 +168,6 @@ func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, 
 				}
 			}
 		}
-	}
-}
-
-// createCampaignChannels is kept for backward compatibility with any remaining call sites.
-// New code should call EnsureCampaignRole + SetupNewChannel separately.
-func createCampaignChannels(s *discordgo.Session, guildID string, c *models.Campaign) {
-	if err := EnsureCampaignRole(s, guildID, c); err != nil {
-		log.Printf("campaign_threads: %v", err)
-		return
-	}
-	if err := SetupNewChannel(s, guildID, c); err != nil {
-		log.Printf("campaign_threads: %v", err)
 	}
 }
 
@@ -220,7 +209,8 @@ Errors are logged but non-fatal; the DB operation that triggered retirement alre
 */
 func RetireChannel(s *discordgo.Session, guildID string, campaign *models.Campaign) {
 	channelID := campaign.ChannelID
-	if channelID == "" {
+	if !isSnowflake(channelID) {
+		log.Printf("campaign_threads: RetireChannel skipped: channelID %q is not a valid snowflake", channelID)
 		return
 	}
 
@@ -243,13 +233,11 @@ func RetireChannel(s *discordgo.Session, guildID string, campaign *models.Campai
 		}
 	}
 
-	// Deny @everyone.
 	if err := guard.ChannelPermissionSet(s, channelID, guildID,
 		discordgo.PermissionOverwriteTypeRole, 0, discordgo.PermissionViewChannel); err != nil {
 		log.Printf("campaign_threads: retire channel %s: deny everyone: %v", channelID, err)
 	}
 
-	// Deny campaign role.
 	if campaign.RoleID != "" {
 		if err := guard.ChannelPermissionSet(s, channelID, campaign.RoleID,
 			discordgo.PermissionOverwriteTypeRole, 0, discordgo.PermissionViewChannel); err != nil {
@@ -257,11 +245,23 @@ func RetireChannel(s *discordgo.Session, guildID string, campaign *models.Campai
 		}
 	}
 
-	// Allow staff roles.
 	for _, roleID := range staffRoleIDs {
 		if err := guard.ChannelPermissionSet(s, channelID, roleID,
 			discordgo.PermissionOverwriteTypeRole, discordgo.PermissionViewChannel, 0); err != nil {
 			log.Printf("campaign_threads: retire channel %s: allow staff role %s: %v", channelID, roleID, err)
 		}
 	}
+}
+
+// isSnowflake reports whether s is a non-empty, all-digit string, like a Discord snowflake ID.
+func isSnowflake(s string) bool {
+	if s == "" {
+		return false
+	}
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }

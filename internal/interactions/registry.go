@@ -167,6 +167,13 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&manageCampaignInviteSelect{db: db, dispatcher: d},
 		&campaignInviteAccept{db: db},
 		&campaignInviteDecline{db: db},
+
+		// Campaign import thread-mapping flow
+		&importThreadSelHandler{},
+		&importNextHandler{},
+		&importBackHandler{},
+		&importCancelHandler{},
+		&importConfirmHandler{db: db},
 	}
 }
 
