@@ -201,6 +201,12 @@ func (h *importConfirmHandler) HandleComponents(s *discordgo.Session, i *discord
 				Components: &empty,
 			})
 		}
+		editWithComponents := func(content string, comps []discordgo.MessageComponent) {
+			s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+				Content:    &content,
+				Components: &comps,
+			})
+		}
 
 		/*
 			Collect all guild members who hold the campaign role.
@@ -270,7 +276,23 @@ func (h *importConfirmHandler) HandleComponents(s *discordgo.Session, i *discord
 		log.Printf("importcampaign: imported %q (%s): %d members, %d bound, %d created",
 			sess.ChannelName, campaign.ID, len(memberIDs), bound, created)
 
-		edit(fmt.Sprintf(messages.ImportCampaignSuccess, sess.ChannelName, len(memberIDs), bound, created))
+		// Try to find an existing billboard forum channel for this campaign's format.
+		// If found, post immediately. If not, show a channel selector so the admin can pick one.
+		categoryID, catErr := findOrCreateCampaignsCategory(s, sess.GuildID)
+		if catErr == nil {
+			if chanID, ok := findForumChannel(s, sess.GuildID, categoryID, billboardChannelName(campaign)); ok {
+				if err := PostBillboardToChannel(h.db, s, campaign, chanID); err != nil {
+					log.Printf("importcampaign: billboard for %s: %v", campaign.ID, err)
+				}
+				edit(fmt.Sprintf(messages.ImportCampaignSuccess, sess.ChannelName, len(memberIDs), bound, created))
+				return
+			}
+		}
+
+		// No billboard channel found — ask the admin to select or auto-create one.
+		successMsg := fmt.Sprintf(messages.ImportCampaignSuccess, sess.ChannelName, len(memberIDs), bound, created)
+		prompt := successMsg + "\n\n" + messages.ImportBillboardPrompt
+		editWithComponents(prompt, importBillboardStep3Components(campaign.ID, sess.GuildID))
 	}()
 }
 
@@ -364,4 +386,96 @@ func containsString(ss []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// importBillboardStep3Components builds the channel-select + auto-create row for Step 3.
+func importBillboardStep3Components(campaignID, guildID string) []discordgo.MessageComponent {
+	return []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.SelectMenu{
+				MenuType:    discordgo.ChannelSelectMenu,
+				CustomID:    fmt.Sprintf("%s:%s:%s", messages.ImportBillboardSelPrefix, campaignID, guildID),
+				Placeholder: messages.ImportBillboardSelPlaceholder,
+			},
+		}},
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.ImportBillboardSkipLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s:%s", messages.ImportBillboardSkipPrefix, campaignID, guildID),
+			},
+		}},
+	}
+}
+
+/*
+importBillboardSelHandler handles the admin picking a specific forum channel for the billboard.
+
+CustomID: import_billboard_sel:<campaignID>:<guildID>
+*/
+type importBillboardSelHandler struct {
+	db *bun.DB
+}
+
+func (h *importBillboardSelHandler) CustomIDPrefix() string { return messages.ImportBillboardSelPrefix }
+
+func (h *importBillboardSelHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	channelID := values[0]
+
+	campaign, ok := helpers.LoadCampaignAsMod(s, i, h.db, campaignID)
+	if !ok {
+		return
+	}
+
+	if err := PostBillboardToChannel(h.db, s, campaign, channelID); err != nil {
+		log.Printf("import_billboard_sel: billboard for %s: %v", campaignID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ImportCampaignSuccess, campaign.Name, 0, 0, 0))
+}
+
+/*
+importBillboardSkipHandler auto-creates the billboard forum channel for this campaign's format.
+
+CustomID: import_billboard_skip:<campaignID>:<guildID>
+*/
+type importBillboardSkipHandler struct {
+	db *bun.DB
+}
+
+func (h *importBillboardSkipHandler) CustomIDPrefix() string {
+	return messages.ImportBillboardSkipPrefix
+}
+
+func (h *importBillboardSkipHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+	guildID := parts[2]
+
+	campaign, ok := helpers.LoadCampaignAsMod(s, i, h.db, campaignID)
+	if !ok {
+		return
+	}
+
+	if err := PostBillboard(h.db, s, campaign, guildID); err != nil {
+		log.Printf("import_billboard_skip: billboard for %s: %v", campaignID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ImportCampaignSuccess, campaign.Name, 0, 0, 0))
 }

@@ -139,6 +139,12 @@ func (h *manageLinksModal) HandleModal(s *discordgo.Session, i *discordgo.Intera
 		return
 	}
 
+	go func() {
+		if err := helpers.UpdateBillboard(s, h.db, campaign); err != nil {
+			log.Printf("manage_links: billboard update for %s: %v", campaignID, err)
+		}
+	}()
+
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageLinksSuccess, campaign.Name))
 }
 

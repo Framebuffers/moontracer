@@ -118,6 +118,9 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		if err := db.Update(c.db, campaign); err != nil {
 			log.Printf("campaign_approve: save channel IDs for %s: %v", campaignID, err)
 		}
+		if err := PostBillboard(c.db, s, campaign, guildID); err != nil {
+			log.Printf("campaign_approve: billboard for %s: %v", campaignID, err)
+		}
 	}()
 }
 

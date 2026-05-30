@@ -110,6 +110,25 @@ func NewCampaignForumPost(db *bun.DB, s *discordgo.Session, c *models.Campaign) 
 	return c.Name, b.String()
 }
 
+/*
+UpdateBillboard edits the starter message of a campaign's billboard forum thread
+with freshly rendered content. No-op if the campaign has no thread yet.
+
+The starter message of a Discord forum thread has the same ID as the thread channel itself,
+so ChannelMessageEdit(threadID, threadID, body) is the correct call.
+*/
+func UpdateBillboard(s *discordgo.Session, db *bun.DB, c *models.Campaign) error {
+	if c.BillboardThreadID == "" {
+		return nil
+	}
+	_, body := NewCampaignForumPost(db, s, c)
+	if body == "" {
+		return nil
+	}
+	_, err := s.ChannelMessageEdit(c.BillboardThreadID, c.BillboardThreadID, body)
+	return err
+}
+
 func activeCampaignPlayers(players []models.CampaignPlayer) []models.CampaignPlayer {
 	var out []models.CampaignPlayer
 	for _, cp := range players {

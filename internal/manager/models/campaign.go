@@ -69,6 +69,10 @@ type Campaign struct {
 	// Soft delete: staff-triggered. Row is retained for the admin historical log.
 	// bun automatically adds WHERE deleted_at IS NULL to all normal queries.
 	DeletedAt time.Time `bun:",soft_delete,nullzero"`
+
+	// Billboard: Discord Forum Channel thread created on approval.
+	BillboardChannelID string `bun:",default:''" json:"billboard_channel_id,omitempty"`
+	BillboardThreadID  string `bun:",default:''" json:"billboard_thread_id,omitempty"`
 }
 
 // CanMutate returns false if the campaign is archived (immutable).
@@ -322,8 +326,12 @@ func (c *Campaign) CreateCampaign(
 	return campaign, nil
 }
 
-// RefreshNextSession updates Campaign.Schedule.NextSession to the earliest upcoming session
-// in the sessions table. Should be called after inserting or deleting a Session.
+/*
+RefreshNextSession updates Campaign.Schedule.NextSession to the earliest upcoming session
+in the sessions table.
+
+Should be called after inserting or deleting a Session.
+*/
 func (c *Campaign) RefreshNextSession(db *bun.DB) error {
 	ctx := context.Background()
 	var earliest Session

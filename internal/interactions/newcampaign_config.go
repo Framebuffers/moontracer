@@ -319,6 +319,24 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 						Placeholder: messages.NewCampaignScheduleTimePlaceholder,
 					},
 				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignWarningsFieldID,
+						Label:       messages.NewCampaignWarningsLabel,
+						Style:       discordgo.TextInputShort,
+						Required:    false,
+						Placeholder: messages.NewCampaignWarningsPlaceholder,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignExtraFieldID,
+						Label:       messages.NewCampaignExtraLabel,
+						Style:       discordgo.TextInputParagraph,
+						Required:    false,
+						Placeholder: messages.NewCampaignExtraPlaceholder,
+					},
+				}},
 			},
 		},
 	})
@@ -361,7 +379,7 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 	}
 	loc := settings.Location()
 
-	var dateStr, timeStr string
+	var dateStr, timeStr, warningsStr, extraStr string
 	for _, row := range i.ModalSubmitData().Components {
 		for _, comp := range row.(*discordgo.ActionsRow).Components {
 			input := comp.(*discordgo.TextInput)
@@ -370,9 +388,25 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 				dateStr = strings.TrimSpace(input.Value)
 			case messages.NewCampaignScheduleTimeFieldID:
 				timeStr = strings.TrimSpace(input.Value)
+			case messages.NewCampaignWarningsFieldID:
+				warningsStr = strings.TrimSpace(input.Value)
+			case messages.NewCampaignExtraFieldID:
+				extraStr = strings.TrimSpace(input.Value)
 			}
 		}
 	}
+
+	// Parse warnings: split on comma or newline, trim, drop empties.
+	if warningsStr != "" {
+		for _, w := range strings.FieldsFunc(warningsStr, func(r rune) bool { return r == ',' || r == '\n' }) {
+			if w = strings.TrimSpace(w); w != "" {
+				c.Warnings = append(c.Warnings, w)
+			}
+		}
+	}
+	c.Extra = extraStr
+
+	needsSave := len(c.Warnings) > 0 || c.Extra != ""
 
 	if dateStr != "" || timeStr != "" {
 		if dateStr == "" || timeStr == "" {
@@ -401,6 +435,10 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 			return
 		}
 		c.Schedule.NextSession = when.UTC()
+		needsSave = true
+	}
+
+	if needsSave {
 		if err := db.Update(h.db, c); err != nil {
 			log.Printf("newcampaign_schedule: update failed: %v", err)
 			helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)

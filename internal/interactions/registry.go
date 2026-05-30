@@ -174,6 +174,10 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&importBackHandler{},
 		&importCancelHandler{},
 		&importConfirmHandler{db: db},
+
+		// Campaign import billboard channel selector
+		&importBillboardSelHandler{db: db},
+		&importBillboardSkipHandler{db: db},
 	}
 }
 

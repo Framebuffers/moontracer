@@ -65,6 +65,12 @@ func (h *campaignToggle) HandleComponents(s *discordgo.Session, i *discordgo.Int
 		return
 	}
 
+	go func() {
+		if err := helpers.UpdateBillboard(s, h.db, campaign); err != nil {
+			log.Printf("campaign_toggle: billboard update for %s: %v", campaign.ID, err)
+		}
+	}()
+
 	status := "closed"
 	if campaign.IsOpen {
 		status = "open"

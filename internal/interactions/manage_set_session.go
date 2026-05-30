@@ -202,6 +202,11 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		helpers.RespondUpdateTerminal(s, i, messages.ManageSetSessionUpdateFailed)
 		return
 	}
+	go func() {
+		if err := helpers.UpdateBillboard(s, h.db, campaign); err != nil {
+			log.Printf("manage_set_session: billboard update for %s: %v", campaign.ID, err)
+		}
+	}()
 	h.sched.Schedule(i.GuildID, campaign)
 	if err := models.ResetCampaignRSVPs(h.db, campaign.ID); err != nil {
 		log.Printf("manage_set_session: reset RSVPs for %s: %v", campaign.ID, err)

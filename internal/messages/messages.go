@@ -1106,7 +1106,7 @@ const (
 	ImportSelWelcome       = "Welcome thread…"
 	ImportSelAnnouncements = "Announcements thread…"
 	ImportSelSessions      = "Sessions thread…"
-	ImportSelDiceRolls = "Dice rolls thread…"
+	ImportSelDiceRolls     = "Dice rolls thread…"
 
 	// "Create new" option shown at the top of every select menu.
 	ImportOptCreateNew      = "Create new"
@@ -1137,6 +1137,38 @@ const (
 	ForumPostStatusClosed    = "Closed"
 	ForumPostSlotsUnlimited  = "Unlimited"
 	ForumPostNoPlayers       = "*None yet*"
+)
+
+// Billboard
+
+// Campaign billboard: forum channel names (internal)
+const (
+	BillboardChannelCampaign  = "new-campaigns"
+	BillboardChannelOneshot   = "one-shots"
+	BillboardChannelWestmarch = "westmarches"
+)
+
+// New campaign modal: schedule step additions (internal)
+const (
+	NewCampaignWarningsFieldID = "newcampaign_warnings"
+	NewCampaignExtraFieldID    = "newcampaign_extra"
+)
+
+// New campaign modal: schedule step additions (user-facing)
+const (
+	NewCampaignWarningsLabel       = "Content warnings (optional)"
+	NewCampaignWarningsPlaceholder = "e.g. Violence, horror (comma-separated)"
+	NewCampaignExtraLabel          = "Extra info for players (optional)"
+	NewCampaignExtraPlaceholder    = "House rules, tone, session zero notes..."
+)
+
+// Import campaign: billboard channel selector (user-facing)
+const (
+	ImportBillboardSelPrefix      = "import_billboard_sel"
+	ImportBillboardSelPlaceholder = "Select the billboard forum channel…"
+	ImportBillboardPrompt         = "**Select the forum channel** where this campaign's post should appear, or skip to auto-create one."
+	ImportBillboardSkipPrefix     = "import_billboard_skip"
+	ImportBillboardSkipLabel      = "Auto-create"
 )
 
 // Timezone preference

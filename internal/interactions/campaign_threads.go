@@ -14,8 +14,11 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/guard"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"github.com/framebuffers/moontracer/internal/manager/models"
 	"github.com/framebuffers/moontracer/internal/messages"
 )
@@ -251,6 +254,114 @@ func RetireChannel(s *discordgo.Session, guildID string, campaign *models.Campai
 			log.Printf("campaign_threads: retire channel %s: allow staff role %s: %v", channelID, roleID, err)
 		}
 	}
+}
+
+// billboardChannelName returns the per-format forum channel name for Campaign c.
+func billboardChannelName(c *models.Campaign) string {
+	if c.IsOneshot {
+		return messages.BillboardChannelOneshot
+	}
+	if c.IsWestmarch {
+		return messages.BillboardChannelWestmarch
+	}
+	return messages.BillboardChannelCampaign
+}
+
+/*
+findOrCreateForumChannel finds a forum (ChannelTypeGuildForum) channel with the given name inside
+categoryID, or creates one if absent.
+
+Follows the same pattern as findOrCreateCampaignsCategory.
+*/
+func findOrCreateForumChannel(s *discordgo.Session, guildID, categoryID, name string) (string, error) {
+	channels, err := s.GuildChannels(guildID)
+	if err != nil {
+		return "", fmt.Errorf("fetch guild channels: %w", err)
+	}
+	for _, ch := range channels {
+		if ch.Type == discordgo.ChannelTypeGuildForum &&
+			ch.ParentID == categoryID &&
+			strings.EqualFold(ch.Name, name) {
+			return ch.ID, nil
+		}
+	}
+	ch, err := guard.GuildChannelCreateComplex(s, guildID, discordgo.GuildChannelCreateData{
+		Name:     name,
+		Type:     discordgo.ChannelTypeGuildForum,
+		ParentID: categoryID,
+	})
+	if err != nil {
+		return "", fmt.Errorf("create forum channel %q: %w", name, err)
+	}
+	return ch.ID, nil
+}
+
+/*
+findForumChannel looks for a forum (ChannelTypeGuildForum) channel with the given name inside
+categoryID.
+
+Returns ("", false) if not found. Does not create one.
+*/
+func findForumChannel(s *discordgo.Session, guildID, categoryID, name string) (string, bool) {
+	channels, err := s.GuildChannels(guildID)
+	if err != nil {
+		return "", false
+	}
+	for _, ch := range channels {
+		if ch.Type == discordgo.ChannelTypeGuildForum &&
+			ch.ParentID == categoryID &&
+			strings.EqualFold(ch.Name, name) {
+			return ch.ID, true
+		}
+	}
+	return "", false
+}
+
+/*
+PostBillboard resolves the correct billboard forum channel for c's format (find or create),
+creates a new forum thread with the formatted campaign post, and stores the resulting thread
+ID on c.
+
+Callers must db.Update(c) after this returns to persist BillboardChannelID and BillboardThreadID.
+*/
+func PostBillboard(database *bun.DB, s *discordgo.Session, c *models.Campaign, guildID string) error {
+	categoryID, err := findOrCreateCampaignsCategory(s, guildID)
+	if err != nil {
+		return fmt.Errorf("resolve campaigns category: %w", err)
+	}
+
+	channelID, err := findOrCreateForumChannel(s, guildID, categoryID, billboardChannelName(c))
+	if err != nil {
+		return fmt.Errorf("resolve billboard channel: %w", err)
+	}
+
+	return PostBillboardToChannel(database, s, c, channelID)
+}
+
+/*
+PostBillboardToChannel creates a forum thread in an explicitly specified channel and stores
+the resulting IDs on c. Used by the import flow when the admin has picked a specific channel.
+
+Callers must db.Update(c) after this returns to persist BillboardChannelID and BillboardThreadID.
+*/
+func PostBillboardToChannel(database *bun.DB, s *discordgo.Session, c *models.Campaign, channelID string) error {
+	title, body := helpers.NewCampaignForumPost(database, s, c)
+	if title == "" {
+		return nil
+	}
+
+	thread, err := s.ForumThreadStart(channelID, title, defaultArchiveDuration, body)
+	if err != nil {
+		return fmt.Errorf("create forum thread: %w", err)
+	}
+
+	c.BillboardChannelID = channelID
+	c.BillboardThreadID = thread.ID
+
+	if err := db.Update(database, c); err != nil {
+		log.Printf("campaign_threads: save billboard IDs for %s: %v", c.ID, err)
+	}
+	return nil
 }
 
 // isSnowflake reports whether s is a non-empty, all-digit string, like a Discord snowflake ID.
