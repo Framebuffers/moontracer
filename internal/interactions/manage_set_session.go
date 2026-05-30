@@ -3,14 +3,14 @@ package interactions
 /*
 	Set / Reschedule Session flow.
 
-	Step 1 — Button (manage_set_session:<campaignID>):
+	Step 1- Button (manage_set_session:<campaignID>):
 		Opens a modal. Title and fields adapt to context:
 		  - First set: "Set Session" title, date + time fields.
 		  - Re-schedule: "Reschedule Session" title, date + time + optional reason.
 		Date/time fields are pre-filled and labelled in the DM's local timezone
 		(from PlayerSettings). Input is parsed in that timezone and stored as UTC.
 
-	Step 2 — Modal (modal_manage_set_session:<campaignID>):
+	Step 2- Modal (modal_manage_set_session:<campaignID>):
 		Validates and writes campaign.Schedule.NextSession (UTC).
 		On re-schedule with a reason: posts to the campaign's announcements thread
 		(if one is set) and writes an audit entry.

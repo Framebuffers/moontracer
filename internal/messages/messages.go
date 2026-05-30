@@ -315,13 +315,13 @@ const (
 	ManageBanSelectPlaceholder = "Select a member..."
 	ManageCampaignHeader       = "Managing **%s**:"
 	ManageInviteSelectPrompt   = "Select a player to invite to **%s**:"
-	MyCampaignListLine         = "**%s** — %s (%s)"
-	ManageCampaignListLine     = "**%s** — %s"
+	MyCampaignListLine         = "**%s**- %s (%s)"
+	ManageCampaignListLine     = "**%s**- %s"
 )
 
 // Token upload
 const (
-	// identifiers — token gallery
+	// identifiers- token gallery
 	TokensCommandName              = "tokens"
 	TokenGallerySelectPrefix       = "token_gallery_select"
 	TokenGalleryAssignPrefix       = "token_gallery_assign"
@@ -331,7 +331,7 @@ const (
 	TokenDownloadPrefix            = "token_download"
 )
 const (
-	// user-facing — token gallery
+	// user-facing- token gallery
 	TokensCommandDesc                   = "Browse and manage your tokens."
 	TokensLabel                         = "🐺 Tokens"
 	TokenGalleryHeader                  = "Your tokens:"
@@ -369,7 +369,7 @@ const (
 	TokenUploadSourceOptDesc         = "Your photo (JPG/PNG)."
 	TokenUploadFrameOptDesc          = "Frame/border image (PNG with transparency). Cannot be used with color."
 	TokenUploadColorOptDesc          = "Border color as hex (e.g. ff3a7c). Cannot be used with frame."
-	TokenUploadNeedOneOf             = "🚫 Provide either a frame image or a color — not both, not neither."
+	TokenUploadNeedOneOf             = "🚫 Provide either a frame image or a color- not both, not neither."
 	TokenUploadNotImage              = "⚠️ Both files must be images (JPEG or PNG)."
 	TokenUploadTooLarge              = "⚠️ Each file must be under 8 MiB."
 	TokenUploadProcessFailed         = "🚫 Failed to process your token. Please try again."
@@ -674,7 +674,7 @@ const (
 	ManageDangerLabel    = "⚠️ Spicy Zone"
 	ManageOpenLabel      = "🟢 Open Campaign"
 	ManageCloseLabel     = "🔴 Close Campaign"
-	CampaignAutoClosedDM = "ℹ️ **%s** has been automatically closed — all %d slots are filled."
+	CampaignAutoClosedDM = "ℹ️ **%s** has been automatically closed- all %d slots are filled."
 )
 
 // Manage campaign: Links
@@ -880,7 +880,7 @@ const (
 )
 const (
 	// user-facing
-	AdminDBCampaignLine = "**%s** (`%s`) — DM: <@%s> [%s]"
+	AdminDBCampaignLine = "**%s** (`%s`)- DM: <@%s> [%s]"
 )
 
 // Admin hub: Settings
@@ -931,28 +931,28 @@ const (
 	ManageSetSessionInvalidDate     = "⚠️ Invalid date format. Use DD/MM/YYYY."
 	ManageSetSessionInvalidTime     = "⚠️ Invalid time format. Use HH:MM (24h)."
 	ManageSetSessionInPast          = "⚠️ Cannot set a session in the past."
-	ManageSetSessionSuccess         = "✅ Next session for **%s** set to **%s** — %s."
+	ManageSetSessionSuccess         = "✅ Next session for **%s** set to **%s**- %s."
 	ManageSetSessionUpdateFailed    = "🚫 Failed to update next session."
 
 	// Reschedule-specific (existing session -> new date + reason).
 	ManageRescheduleModalTitle        = "Reschedule Session"
 	ManageSetSessionReasonLabel       = "Reason for change (optional)"
 	ManageSetSessionReasonPlaceholder = "e.g. DM unavailable this week"
-	ManageSetSessionRescheduleThread  = "📅 Session rescheduled to **%s** — _%s_"
-	ManageSetSessionRescheduleSuccess = "✅ Session for **%s** rescheduled to **%s** — %s. Reason posted to thread."
+	ManageSetSessionRescheduleThread  = "📅 Session rescheduled to **%s**- _%s_"
+	ManageSetSessionRescheduleSuccess = "✅ Session for **%s** rescheduled to **%s**- %s. Reason posted to thread."
 
 	// Session reminder DM (sent ~1 hour before NextSession).
-	ReminderContent = "ℹ️ **Session Reminder: %s**\nYour next session starts in about 1 hour — **%s** (%s)"
+	ReminderContent = "ℹ️ **Session Reminder: %s**\nYour next session starts in about 1 hour- **%s** (%s)"
 
 	InviteSentMessage      = "✅ Invitation sent to <@%s> for **%s**."
 	InviteDMMessage        = "ℹ️ You've been invited to join **%s** by <@%s>!"
 	InviteAcceptedDMUpdate = "✅ You accepted the invitation to **%s**."
 	InviteDeclinedDMUpdate = "ℹ️ You declined the invitation to **%s**."
 	InviteAlreadyProcessed = "ℹ️ This invitation has already been processed."
-	InviteCampaignFull     = "⚠️ Cannot invite — campaign **%s** is full."
+	InviteCampaignFull     = "⚠️ Cannot invite- campaign **%s** is full."
 )
 
-// Session RSVP — legacy (campaign-level, reminder DMs only)
+// Session RSVP- legacy (campaign-level, reminder DMs only)
 const (
 	// identifiers
 	RSVPAcceptPrefix  = "rsvp_accept"
@@ -992,7 +992,7 @@ const (
 	NewSessionOptionDesc       = "Campaign to schedule a session for"
 	NewSessionModalTitle       = "📅 Schedule a New Session"
 	NewSessionNotesLabel       = "What to expect (optional)"
-	NewSessionNotesPlaceholder = "e.g. Picking up from last time — don't forget your character sheet!"
+	NewSessionNotesPlaceholder = "e.g. Picking up from last time- don't forget your character sheet!"
 	ManageNewSessionLabel      = "📅 New Session"
 
 	SessionEmbedGoingFmt = "✅ Going: %d  ·  ❌ Not Going: %d"
@@ -1001,8 +1001,8 @@ const (
 	SessionRSVPDeclineLabel = "❌ Not Going"
 
 	SessionRSVPAcceptedMsg   = "✅ You're in! The DM has been notified."
-	SessionRSVPDeclinedMsg   = "❌ Can't make it — the DM has been notified."
-	SessionRSVPWaitlistedMsg = "⏳ Session is full — you're on the waitlist. The DM will confirm the final roster."
+	SessionRSVPDeclinedMsg   = "❌ Can't make it- the DM has been notified."
+	SessionRSVPWaitlistedMsg = "⏳ Session is full- you're on the waitlist. The DM will confirm the final roster."
 	SessionRSVPConflictFmt   = "⚠️ You already have a session at this time: **%s** on %s.\nConfirm anyway?"
 	SessionRSVPConfirmLabel  = "Confirm anyway"
 	SessionRSVPCancelLabel   = "Cancel"
@@ -1014,17 +1014,17 @@ const (
 	SessionRSVPDMNotifyDecline  = "❌ <@%s> can't make it for **%s** · %s"
 	SessionRSVPDMNotifyWaitlist = "⏳ <@%s> is on the waitlist for **%s** · %s (session full)"
 
-	NewSessionAnnouncedFmt    = "✅ Session for **%s** announced — %d member(s) notified."
+	NewSessionAnnouncedFmt    = "✅ Session for **%s** announced- %d member(s) notified."
 	NewSessionNoChannel       = "⚠️ This campaign has no channel. Set one up in campaign settings first."
-	NewSessionDMContentFmt    = "📅 **%s** — New Session!\n<t:%d:F> · <t:%d:R>%s"
+	NewSessionDMContentFmt    = "📅 **%s**- New Session!\n<t:%d:F> · <t:%d:R>%s"
 	SessionReminderContentFmt = "⏰ Reminder: **%s** starts in ~1 hour!\n<t:%d:F>%s"
 
-	SessionEmbedTitleFmt        = "📅 New Session — %s"
+	SessionEmbedTitleFmt        = "📅 New Session- %s"
 	SessionEmbedGoingLabel      = "✅ Going"
 	SessionEmbedNotGoingLabel   = "❌ Not Going"
 	SessionEmbedWaitlistedLabel = "⏳ Waitlisted"
 	SessionRSVPCancelledMsg     = "ℹ️ RSVP cancelled."
-	SessionRSVPLineEmptyFmt     = "%s (0): —"
+	SessionRSVPLineEmptyFmt     = "%s (0):-"
 	SessionRSVPLineFmt          = "%s (%d): %s"
 	SessionRSVPLineOverflowFmt  = " +%d more"
 )

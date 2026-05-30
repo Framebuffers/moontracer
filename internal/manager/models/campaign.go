@@ -27,7 +27,7 @@ type Campaign struct {
 	// Details about your campaign, like open slots, the style, trigger warnings, extra info by the DM to be added to the Campaign's description.
 
 	Slots           int      `bun:",notnull,default:0" json:"slots"`            // Total roster cap. Westmarches set this to math.MaxInt32 (effectively unlimited) and gate per-session admission via SessionCapacity instead.
-	SessionCapacity int      `bun:",notnull,default:6" json:"session_capacity"` // Westmarch tripwire — seats per sitting. Joining past this admits anyway and DMs the campaign DM. Ignored for non-westmarch campaigns.
+	SessionCapacity int      `bun:",notnull,default:6" json:"session_capacity"` // Westmarch tripwire- seats per sitting. Joining past this admits anyway and DMs the campaign DM. Ignored for non-westmarch campaigns.
 	IsOpen          bool     `bun:",notnull,default:false" json:"is_open"`
 	IsOneshot       bool     `bun:",notnull,default:false" json:"is_oneshot"`
 	IsWestmarch     bool     `bun:",notnull,default:false" json:"is_westmarch"`
@@ -341,7 +341,7 @@ func (c *Campaign) RefreshNextSession(db *bun.DB) error {
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
-		// No upcoming sessions — clear NextSession.
+		// No upcoming sessions, clear NextSession.
 		c.Schedule.NextSession = time.Time{}
 		c.Schedule.AlertSent = false
 	} else {
