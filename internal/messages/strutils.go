@@ -11,6 +11,9 @@ BuildFlags renders a Campaign's status flags (approved/unapproved, archived,
 open/closed) as a comma-separated string for display.
 */
 func BuildFlags(c models.Campaign) string {
+	if !c.DeletedAt.IsZero() {
+		return "deleted"
+	}
 	flags := []string{"unapproved"}
 	if c.IsApproved {
 		flags[0] = "approved"

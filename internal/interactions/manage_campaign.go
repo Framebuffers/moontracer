@@ -12,8 +12,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strings"
+
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -202,22 +203,17 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		return
 	}
 
-	ctx := context.Background()
-	_, err := h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
-		Where("campaign_id = ?", campaignID).Exec(ctx)
-	if err != nil {
-		log.Printf("manage_delete_confirm: failed to delete campaign players: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageDeleteFailure)
-		return
-	}
-
-	if err := db.Delete[models.Campaign](h.db, campaignID); err != nil {
-		log.Printf("manage_delete_confirm: failed to delete campaign: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageDeleteFailure)
-		return
-	}
-
 	RetireChannel(s, i.GuildID, campaign)
+
+	// all records are soft-deleted: sets deleted-at and keeps it as a historical log.
+	ctx := context.Background()
+	_, err := h.db.NewDelete().Model(campaign).WherePK().Exec(ctx)
+	if err != nil {
+		log.Printf("manage_delete_confirm: failed to soft-delete campaign: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageDeleteFailure)
+		return
+	}
+
 	log.Printf("manage_delete_confirm: %s deleted campaign %s (%s)", userID, campaign.Name, campaignID)
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
 }

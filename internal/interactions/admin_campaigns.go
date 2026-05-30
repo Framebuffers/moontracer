@@ -13,6 +13,7 @@ package interactions
 */
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -45,7 +46,12 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 		return
 	}
 
-	filtered, err := db.GetAll[models.Campaign](h.db)
+	var filtered []models.Campaign
+	err = h.db.NewSelect().
+		Model(&filtered).
+		WhereAllWithDeleted().
+		OrderExpr("(deleted_at IS NOT NULL) ASC, is_archived ASC, is_approved DESC, COALESCE(deleted_at, archived_at, '0001-01-01') DESC").
+		Scan(context.Background())
 	if err != nil {
 		log.Printf("admin_campaigns: failed to load campaigns: %v", err)
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
@@ -70,11 +76,11 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 		return userID
 	}
 
-	const nameW, statusW, dmW = 20, 10, 18
+	const nameW, statusW, dmW = 20, 12, 18
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "%-*s %-*s %-4s %-*s %s\n",
-		nameW, "CAMPAIGN", statusW, "STATUS", "OPEN", dmW, "DM", "NEXT SESSION")
-	sb.WriteString(strings.Repeat("-", nameW+statusW+dmW+30) + "\n")
+	fmt.Fprintf(&sb, "%-*s %-*s %-*s %s\n",
+		nameW, "CAMPAIGN", statusW, "STATUS", dmW, "DM", "DATE")
+	sb.WriteString(strings.Repeat("-", nameW+statusW+dmW+26) + "\n")
 	for _, c := range filtered {
 		name := c.Name
 		if len(name) > nameW {
@@ -84,20 +90,23 @@ func (h *adminCampaignsHandler) HandleComponents(s *discordgo.Session, i *discor
 		if len(status) > statusW {
 			status = status[:statusW-1] + "."
 		}
-		open := "no"
-		if c.IsOpen {
-			open = "yes"
-		}
 		dmName := resolveName(c.DungeonMaster)
 		if len(dmName) > dmW {
 			dmName = dmName[:dmW-1] + "."
 		}
-		next := "(not set)"
-		if !c.Schedule.NextSession.IsZero() {
-			next = c.Schedule.NextSession.Format("2006-01-02")
+		var date string
+		switch {
+		case !c.DeletedAt.IsZero():
+			date = "deleted " + c.DeletedAt.Format("2006-01-02")
+		case c.IsArchived && !c.ArchivedAt.IsZero():
+			date = "archived " + c.ArchivedAt.Format("2006-01-02")
+		case !c.Schedule.NextSession.IsZero():
+			date = "next " + c.Schedule.NextSession.Format("2006-01-02")
+		default:
+			date = "(no date)"
 		}
-		fmt.Fprintf(&sb, "%-*s %-*s %-4s %-*s %s\n",
-			nameW, name, statusW, status, open, dmW, dmName, next)
+		fmt.Fprintf(&sb, "%-*s %-*s %-*s %s\n",
+			nameW, name, statusW, status, dmW, dmName, date)
 	}
 	block := "```\n" + sb.String() + "```"
 	if len(block) > 1900 {

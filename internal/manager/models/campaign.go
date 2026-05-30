@@ -65,6 +65,10 @@ type Campaign struct {
 	IsArchived     bool      `bun:",notnull,default:false"`
 	ArchivedAt     time.Time `bun:",nullzero"`
 	ArchivedReason string    `bun:",nullzero"`
+
+	// Soft delete: staff-triggered. Row is retained for the admin historical log.
+	// bun automatically adds WHERE deleted_at IS NULL to all normal queries.
+	DeletedAt time.Time `bun:",soft_delete,nullzero"`
 }
 
 // CanMutate returns false if the campaign is archived (immutable).
