@@ -140,7 +140,7 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -194,7 +194,7 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}

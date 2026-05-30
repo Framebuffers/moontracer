@@ -49,7 +49,7 @@ func (h *manageSetSession) HandleComponents(s *discordgo.Session, i *discordgo.I
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -142,7 +142,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}

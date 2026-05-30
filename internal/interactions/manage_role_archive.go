@@ -16,8 +16,9 @@ package interactions
 import (
 	"fmt"
 	"log"
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strings"
+
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -93,7 +94,7 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -167,7 +168,7 @@ func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -222,7 +223,7 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}

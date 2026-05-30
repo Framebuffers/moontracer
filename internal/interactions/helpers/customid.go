@@ -1,10 +1,12 @@
 package helpers
 
 import (
+	"log"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
 
+	"github.com/framebuffers/moontracer/internal/manager/models"
 	"github.com/framebuffers/moontracer/internal/messages"
 )
 
@@ -37,4 +39,22 @@ func GetUserID(i *discordgo.InteractionCreate) string {
 		return i.User.ID
 	}
 	return ""
+}
+
+func GetUserName(id *models.Player, s *discordgo.Session, i *discordgo.InteractionCreate) string {
+	usr, err := s.GuildMember(i.GuildID, id.ID)
+	if err != nil {
+		log.Printf("get_username: could not fetch guildMember from server: %s", err)
+		return ""
+	}
+
+	name := usr.Nick
+	if name == "" {
+		name = usr.User.GlobalName
+	}
+	if name == "" {
+		name = usr.User.Username
+	}
+
+	return name
 }

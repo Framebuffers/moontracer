@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
@@ -68,7 +69,7 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		Auth + DB load are fast; handle errors here before the defer so we can still
 		call InteractionRespond without conflicting with a deferred response.
 	*/
-	campaign, ok := helpers.LoadModCampaign(s, i, c.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsMod(s, i, c.db, campaignID)
 	if !ok {
 		return
 	}
@@ -223,7 +224,7 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 		userID = i.Member.User.ID
 	}
 
-	campaign, ok := helpers.LoadModCampaign(s, i, m.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsMod(s, i, m.db, campaignID)
 	if !ok {
 		return
 	}

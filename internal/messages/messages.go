@@ -1127,6 +1127,18 @@ const (
 	ImportCampaignErrSession = "❌ This import session has expired. Please run /importcampaign again."
 )
 
+// Forum post (all user-facing)
+const (
+	ForumPostFormatCampaign  = "Campaign"
+	ForumPostFormatOneshot   = "One-shot"
+	ForumPostFormatWestmarch = "Westmarch"
+	ForumPostScheduleUnset   = "Unset"
+	ForumPostStatusOpen      = "Open"
+	ForumPostStatusClosed    = "Closed"
+	ForumPostSlotsUnlimited  = "Unlimited"
+	ForumPostNoPlayers       = "*None yet*"
+)
+
 // Timezone preference
 const (
 	// identifiers

@@ -65,7 +65,7 @@ func (h *manageNewSessionButton) HandleComponents(s *discordgo.Session, i *disco
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -108,7 +108,7 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	userID := helpers.GetUserID(i)
 	guildID := i.GuildID
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}

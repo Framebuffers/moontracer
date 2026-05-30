@@ -47,7 +47,7 @@ func (h *manageLinksHandler) HandleComponents(s *discordgo.Session, i *discordgo
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -105,7 +105,7 @@ func (h *manageLinksModal) HandleModal(s *discordgo.Session, i *discordgo.Intera
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}

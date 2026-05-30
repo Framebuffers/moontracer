@@ -3,8 +3,9 @@ package interactions
 import (
 	"fmt"
 	"log"
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strings"
+
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
@@ -48,7 +49,7 @@ func (h *manageCampaignAnnounce) HandleComponents(s *discordgo.Session, i *disco
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -124,7 +125,7 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
