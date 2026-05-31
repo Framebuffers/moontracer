@@ -131,8 +131,8 @@ func UpdateBillboard(s *discordgo.Session, db *bun.DB, c *models.Campaign) error
 		embeds := []*discordgo.MessageEmbed{}
 		edit.Embeds = &embeds
 	}
-	components := BillboardComponents(c)
-	edit.Components = &components
+	empty := []discordgo.MessageComponent{}
+	edit.Components = &empty
 	_, err := s.ChannelMessageEditComplex(edit)
 	return err
 }

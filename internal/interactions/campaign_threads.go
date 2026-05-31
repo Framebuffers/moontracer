@@ -387,10 +387,7 @@ func PostBillboardToChannel(database *bun.DB, s *discordgo.Session, c *models.Ca
 	}
 
 	threadData := &discordgo.ThreadStart{Name: title, AutoArchiveDuration: defaultArchiveDuration}
-	msgData := &discordgo.MessageSend{
-		Content:    body,
-		Components: helpers.BillboardComponents(c),
-	}
+	msgData := &discordgo.MessageSend{Content: body}
 	if coverURL != "" {
 		msgData.Embeds = []*discordgo.MessageEmbed{{Image: &discordgo.MessageEmbedImage{URL: coverURL}}}
 	}
@@ -406,10 +403,34 @@ func PostBillboardToChannel(database *bun.DB, s *discordgo.Session, c *models.Ca
 		log.Printf("campaign_threads: save billboard IDs for %s: %v", c.ID, err)
 	}
 
+	postJoinButton(s, thread.ID, c)
+
 	if isSnowflake(c.ChannelID) {
 		pinBillboardInChannel(s, c.ChannelID, thread.ID)
 	}
 	return nil
+}
+
+/*
+postJoinButton sends a standalone pinned message containing only the Join button
+to the forum thread. Kept separate from the starter message so clicks don't
+overwrite the campaign body.
+*/
+func postJoinButton(s *discordgo.Session, threadID string, c *models.Campaign) {
+	joinComponents := helpers.BillboardComponents(c)
+	if len(joinComponents) == 0 {
+		return
+	}
+	msg, err := guard.ChannelMessageSendComplex(s, threadID, &discordgo.MessageSend{
+		Components: joinComponents,
+	})
+	if err != nil {
+		log.Printf("campaign_threads: send join button to thread %s: %v", threadID, err)
+		return
+	}
+	if err := guard.ChannelMessagePin(s, threadID, msg.ID); err != nil {
+		log.Printf("campaign_threads: pin join button in thread %s: %v", threadID, err)
+	}
 }
 
 /*
