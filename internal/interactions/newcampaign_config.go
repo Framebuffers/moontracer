@@ -444,6 +444,13 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 			helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 			return
 		}
+		if c.IsApproved && c.BillboardThreadID != "" {
+			go func() {
+				if err := helpers.UpdateBillboard(s, h.db, c); err != nil {
+					log.Printf("newcampaign_schedule: billboard update for %s: %v", c.ID, err)
+				}
+			}()
+		}
 	}
 
 	staffMembers, err := db.GetStaff(h.db)

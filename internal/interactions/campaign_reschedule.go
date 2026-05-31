@@ -180,6 +180,11 @@ func (h *manageCampaignRescheduleModal) HandleModal(s *discordgo.Session, i *dis
 		helpers.RespondUpdateTerminal(s, i, messages.RescheduleError)
 		return
 	}
+	go func() {
+		if err := helpers.UpdateBillboard(s, h.db, campaign); err != nil {
+			log.Printf("campaign_reschedule: billboard update for %s: %v", campaign.ID, err)
+		}
+	}()
 
 	dayName := campaign.Schedule.DayName()
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.RescheduleSuccess, campaign.Name, dayName, timeStr, durStr, freqStr))

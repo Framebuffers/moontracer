@@ -14,6 +14,7 @@ import (
 
 	"github.com/framebuffers/moontracer/internal/auth"
 	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"github.com/framebuffers/moontracer/internal/manager/models"
 	"github.com/framebuffers/moontracer/internal/mediaserver"
 	"github.com/framebuffers/moontracer/internal/messages"
@@ -151,6 +152,11 @@ func (c *campaignUploadCommand) Execute(s *discordgo.Session, i *discordgo.Inter
 	}
 
 	log.Printf("campaignupload: %s uploaded cover for campaign %s -> %s", userID, campaignID, diskPath)
+	go func() {
+		if err := helpers.UpdateBillboard(s, c.db, campaign); err != nil {
+			log.Printf("campaignupload: billboard update for %s: %v", campaignID, err)
+		}
+	}()
 	respond(s, i, fmt.Sprintf(messages.CampaignUploadSuccess, campaign.Name, publicURL))
 }
 

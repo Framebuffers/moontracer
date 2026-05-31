@@ -181,4 +181,9 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
 		}},
 	})
+	go func() {
+		if err := helpers.UpdateBillboard(s, h.db, campaign); err != nil {
+			log.Printf("campaign_join: billboard update for %s: %v", campaign.ID, err)
+		}
+	}()
 }
