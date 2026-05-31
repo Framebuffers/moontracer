@@ -1140,25 +1140,25 @@ const (
 	ImportStep2Header = "**Map threads for #%s** (step 2 of 2)\nChoose an existing thread for each slot, or leave as **Create new**."
 
 	// Select-menu placeholders.
-	ImportSelWelcome       = "Welcome thread…"
-	ImportSelAnnouncements = "Announcements thread…"
-	ImportSelSessions      = "Sessions thread…"
-	ImportSelDiceRolls     = "Dice rolls thread…"
+	ImportSelWelcome       = "Welcome: intro pinned for new players"
+	ImportSelAnnouncements = "Announcements: new sessions and info"
+	ImportSelSessions      = "Sessions: journal of past sessions"
+	ImportSelDiceRolls     = "Dice rolls: live dice roll registry"
 
 	// "Create new" option shown at the top of every select menu.
 	ImportOptCreateNew      = "Create new"
 	ImportOptCreateNewDescr = "Bot will create this thread automatically."
 
 	// Button labels.
-	ImportNextLabel    = "Next ->"
-	ImportBackLabel    = "<- Back"
-	ImportConfirmLabel = "Confirm Import"
-	ImportCancelLabel  = "Cancel"
+	ImportNextLabel    = "Next ➡️"
+	ImportBackLabel    = "⬅️ Back"
+	ImportConfirmLabel = "✅ Confirm Import"
+	ImportCancelLabel  = "❌ Cancel"
 
 	// Terminal messages.
 	ImportCampaignProcessing = "⏳ Fetching threads, just a moment…"
 	ImportCampaignSuccess    = "✅ Imported **%s**: %d member(s) registered, %d thread(s) bound, %d thread(s) created."
-	ImportCampaignCancelled  = "Import cancelled."
+	ImportCampaignCancelled  = "⚠️ Import cancelled."
 	ImportCampaignErrDB      = "❌ Failed to write campaign to the database."
 	ImportCampaignErrChannel = "❌ Could not read the channel. Make sure the bot has access to it."
 	ImportCampaignErrSession = "❌ This import session has expired. Please run /importcampaign again."
