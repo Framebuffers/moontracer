@@ -387,7 +387,26 @@ func PostBillboardToChannel(database *bun.DB, s *discordgo.Session, c *models.Ca
 	if err := db.Update(database, c); err != nil {
 		log.Printf("campaign_threads: save billboard IDs for %s: %v", c.ID, err)
 	}
+
+	if isSnowflake(c.ChannelID) {
+		pinBillboardInChannel(s, c.ChannelID, thread.ID)
+	}
 	return nil
+}
+
+/*
+pinBillboardInChannel sends a message linking to the billboard thread and pins it
+in the campaign's private channel so members can navigate to it directly.
+*/
+func pinBillboardInChannel(s *discordgo.Session, campaignChannelID, threadID string) {
+	msg, err := guard.ChannelMessageSend(s, campaignChannelID, fmt.Sprintf(messages.BillboardPinMessage, threadID))
+	if err != nil {
+		log.Printf("campaign_threads: send billboard pin message to %s: %v", campaignChannelID, err)
+		return
+	}
+	if err := guard.ChannelMessagePin(s, campaignChannelID, msg.ID); err != nil {
+		log.Printf("campaign_threads: pin billboard message in %s: %v", campaignChannelID, err)
+	}
 }
 
 // isSnowflake reports whether s is a non-empty, all-digit string, like a Discord snowflake ID.

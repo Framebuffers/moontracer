@@ -1162,6 +1162,13 @@ const (
 	BillboardChannelWestmarch = "westmarches"
 )
 
+/*
+BillboardPinMessage is pinned in the campaign channel after the forum thread is created.
+
+%s is the billboard thread/channel ID (rendered as a clickable channel mention).
+*/
+const BillboardPinMessage = "**Campaign info & roster:** <#%s>"
+
 // New campaign modal: schedule step additions (internal)
 const (
 	NewCampaignWarningsFieldID = "newcampaign_warnings"
