@@ -16,9 +16,9 @@ NewCampaignForumPost formats a Campaign into a message to be sent to a forum.
 
 This is used to create a "campaign billboard" of new games being created by the players.
 */
-func NewCampaignForumPost(db *bun.DB, s *discordgo.Session, c *models.Campaign) (string, string) {
+func NewCampaignForumPost(db *bun.DB, s *discordgo.Session, c *models.Campaign) (title, body, coverURL string) {
 	if !c.IsApproved || c.IsArchived {
-		return "", ""
+		return "", "", ""
 	}
 
 	format := messages.ForumPostFormatCampaign
@@ -102,12 +102,11 @@ func NewCampaignForumPost(db *bun.DB, s *discordgo.Session, c *models.Campaign) 
 		fmt.Fprintf(&b, "- **Waiting list:** %s\n", strings.Join(playerMentions(waiting), ", "))
 	}
 
-	cover, err := models.MediaByCampaign(db, c.ID, models.KindCoverArt)
-	if err == nil && len(cover) > 0 && cover[0].URL != "" {
-		fmt.Fprintf(&b, "\n---\n\n%s\n", cover[0].URL)
+	if cover, err := models.MediaByCampaign(db, c.ID, models.KindCoverArt); err == nil && len(cover) > 0 {
+		coverURL = cover[0].URL
 	}
 
-	return c.Name, b.String()
+	return c.Name, b.String(), coverURL
 }
 
 /*
@@ -121,11 +120,18 @@ func UpdateBillboard(s *discordgo.Session, db *bun.DB, c *models.Campaign) error
 	if c.BillboardThreadID == "" {
 		return nil
 	}
-	_, body := NewCampaignForumPost(db, s, c)
+	_, body, coverURL := NewCampaignForumPost(db, s, c)
 	if body == "" {
 		return nil
 	}
-	_, err := s.ChannelMessageEdit(c.BillboardThreadID, c.BillboardThreadID, body)
+	edit := discordgo.NewMessageEdit(c.BillboardThreadID, c.BillboardThreadID).SetContent(body)
+	if coverURL != "" {
+		edit.SetEmbed(&discordgo.MessageEmbed{Image: &discordgo.MessageEmbedImage{URL: coverURL}})
+	} else {
+		embeds := []*discordgo.MessageEmbed{}
+		edit.Embeds = &embeds
+	}
+	_, err := s.ChannelMessageEditComplex(edit)
 	return err
 }
 

@@ -366,12 +366,17 @@ the resulting IDs on c. Used by the import flow when the admin has picked a spec
 Callers must db.Update(c) after this returns to persist BillboardChannelID and BillboardThreadID.
 */
 func PostBillboardToChannel(database *bun.DB, s *discordgo.Session, c *models.Campaign, channelID string) error {
-	title, body := helpers.NewCampaignForumPost(database, s, c)
+	title, body, coverURL := helpers.NewCampaignForumPost(database, s, c)
 	if title == "" {
 		return nil
 	}
 
-	thread, err := s.ForumThreadStart(channelID, title, defaultArchiveDuration, body)
+	threadData := &discordgo.ThreadStart{Name: title, AutoArchiveDuration: defaultArchiveDuration}
+	msgData := &discordgo.MessageSend{Content: body}
+	if coverURL != "" {
+		msgData.Embeds = []*discordgo.MessageEmbed{{Image: &discordgo.MessageEmbedImage{URL: coverURL}}}
+	}
+	thread, err := s.ForumThreadStartComplex(channelID, threadData, msgData)
 	if err != nil {
 		return fmt.Errorf("create forum thread: %w", err)
 	}
