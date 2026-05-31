@@ -93,17 +93,23 @@ func SetupNewChannel(database *bun.DB, s *discordgo.Session, guildID string, c *
 	c.CategoryID = categoryID
 
 	overwrites := []*discordgo.PermissionOverwrite{
-		// visibility
+		// deny everyone by default
 		{
 			ID:   guildID,
 			Type: discordgo.PermissionOverwriteTypeRole,
 			Deny: discordgo.PermissionViewChannel,
 		},
-		// accesibility
+		// bot: full control
 		{
 			ID:    s.State.User.ID,
 			Type:  discordgo.PermissionOverwriteTypeMember,
 			Allow: discordgo.PermissionViewChannel | discordgo.PermissionManageThreads | discordgo.PermissionSendMessages,
+		},
+		// DM: ManageThreads so they can post in locked threads
+		{
+			ID:    c.DungeonMaster,
+			Type:  discordgo.PermissionOverwriteTypeMember,
+			Allow: discordgo.PermissionViewChannel | discordgo.PermissionSendMessages | discordgo.PermissionManageThreads,
 		},
 	}
 	if c.RoleID != "" {
@@ -156,7 +162,16 @@ func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, 
 			c.AnnouncementsThreadID = thread.ID
 		}
 
-		setThreadPermissions(s, thread.ID, name, c)
+		/*
+			Lock DM-only threads.
+			Players can view but not post. the DM and bot can post because they have ManageThreads on the parent channel.
+			This is such that this can be used as a broadcasting channel for new announcements without needing to add a role mention.
+		*/
+		if name == "welcome" || name == "sessions" || name == "announcements" {
+			if err := guard.LockThread(s, thread.ID); err != nil {
+				log.Printf("campaign_threads: lock %s thread %s: %v", name, thread.ID, err)
+			}
+		}
 
 		// Resolve init message: welcome uses the campaign name; others use the static map.
 		var initMsg string
@@ -175,44 +190,6 @@ func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, 
 			if err := guard.ChannelMessagePin(s, thread.ID, msg.ID); err != nil {
 				log.Printf("campaign_threads: pin init message in %s: %v", threadName, err)
 			}
-		}
-	}
-}
-
-/*
-setThreadPermissions applies posting restrictions to a newly created standard thread.
-
-  - welcome / sessions: DM-only. Deny campaign role SendMessages, allow DM member.
-  - announcements: bot-only. Deny campaign role SendMessages, allow bot member.
-  - dice-rolls: no restriction.
-*/
-func setThreadPermissions(s *discordgo.Session, threadID, name string, c *models.Campaign) {
-	const send = discordgo.PermissionSendMessages
-
-	switch name {
-	case "welcome", "sessions":
-		if c.RoleID != "" {
-			if err := guard.ChannelPermissionSet(s, threadID, c.RoleID,
-				discordgo.PermissionOverwriteTypeRole, 0, send); err != nil {
-				log.Printf("campaign_threads: deny role in %s thread %s: %v", name, threadID, err)
-			}
-		}
-		if err := guard.ChannelPermissionSet(s, threadID, c.DungeonMaster,
-			discordgo.PermissionOverwriteTypeMember, send, 0); err != nil {
-			log.Printf("campaign_threads: allow DM in %s thread %s: %v", name, threadID, err)
-		}
-
-	case "announcements":
-		// DM-only
-		if c.RoleID != "" {
-			if err := guard.ChannelPermissionSet(s, threadID, c.RoleID,
-				discordgo.PermissionOverwriteTypeRole, 0, send); err != nil {
-				log.Printf("campaign_threads: deny role in announcements thread %s: %v", threadID, err)
-			}
-		}
-		if err := guard.ChannelPermissionSet(s, threadID, c.DungeonMaster,
-			discordgo.PermissionOverwriteTypeMember, send, 0); err != nil {
-			log.Printf("campaign_threads: allow DM in announcements thread %s: %v", threadID, err)
 		}
 	}
 }
