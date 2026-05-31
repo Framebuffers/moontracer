@@ -1039,9 +1039,10 @@ const (
 	SessionRSVPNotMember     = "⚠️ Join this campaign before RSVPing to its sessions."
 	SessionRSVPGone          = "ℹ️ This session is no longer active."
 
-	SessionRSVPDMNotifyAccept   = "✅ <@%s> is going to **%s** · %s"
-	SessionRSVPDMNotifyDecline  = "❌ <@%s> can't make it for **%s** · %s"
-	SessionRSVPDMNotifyWaitlist = "⏳ <@%s> is on the waitlist for **%s** · %s (session full)"
+	SessionRSVPDMNotifyAccept         = "✅ <@%s> is going to **%s** · %s"
+	SessionRSVPDMNotifyAcceptConflict = "✅ <@%s> is going to **%s** · %s ⚠️ They have a scheduling conflict: going to **%s** at the same time."
+	SessionRSVPDMNotifyDecline        = "❌ <@%s> can't make it for **%s** · %s"
+	SessionRSVPDMNotifyWaitlist       = "⏳ <@%s> is on the waitlist for **%s** · %s (session full)"
 
 	NewSessionAnnouncedFmt    = "✅ Session for **%s** announced- %d member(s) notified."
 	NewSessionNoChannel       = "⚠️ This campaign has no channel. Set one up in campaign settings first."

@@ -375,48 +375,65 @@ func handleSessionRSVP(
 	}
 
 	finalStatus := intent
+	var confirmedConflictName string // set when player confirmed RSVP despite a known clash
 
 	if intent == models.RSVPAccepted {
 		// a. conflict check.
-		if !skipConflictCheck {
-			conflicts, _ := models.GetPlayerConflictingSessions(guildDB, playerID, session.ScheduledAt)
-			if len(conflicts) > 0 {
-				conflict := conflicts[0]
-				// b. load campaign name for the conflicting session.
-				conflictCampaign, _ := db.GetByID[models.Campaign](guildDB, conflict.CampaignID)
-				conflictName := conflict.CampaignID
-				if conflictCampaign != nil {
-					conflictName = conflictCampaign.Name
-				}
-				pSettings, _ := models.GetOrCreatePlayerSettings(guildDB, playerID)
-				conflictTime := helpers.FormatInLocation(conflict.ScheduledAt, messages.SessionListFormat, pSettings.Location())
+		conflicts, _ := models.GetPlayerConflictingSessions(guildDB, playerID, session.ScheduledAt)
+		var clashConflicts []models.Session
+		for _, c := range conflicts {
+			if c.ID != sessionID {
+				clashConflicts = append(clashConflicts, c)
+			}
+		}
 
-				guildID := parts[1]
-				confirmID := fmt.Sprintf("%s:%s:%s", messages.SessionRSVPConfirmPrefix, guildID, sessionID)
-				cancelID := fmt.Sprintf("%s:%s:%s", messages.SessionRSVPCancelPrefix, guildID, sessionID)
+		if len(clashConflicts) > 0 && !skipConflictCheck {
+			conflict := clashConflicts[0]
+			// b. load campaign name for the conflicting session.
+			conflictCampaign, _ := db.GetByID[models.Campaign](guildDB, conflict.CampaignID)
+			conflictName := conflict.CampaignID
+			if conflictCampaign != nil {
+				conflictName = conflictCampaign.Name
+			}
+			pSettings, _ := models.GetOrCreatePlayerSettings(guildDB, playerID)
+			conflictTime := helpers.FormatInLocation(conflict.ScheduledAt, messages.SessionListFormat, pSettings.Location())
 
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: fmt.Sprintf(messages.SessionRSVPConflictFmt, conflictName, conflictTime),
-						Flags:   discordgo.MessageFlagsEphemeral,
-						Components: []discordgo.MessageComponent{
-							discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-								discordgo.Button{
-									Label:    messages.SessionRSVPConfirmLabel,
-									Style:    discordgo.DangerButton,
-									CustomID: confirmID,
-								},
-								discordgo.Button{
-									Label:    messages.SessionRSVPCancelLabel,
-									Style:    discordgo.SecondaryButton,
-									CustomID: cancelID,
-								},
-							}},
-						},
+			guildID := parts[1]
+			confirmID := fmt.Sprintf("%s:%s:%s", messages.SessionRSVPConfirmPrefix, guildID, sessionID)
+			cancelID := fmt.Sprintf("%s:%s:%s", messages.SessionRSVPCancelPrefix, guildID, sessionID)
+
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf(messages.SessionRSVPConflictFmt, conflictName, conflictTime),
+					Flags:   discordgo.MessageFlagsEphemeral,
+					Components: []discordgo.MessageComponent{
+						discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+							discordgo.Button{
+								Label:    messages.SessionRSVPConfirmLabel,
+								Style:    discordgo.DangerButton,
+								CustomID: confirmID,
+							},
+							discordgo.Button{
+								Label:    messages.SessionRSVPCancelLabel,
+								Style:    discordgo.SecondaryButton,
+								CustomID: cancelID,
+							},
+						}},
 					},
-				})
-				return
+				},
+			})
+			return
+		}
+
+		// clash confirmed
+		if skipConflictCheck && len(clashConflicts) > 0 {
+			conflict := clashConflicts[0]
+			conflictCampaign, _ := db.GetByID[models.Campaign](guildDB, conflict.CampaignID)
+			if conflictCampaign != nil {
+				confirmedConflictName = conflictCampaign.Name
+			} else {
+				confirmedConflictName = conflict.CampaignID
 			}
 		}
 
@@ -493,7 +510,7 @@ func handleSessionRSVP(
 	}
 
 	// Notify campaign DM.
-	notifyDM(dispatcher, guildDB, campaign, playerID, session, finalStatus)
+	notifyDM(dispatcher, guildDB, campaign, playerID, session, finalStatus, confirmedConflictName)
 }
 
 /*
@@ -567,7 +584,7 @@ func sessionRSVPButtons(guildID, sessionID string) discordgo.ActionsRow {
 	}}
 }
 
-func notifyDM(dispatcher *dispatch.Dispatcher, guildDB *bun.DB, campaign *models.Campaign, playerID string, session *models.Session, status models.RSVPStatus) {
+func notifyDM(dispatcher *dispatch.Dispatcher, guildDB *bun.DB, campaign *models.Campaign, playerID string, session *models.Session, status models.RSVPStatus, conflictName string) {
 	if campaign.DungeonMaster == "" {
 		return
 	}
@@ -578,19 +595,23 @@ func notifyDM(dispatcher *dispatch.Dispatcher, guildDB *bun.DB, campaign *models
 	sessionTime := helpers.FormatInLocation(session.ScheduledAt, messages.SessionTimeFormat, dmSettings.Location()) +
 		" " + helpers.TZLabel(dmSettings.Location())
 
-	var notifyFmt string
+	var content string
 	switch status {
 	case models.RSVPAccepted:
-		notifyFmt = messages.SessionRSVPDMNotifyAccept
+		if conflictName != "" {
+			content = fmt.Sprintf(messages.SessionRSVPDMNotifyAcceptConflict, playerID, campaign.Name, sessionTime, conflictName)
+		} else {
+			content = fmt.Sprintf(messages.SessionRSVPDMNotifyAccept, playerID, campaign.Name, sessionTime)
+		}
 	case models.RSVPDeclined:
-		notifyFmt = messages.SessionRSVPDMNotifyDecline
+		content = fmt.Sprintf(messages.SessionRSVPDMNotifyDecline, playerID, campaign.Name, sessionTime)
 	default:
-		notifyFmt = messages.SessionRSVPDMNotifyWaitlist
+		content = fmt.Sprintf(messages.SessionRSVPDMNotifyWaitlist, playerID, campaign.Name, sessionTime)
 	}
 
 	dispatcher.Push(dispatch.DirectMessage{
 		ID:      fmt.Sprintf("session-rsvp-notify:%s:%s:%s", session.ID, playerID, string(status)),
 		Target:  campaign.DungeonMaster,
-		Content: fmt.Sprintf(notifyFmt, playerID, campaign.Name, sessionTime),
+		Content: content,
 	})
 }
