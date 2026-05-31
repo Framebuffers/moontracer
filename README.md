@@ -150,7 +150,7 @@ Once the bot is online in your server, run `/register` to create your player pro
 - Built-in HTTP media server (Go stdlib net/http) for serving cover art and tokens.
 - One-time opaque download endpoint (claim store, UUID, 10-min TTL).
 - All Discord-mutating operations wrapped in a guard package that respects SAFE_MODE.
-- Command registration uses ApplicationCommandBulkOverwrite — stale commands auto-removed on startup.
+- Command registration uses ApplicationCommandBulkOverwrite- stale commands auto-removed on startup.
 - Global/guild command mode: 
     - guild ID set -> instant registration (dev); 
     - unset -> global (up to 1h propagation).
@@ -159,17 +159,17 @@ Once the bot is online in your server, run `/register` to create your player pro
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `DISCORD_BOT_TOKEN` | Yes | — | Bot token from Discord Developer Portal |
-| `ADMIN_ROLE_NAME` | Yes | — | Name of the admin/owner role on the server |
-| `MOD_ROLE_NAME` | No | — | Name of the moderator role (optional) |
-| `DISCORD_GUILD_ID` | No | — | Limit command registration to one guild (dev mode) |
+| `DISCORD_BOT_TOKEN` | Yes |- | Bot token from Discord Developer Portal |
+| `ADMIN_ROLE_NAME` | Yes |- | Name of the admin/owner role on the server |
+| `MOD_ROLE_NAME` | No |- | Name of the moderator role (optional) |
+| `DISCORD_GUILD_ID` | No |- | Limit command registration to one guild (dev mode) |
 | `MEDIA_PORT` | No | `8090` | Port for the built-in media server |
 | `MEDIA_BASE_URL` | No | `http://localhost:8090/api/v1/cdn` | Public CDN root URL |
 | `MEDIA_DOWNLOAD_URL` | No | `http://localhost:8090` | Public server root for `/dl/` download links |
-| `SAFE_MODE` | No | — | Disable Discord mutations (roles, DMs) |
-| `DEV_MODE` | No | — | Development mode flag |
-| `DEBUG_ADMIN_ID` | No | — | Developer override Discord user ID |
-| `VERBOSE` | No | — | Enable verbose logging with timestamps |
+| `SAFE_MODE` | No |- | Disable Discord mutations (roles, DMs) |
+| `DEV_MODE` | No |- | Development mode flag |
+| `DEBUG_ADMIN_ID` | No |- | Developer override Discord user ID |
+| `VERBOSE` | No |- | Enable verbose logging with timestamps |
 
 ## 📦 Deployment
 
