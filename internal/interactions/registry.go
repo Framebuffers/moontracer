@@ -128,7 +128,6 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&adminDatabaseHandler{db: db},
 		&adminSettingsHandler{db: db},
 		&adminBillboardSetHandler{db: db},
-		&adminBillboardSetCategoryHandler{db: db},
 		&adminCampaignChannelSetHandler{db: db},
 		&adminDiagHandler{db: db},
 
