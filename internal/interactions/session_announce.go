@@ -175,15 +175,22 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 		return
 	}
 
-	var roleMention string
-	if campaign.RoleID != "" {
-		roleMention = fmt.Sprintf("<@&%s>", campaign.RoleID)
-	}
-	msg, err := guard.ChannelMessageSendComplex(s, channelID, &discordgo.MessageSend{
-		Content:    roleMention,
+	send := &discordgo.MessageSend{
 		Embeds:     []*discordgo.MessageEmbed{embed},
 		Components: []discordgo.MessageComponent{rsvpButtons},
-	})
+		/*
+			Suppress all mention types by default
+
+			Explicitly allow only the campaign role,
+			so a DM can't inject an @everyone mention.
+		*/
+		AllowedMentions: &discordgo.MessageAllowedMentions{},
+	}
+	if campaign.RoleID != "" {
+		send.Content = fmt.Sprintf("<@&%s>", campaign.RoleID)
+		send.AllowedMentions.Roles = []string{campaign.RoleID}
+	}
+	msg, err := guard.ChannelMessageSendComplex(s, channelID, send)
 	if err != nil {
 		log.Printf("new_session_modal: post to channel %s: %v", channelID, err)
 		helpers.Respond(s, i, messages.GenericErrorMessage)
@@ -420,6 +427,9 @@ func handleSessionRSVP(
 								CustomID: cancelID,
 							},
 						}},
+					},
+					AllowedMentions: &discordgo.MessageAllowedMentions{
+						Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeRoles},
 					},
 				},
 			})
