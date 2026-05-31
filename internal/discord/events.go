@@ -10,6 +10,7 @@ import (
 	"github.com/framebuffers/moontracer/internal/commands"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/dispatch"
+	"github.com/framebuffers/moontracer/internal/guard"
 	"github.com/framebuffers/moontracer/internal/manager/models"
 	"github.com/framebuffers/moontracer/internal/messages"
 	"github.com/framebuffers/moontracer/internal/scheduler"
@@ -66,6 +67,8 @@ func HandleAnnouncementMessage(guildDBM *db.GuildDBManager, d *dispatch.Dispatch
 		}
 
 		content := fmt.Sprintf(messages.AnnouncementDMFmt, campaign.Name, m.Author.ID, m.Content)
+
+		sent := map[string]bool{}
 		for _, p := range players {
 			if p.PlayerID == campaign.DungeonMaster {
 				continue
@@ -73,9 +76,22 @@ func HandleAnnouncementMessage(guildDBM *db.GuildDBManager, d *dispatch.Dispatch
 			if p.Status != models.StatusActive {
 				continue
 			}
+			sent[p.PlayerID] = true
 			d.Push(dispatch.DirectMessage{
 				ID:      uuid.NewString(),
 				Target:  p.PlayerID,
+				Content: content,
+			})
+		}
+
+		/*
+			send to the DM when it's on test mode, so they can see if this works
+		*/
+		if aid := guard.DebugAdminID; aid != "" && !sent[aid] {
+			log.Printf("events: announcement debug: testing announcements for campaign %s to DEBUG_ADMIN_ID", campaign.ID)
+			d.Push(dispatch.DirectMessage{
+				ID:      uuid.NewString(),
+				Target:  aid,
 				Content: content,
 			})
 		}
