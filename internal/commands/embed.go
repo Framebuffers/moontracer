@@ -39,8 +39,8 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL,
 		if p.Status == models.StatusBanned {
 			continue
 		}
-		playerLines = append(playerLines, fmt.Sprintf("<@%s>- %s (%s, %d sessions)",
-			p.PlayerID, p.Role, p.Status, p.SessionsPlayed))
+		playerLines = append(playerLines, fmt.Sprintf("<@%s>- %s (%s)",
+			p.PlayerID, p.Role, p.Status))
 	}
 	playersValue := messages.NoneLabel
 	if len(playerLines) > 0 {

@@ -64,7 +64,13 @@ func threadSelectRow(sessionID, threadName, placeholder string, threads []Thread
 			Label:       messages.ImportOptCreateNew,
 			Description: messages.ImportOptCreateNewDescr,
 			Value:       messages.ImportCreateNew,
-			Default:     current == messages.ImportCreateNew,
+			/*
+				Never pre-select "Create new".
+
+				The placeholder must be visible on first render so the user knows what each dropdown does.
+				Confirming without a selection still maps to "Create new" as a fallback.
+			*/
+			Default: false,
 		},
 	}
 	// Note: Discord limits select menus to 25 options max.
