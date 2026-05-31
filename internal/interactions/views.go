@@ -116,6 +116,14 @@ func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 		commands.RenderAdminHubUpdate(s, i)
 	})
 
+	router.Register(router.ViewAdminSettings, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		renderAdminGeneralSettings(s, i, db)
+	})
+
+	router.Register(router.ViewAdminBillboard, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		renderAdminBillboardSettings(s, i, db)
+	})
+
 	router.Register(router.ViewAdminDiag, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
 		commands.RenderAdminDiag(s, i, db, i.GuildID)
 	})

@@ -9,15 +9,15 @@ package interactions
 	Flow:
 		1. Player clicks "Schedule conflict" on the session DM.
 		   CustomID: session_conflict:<guildID>:<sessionID>
-		2. Bot queries GetPlayerConflictingSessions (±2h window) and filters out
+		2. Bot queries GetPlayerConflictingSessions (~30min window) and filters out
 		   the current campaign. If nothing found, replies with a "no conflicts" message.
 		3. A select menu is shown listing the overlapping sessions by campaign + date.
 		   CustomID: session_conflict_sel:<guildID>:<thisSessionID>
 		4. Player picks the campaign they're going to instead.
 		5. Bot:
 		   a. Declines the player's RSVP for the current session.
-		   b. DMs the absent campaign's DM: "Player won't attend — conflict with Campaign B."
-		   c. DMs the present campaign's DM: "Player intends to come — heads up re: Campaign A."
+		   b. DMs the absent campaign's DM: "Player won't attend: conflict with Campaign B."
+		   c. DMs the present campaign's DM: "Player intends to come: attention re: Campaign A."
 		   d. Confirms to the player.
 
 	Both DMs are informed; neither is committed. The DM always has the final say.

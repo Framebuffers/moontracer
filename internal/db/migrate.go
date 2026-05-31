@@ -37,15 +37,15 @@ func Migrate(db *bun.DB) error {
 	/*
 		Migration process (three passes, all idempotent):
 
-		1. CreateTable loop above — `IfNotExists`, so fresh DBs get every column
+		1. CreateTable loop above -`IfNotExists`, so fresh DBs get every column
 		   from the model struct tags. Existing DBs skip this entirely.
-		2. `alterStmts` below — `ADD COLUMN` retrofits for columns that were added
+		2. `alterStmts` below -`ADD COLUMN` retrofits for columns that were added
 		   to a model after deploy. Each statement is wrapped by `isDuplicateColumn`:
 		   SQLite errors "duplicate column name ..." on re-run, which we swallow.
 		   Any other error aborts migration. Columns MUST be appended (never
 		   reordered or removed) so old deploys advancing N versions at once
 		   replay history in order.
-		3. Post-migration cleanup — dedup passes, unique indexes, backfills.
+		3. Post-migration cleanup -dedup passes, unique indexes, backfills.
 		   Each runs on every boot; must be idempotent.
 
 		Adding a new model:
@@ -58,7 +58,7 @@ func Migrate(db *bun.DB) error {
 
 		Why this shape: bun has no migration framework wired up here, so the
 		three passes stand in. Ordering matters within `alterStmts` only when a
-		later statement depends on an earlier column existing — otherwise append
+		later statement depends on an earlier column existing -otherwise append
 		is safe.
 	*/
 

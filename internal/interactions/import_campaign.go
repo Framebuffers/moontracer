@@ -289,7 +289,7 @@ func (h *importConfirmHandler) HandleComponents(s *discordgo.Session, i *discord
 			}
 		}
 
-		// No billboard channel found — ask the admin to select or auto-create one.
+		// No billboard channel found -ask the admin to select or auto-create one.
 		successMsg := fmt.Sprintf(messages.ImportCampaignSuccess, sess.ChannelName, len(memberIDs), bound, created)
 		prompt := successMsg + "\n\n" + messages.ImportBillboardPrompt
 		editWithComponents(prompt, importBillboardStep3Components(campaign.ID, sess.GuildID))

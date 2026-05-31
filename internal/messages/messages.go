@@ -897,7 +897,9 @@ const (
 const (
 	// user-facing
 	AdminSettingsHeader                = "Bot settings:"
-	AdminBillboardHeader               = "**⚙️ Billboard Channel Settings**\nSelect which forum channel each campaign format posts to when approved.\n\n"
+	AdminSettingsGeneralHeader         = "**⚙️ General Settings**\n\n"
+	AdminBillboardHeader               = "**⚙️ Billboard Channels**\nSelect which forum channel each campaign format posts to when approved.\n\n"
+	AdminBillboardChannelsLabel        = "Billboard channels ->"
 	AdminBillboardCampaignLabel        = "🏰 Campaigns"
 	AdminBillboardOneshotLabel         = "📖 One-shots"
 	AdminBillboardWestmarchLabel       = "🛡️ Westmarches"
@@ -906,7 +908,7 @@ const (
 	AdminBillboardWestmarchPlaceholder = "Select forum channel for westmarches…"
 	AdminBillboardSavedFmt             = "✅ Billboard channel for **%s** set."
 	AdminBillboardCurrentFmt           = "Current: %s"
-	AdminBillboardNotSet               = "_(not set — auto-create)_"
+	AdminBillboardNotSet               = "_(not set -auto-create)_"
 
 	AdminBillboardCategoryLabel       = "📁 Billboard category"
 	AdminBillboardCategoryPlaceholder = "Select category for billboard channels…"

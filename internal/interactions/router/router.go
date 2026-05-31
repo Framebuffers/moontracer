@@ -67,6 +67,7 @@ const (
 	ViewAdminDatabase   ViewID = "admin_database"
 	ViewAdminCampaigns  ViewID = "admin_campaigns"
 	ViewAdminSettings   ViewID = "admin_settings"
+	ViewAdminBillboard  ViewID = "admin_billboard"
 	ViewAdminBroadcast  ViewID = "admin_broadcast"
 	ViewInbox           ViewID = "inbox"
 	ViewConfig          ViewID = "config"
