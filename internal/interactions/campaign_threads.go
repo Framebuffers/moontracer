@@ -433,16 +433,17 @@ func postJoinButton(s *discordgo.Session, threadID string, c *models.Campaign) {
 	if len(joinComponents) == 0 {
 		return
 	}
-	msg, err := guard.ChannelMessageSendComplex(s, threadID, &discordgo.MessageSend{
+	_, err := guard.ChannelMessageSendComplex(s, threadID, &discordgo.MessageSend{
 		Components: joinComponents,
+		Flags:      discordgo.MessageFlagsEphemeral,
 	})
 	if err != nil {
 		log.Printf("campaign_threads: send join button to thread %s: %v", threadID, err)
 		return
 	}
-	if err := guard.ChannelMessagePin(s, threadID, msg.ID); err != nil {
-		log.Printf("campaign_threads: pin join button in thread %s: %v", threadID, err)
-	}
+	// if err := guard.ChannelMessagePin(s, threadID, msg.ID); err != nil {
+	// 	log.Printf("campaign_threads: pin join button in thread %s: %v", threadID, err)
+	// }
 }
 
 /*
