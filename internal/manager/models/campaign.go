@@ -354,3 +354,13 @@ func (c *Campaign) RefreshNextSession(db *bun.DB) error {
 		Exec(ctx)
 	return err2
 }
+
+// GetCampaignByAnnouncementsThreadID finds a campaign whose announcements thread matches threadID.
+func GetCampaignByAnnouncementsThreadID(database *bun.DB, threadID string) (*Campaign, error) {
+	c := &Campaign{}
+	err := database.NewSelect().Model(c).
+		Where("announcements_thread_id = ?", threadID).
+		Limit(1).
+		Scan(context.Background())
+	return c, err
+}

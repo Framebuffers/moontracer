@@ -1,12 +1,15 @@
 package discord
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/google/uuid"
 
 	"github.com/framebuffers/moontracer/internal/commands"
 	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/dispatch"
 	"github.com/framebuffers/moontracer/internal/manager/models"
 	"github.com/framebuffers/moontracer/internal/messages"
 	"github.com/framebuffers/moontracer/internal/scheduler"
@@ -29,6 +32,56 @@ import (
 
 This enforces DM sovereignty: if the DM leaves, the campaign becomes an immutable record rather than being handed off.
 */
+/*
+HandleAnnouncementMessage sends a DM's post in an announcements thread to all active campaign members via DM.
+
+When the DM posts in the campaign's announcements thread, every active player receives a DM with the message content.
+
+The bot itself and the DM are excluded.
+*/
+func HandleAnnouncementMessage(guildDBM *db.GuildDBManager, d *dispatch.Dispatcher) func(s *discordgo.Session, m *discordgo.MessageCreate) {
+	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		if m.Author == nil || m.Author.Bot {
+			return
+		}
+
+		guildDB, err := guildDBM.GetOrCreate(m.GuildID)
+		if err != nil {
+			return
+		}
+
+		campaign, err := models.GetCampaignByAnnouncementsThreadID(guildDB, m.ChannelID)
+		if err != nil {
+			return
+		}
+
+		if m.Author.ID != campaign.DungeonMaster {
+			return
+		}
+
+		players, err := models.GetCampaignPlayers(guildDB, campaign.ID)
+		if err != nil {
+			log.Printf("events: announcement: load players for %s: %v", campaign.ID, err)
+			return
+		}
+
+		content := fmt.Sprintf(messages.AnnouncementDMFmt, campaign.Name, m.Author.ID, m.Content)
+		for _, p := range players {
+			if p.PlayerID == campaign.DungeonMaster {
+				continue
+			}
+			if p.Status != models.StatusActive {
+				continue
+			}
+			d.Push(dispatch.DirectMessage{
+				ID:      uuid.NewString(),
+				Target:  p.PlayerID,
+				Content: content,
+			})
+		}
+	}
+}
+
 func HandleGuildMemberRemove(guildDBM *db.GuildDBManager, sched *scheduler.Scheduler) func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
 	return func(s *discordgo.Session, e *discordgo.GuildMemberRemove) {
 		database, err := guildDBM.GetOrCreate(e.GuildID)

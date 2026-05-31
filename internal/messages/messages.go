@@ -1189,7 +1189,22 @@ BillboardPinMessage is pinned in the campaign channel after the forum thread is 
 
 %s is the billboard thread/channel ID (rendered as a clickable channel mention).
 */
-const BillboardPinMessage = "**Campaign info & roster:** <#%s>"
+const BillboardPinMessage = "**About this campaign:** <#%s>"
+
+/*
+CampaignAnnouncementThreadFmt is appended to the campaign channel announcement when
+a billboard thread exists.
+
+%s is the thread ID.
+*/
+const CampaignAnnouncementThreadFmt = "🏰 **About this campaign:** <#%s>"
+
+/*
+AnnouncementDMFmt is the DM sent to each campaign member when the DM posts in the announcements thread.
+
+Args: campaign name, DM user ID, message content.
+*/
+const AnnouncementDMFmt = "🗣️ **[%s]** <@%s> says:\n\n%s"
 
 // New campaign modal: schedule step additions (internal)
 const (

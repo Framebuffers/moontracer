@@ -156,6 +156,8 @@ func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, 
 			c.AnnouncementsThreadID = thread.ID
 		}
 
+		setThreadPermissions(s, thread.ID, name, c)
+
 		// Resolve init message: welcome uses the campaign name; others use the static map.
 		var initMsg string
 		if name == "welcome" {
@@ -173,11 +175,44 @@ func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, 
 			if err := guard.ChannelMessagePin(s, thread.ID, msg.ID); err != nil {
 				log.Printf("campaign_threads: pin init message in %s: %v", threadName, err)
 			}
-			if name == "welcome" {
-				if err := guard.LockThread(s, thread.ID); err != nil {
-					log.Printf("campaign_threads: lock welcome thread %s: %v", threadName, err)
-				}
+		}
+	}
+}
+
+/*
+setThreadPermissions applies posting restrictions to a newly created standard thread.
+
+  - welcome / sessions: DM-only. Deny campaign role SendMessages, allow DM member.
+  - announcements: bot-only. Deny campaign role SendMessages, allow bot member.
+  - dice-rolls: no restriction.
+*/
+func setThreadPermissions(s *discordgo.Session, threadID, name string, c *models.Campaign) {
+	const send = discordgo.PermissionSendMessages
+
+	switch name {
+	case "welcome", "sessions":
+		if c.RoleID != "" {
+			if err := guard.ChannelPermissionSet(s, threadID, c.RoleID,
+				discordgo.PermissionOverwriteTypeRole, 0, send); err != nil {
+				log.Printf("campaign_threads: deny role in %s thread %s: %v", name, threadID, err)
 			}
+		}
+		if err := guard.ChannelPermissionSet(s, threadID, c.DungeonMaster,
+			discordgo.PermissionOverwriteTypeMember, send, 0); err != nil {
+			log.Printf("campaign_threads: allow DM in %s thread %s: %v", name, threadID, err)
+		}
+
+	case "announcements":
+		// DM-only
+		if c.RoleID != "" {
+			if err := guard.ChannelPermissionSet(s, threadID, c.RoleID,
+				discordgo.PermissionOverwriteTypeRole, 0, send); err != nil {
+				log.Printf("campaign_threads: deny role in announcements thread %s: %v", threadID, err)
+			}
+		}
+		if err := guard.ChannelPermissionSet(s, threadID, c.DungeonMaster,
+			discordgo.PermissionOverwriteTypeMember, send, 0); err != nil {
+			log.Printf("campaign_threads: allow DM in announcements thread %s: %v", threadID, err)
 		}
 	}
 }
@@ -467,10 +502,14 @@ func PostCampaignChannelAnnouncement(database *bun.DB, s *discordgo.Session, c *
 	coverURL := models.CoverURLForCampaign(database, c.ID)
 	embed := commands.CampaignEmbed(*c, players, coverURL, "", callerID)
 
-	components := helpers.BillboardComponents(c)
+	var content string
+	if isSnowflake(c.BillboardThreadID) {
+		content = fmt.Sprintf(messages.CampaignAnnouncementThreadFmt, c.BillboardThreadID)
+	}
+
 	_, err = guard.ChannelMessageSendComplex(s, settings.CampaignChannelID, &discordgo.MessageSend{
-		Embeds:     []*discordgo.MessageEmbed{embed},
-		Components: components,
+		Content: content,
+		Embeds:  []*discordgo.MessageEmbed{embed},
 	})
 	if err != nil {
 		log.Printf("campaign_threads: post announcement for %s to %s: %v", c.ID, settings.CampaignChannelID, err)

@@ -27,6 +27,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/framebuffers/moontracer/internal/auth"
+	"github.com/framebuffers/moontracer/internal/guard"
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"github.com/framebuffers/moontracer/internal/interactions/router"
 	"github.com/framebuffers/moontracer/internal/manager/models"
@@ -177,12 +178,27 @@ func (h *adminCampaignChannelSetHandler) HandleComponents(s *discordgo.Session, 
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
-	settings.CampaignChannelID = values[0]
+	channelID := values[0]
+	settings.CampaignChannelID = channelID
 	if _, err := h.db.NewUpdate().Model(settings).WherePK().Exec(context.Background()); err != nil {
 		log.Printf("admin_campaign_channel_set: save settings: %v", err)
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}
+
+	// Lock the feed: deny @everyone SendMessages, allow the bot to post.
+	if err := guard.ChannelPermissionSet(s, channelID, i.GuildID,
+		discordgo.PermissionOverwriteTypeRole, 0, discordgo.PermissionSendMessages); err != nil {
+		log.Printf("admin_campaign_channel_set: lock channel %s: %v", channelID, err)
+	}
+	if s.State != nil && s.State.User != nil {
+		if err := guard.ChannelPermissionSet(s, channelID, s.State.User.ID,
+			discordgo.PermissionOverwriteTypeMember,
+			discordgo.PermissionSendMessages|discordgo.PermissionViewChannel, 0); err != nil {
+			log.Printf("admin_campaign_channel_set: allow bot in channel %s: %v", channelID, err)
+		}
+	}
+
 	renderAdminGeneralSettings(s, i, h.db)
 }
 
