@@ -237,6 +237,11 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 						Style:    discordgo.DangerButton,
 						CustomID: fmt.Sprintf("%s:%s:%s", messages.SessionRSVPDeclinePrefix, guildID, session.ID),
 					},
+					discordgo.Button{
+						Label:    messages.SessionConflictButtonLabel,
+						Style:    discordgo.SecondaryButton,
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.SessionConflictPrefix, guildID, session.ID),
+					},
 				}},
 			},
 		})

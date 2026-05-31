@@ -104,6 +104,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&sessionRSVPDeclineHandler{db: db, dispatcher: d},
 		&sessionRSVPConfirmHandler{db: db, dispatcher: d},
 		&sessionRSVPCancelHandler{},
+		&sessionConflictHandler{db: db, dispatcher: d},
+		&sessionConflictSelHandler{db: db, dispatcher: d},
 
 		// New campaign config (post-modal)
 		&newCampaignBookHandler{db: db},
@@ -126,6 +128,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&adminDatabaseHandler{db: db},
 		&adminSettingsHandler{db: db},
 		&adminBillboardSetHandler{db: db},
+		&adminBillboardSetCategoryHandler{db: db},
+		&adminCampaignChannelSetHandler{db: db},
 		&adminDiagHandler{db: db},
 
 		// Manage: new campaign from button, links, player tokens

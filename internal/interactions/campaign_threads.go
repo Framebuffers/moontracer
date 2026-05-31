@@ -16,6 +16,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/commands"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/guard"
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
@@ -67,7 +68,7 @@ category, then creates the standard threads inside it.
 
 Mutates campaign in-place with CategoryID, ChannelID, AnnouncementsThreadID.
 */
-func SetupNewChannel(s *discordgo.Session, guildID string, c *models.Campaign) error {
+func SetupNewChannel(database *bun.DB, s *discordgo.Session, guildID string, c *models.Campaign) error {
 	channelName := c.Tag
 	if channelName == "" {
 		channelName = models.NormalizeTag(c.Name) // The fix for the weird characters inside names.
@@ -78,9 +79,16 @@ func SetupNewChannel(s *discordgo.Session, guildID string, c *models.Campaign) e
 		log.Printf("campaign_threads: role for new channel: %v", err)
 	}
 
-	categoryID, err := findOrCreateCampaignsCategory(s, guildID)
-	if err != nil {
-		return fmt.Errorf("resolve category: %w", err)
+	// Use admin-configured category if set, otherwise find-or-create by name.
+	var categoryID string
+	if settings, err := models.GetOrCreateGuildSettings(database); err == nil && isSnowflake(settings.BillboardCategoryID) {
+		categoryID = settings.BillboardCategoryID
+	} else {
+		var err error
+		categoryID, err = findOrCreateCampaignsCategory(s, guildID)
+		if err != nil {
+			return fmt.Errorf("resolve category: %w", err)
+		}
 	}
 	c.CategoryID = categoryID
 
@@ -328,16 +336,23 @@ Resolution order:
 Callers must db.Update(c) after this returns to persist BillboardChannelID and BillboardThreadID.
 */
 func PostBillboard(database *bun.DB, s *discordgo.Session, c *models.Campaign, guildID string) error {
-	// Check admin-configured channel first.
-	if settings, err := models.GetOrCreateGuildSettings(database); err == nil {
+	settings, _ := models.GetOrCreateGuildSettings(database)
+
+	if settings != nil {
 		if ch := billboardChannelFromSettings(settings, c); ch != "" {
 			return PostBillboardToChannel(database, s, c, ch)
 		}
 	}
 
-	categoryID, err := findOrCreateCampaignsCategory(s, guildID)
-	if err != nil {
-		return fmt.Errorf("resolve campaigns category: %w", err)
+	var categoryID string
+	if settings != nil && isSnowflake(settings.BillboardCategoryID) {
+		categoryID = settings.BillboardCategoryID
+	} else {
+		var err error
+		categoryID, err = findOrCreateCampaignsCategory(s, guildID)
+		if err != nil {
+			return fmt.Errorf("resolve campaigns category: %w", err)
+		}
 	}
 
 	channelID, err := findOrCreateForumChannel(s, guildID, categoryID, billboardChannelName(c))
@@ -372,7 +387,10 @@ func PostBillboardToChannel(database *bun.DB, s *discordgo.Session, c *models.Ca
 	}
 
 	threadData := &discordgo.ThreadStart{Name: title, AutoArchiveDuration: defaultArchiveDuration}
-	msgData := &discordgo.MessageSend{Content: body}
+	msgData := &discordgo.MessageSend{
+		Content:    body,
+		Components: helpers.BillboardComponents(c),
+	}
 	if coverURL != "" {
 		msgData.Embeds = []*discordgo.MessageEmbed{{Image: &discordgo.MessageEmbedImage{URL: coverURL}}}
 	}
@@ -406,6 +424,35 @@ func pinBillboardInChannel(s *discordgo.Session, campaignChannelID, threadID str
 	}
 	if err := guard.ChannelMessagePin(s, campaignChannelID, msg.ID); err != nil {
 		log.Printf("campaign_threads: pin billboard message in %s: %v", campaignChannelID, err)
+	}
+}
+
+/*
+PostCampaignChannelAnnouncement sends a campaign embed to the guild's configured campaign
+channel (GuildSettings.CampaignChannelID) when a campaign is approved.
+
+Nothing happens if the channel is not configured.
+*/
+func PostCampaignChannelAnnouncement(database *bun.DB, s *discordgo.Session, c *models.Campaign, callerID string) {
+	settings, err := models.GetOrCreateGuildSettings(database)
+	if err != nil || !isSnowflake(settings.CampaignChannelID) {
+		return
+	}
+
+	players, err := models.GetCampaignPlayers(database, c.ID)
+	if err != nil {
+		log.Printf("campaign_threads: load players for announcement of %s: %v", c.ID, err)
+	}
+	coverURL := models.CoverURLForCampaign(database, c.ID)
+	embed := commands.CampaignEmbed(*c, players, coverURL, "", callerID)
+
+	components := helpers.BillboardComponents(c)
+	_, err = guard.ChannelMessageSendComplex(s, settings.CampaignChannelID, &discordgo.MessageSend{
+		Embeds:     []*discordgo.MessageEmbed{embed},
+		Components: components,
+	})
+	if err != nil {
+		log.Printf("campaign_threads: post announcement for %s to %s: %v", c.ID, settings.CampaignChannelID, err)
 	}
 }
 

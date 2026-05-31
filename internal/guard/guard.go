@@ -183,3 +183,12 @@ func ChannelPermissionSet(s *discordgo.Session, channelID, targetID string, targ
 	}
 	return s.ChannelPermissionSet(channelID, targetID, targetType, allow, deny)
 }
+
+// GuildRoleDelete deletes a Discord role, or logs in safe mode.
+func GuildRoleDelete(s *discordgo.Session, guildID, roleID string) error {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would delete role %s in guild %s", roleID, guildID)
+		return nil
+	}
+	return s.GuildRoleDelete(guildID, roleID)
+}

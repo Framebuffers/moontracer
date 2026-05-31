@@ -111,7 +111,7 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 
 	// Channel + thread creation is slow; run after responding so the mod interaction resolves immediately.
 	go func() {
-		if err := SetupNewChannel(s, guildID, campaign); err != nil {
+		if err := SetupNewChannel(c.db, s, guildID, campaign); err != nil {
 			log.Printf("campaign_approve: channel setup for %s: %v", campaignID, err)
 			return
 		}
@@ -121,6 +121,7 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		if err := PostBillboard(c.db, s, campaign, guildID); err != nil {
 			log.Printf("campaign_approve: billboard for %s: %v", campaignID, err)
 		}
+		PostCampaignChannelAnnouncement(c.db, s, campaign, senderID)
 	}()
 }
 

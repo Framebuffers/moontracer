@@ -205,6 +205,12 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 
 	RetireChannel(s, i.GuildID, campaign)
 
+	if campaign.RoleID != "" {
+		if err := guard.GuildRoleDelete(s, i.GuildID, campaign.RoleID); err != nil {
+			log.Printf("manage_delete_confirm: failed to delete role %s for campaign %s: %v", campaign.RoleID, campaignID, err)
+		}
+	}
+
 	// all records are soft-deleted: sets deleted-at and keeps it as a historical log.
 	ctx := context.Background()
 	_, err := h.db.NewDelete().Model(campaign).WherePK().Exec(ctx)

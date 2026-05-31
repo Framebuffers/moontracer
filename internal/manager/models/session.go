@@ -143,8 +143,8 @@ that overlap the given time window (~2 hours).
 */
 func GetPlayerConflictingSessions(db *bun.DB, playerID string, at time.Time) ([]Session, error) {
 	ctx := context.Background()
-	windowStart := at.Add(-2 * time.Hour)
-	windowEnd := at.Add(2 * time.Hour)
+	windowStart := at.Add(-30 * time.Minute)
+	windowEnd := at.Add(30 * time.Minute)
 
 	var sessions []Session
 	err := db.NewSelect().Model(&sessions).

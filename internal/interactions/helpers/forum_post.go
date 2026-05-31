@@ -131,8 +131,30 @@ func UpdateBillboard(s *discordgo.Session, db *bun.DB, c *models.Campaign) error
 		embeds := []*discordgo.MessageEmbed{}
 		edit.Embeds = &embeds
 	}
+	components := BillboardComponents(c)
+	edit.Components = &components
 	_, err := s.ChannelMessageEditComplex(edit)
 	return err
+}
+
+/*
+BillboardComponents returns the action row for the billboard starter message.
+
+Shows a Join button when the campaign is open. Returns an empty slice otherwise.
+*/
+func BillboardComponents(c *models.Campaign) []discordgo.MessageComponent {
+	if !c.IsOpen {
+		return []discordgo.MessageComponent{}
+	}
+	return []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.JoinCampaignLabel,
+				Style:    discordgo.SuccessButton,
+				CustomID: fmt.Sprintf("campaign_join:%s", c.Tag),
+			},
+		}},
+	}
 }
 
 func activeCampaignPlayers(players []models.CampaignPlayer) []models.CampaignPlayer {

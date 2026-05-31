@@ -49,39 +49,50 @@ func (h *adminSettingsHandler) HandleComponents(s *discordgo.Session, i *discord
 
 	content := messages.AdminBillboardHeader + buildBillboardStatus(settings)
 	helpers.RespondWithBack(s, i, discordgo.InteractionResponseUpdateMessage, content,
-		buildBillboardComponents(), router.ViewAdmin)
+		buildSettingsComponents(), router.ViewAdmin)
 }
 
-// buildBillboardStatus formats the current channel IDs (or "not set") for display.
+// buildBillboardStatus formats current settings (channel IDs or "not set") for display.
 func buildBillboardStatus(s *models.GuildSettings) string {
-	label := func(chID string) string {
-		if chID == "" {
+	ch := func(id string) string {
+		if id == "" {
 			return messages.AdminBillboardNotSet
 		}
-		return fmt.Sprintf(messages.AdminBillboardCurrentFmt, "<#"+chID+">")
+		return fmt.Sprintf(messages.AdminBillboardCurrentFmt, "<#"+id+">")
 	}
-	return fmt.Sprintf("**%s:** %s\n**%s:** %s\n**%s:** %s",
-		messages.AdminBillboardCampaignLabel, label(s.BillboardChannelCampaign),
-		messages.AdminBillboardOneshotLabel, label(s.BillboardChannelOneshot),
-		messages.AdminBillboardWestmarchLabel, label(s.BillboardChannelWestmarch),
+	return fmt.Sprintf(
+		"**%s:** %s\n**%s:** %s\n**%s:** %s\n**%s:** %s\n**%s:** %s",
+		messages.AdminBillboardCategoryLabel, ch(s.BillboardCategoryID),
+		messages.AdminCampaignChannelLabel, ch(s.CampaignChannelID),
+		messages.AdminBillboardCampaignLabel, ch(s.BillboardChannelCampaign),
+		messages.AdminBillboardOneshotLabel, ch(s.BillboardChannelOneshot),
+		messages.AdminBillboardWestmarchLabel, ch(s.BillboardChannelWestmarch),
 	)
 }
 
-// buildBillboardComponents renders three channel-select menus, one per format.
-func buildBillboardComponents() []discordgo.MessageComponent {
-	sel := func(format, placeholder string) discordgo.MessageComponent {
+// buildSettingsComponents renders all five channel/category selects for the settings panel.
+func buildSettingsComponents() []discordgo.MessageComponent {
+	chanSel := func(customID, placeholder string, types ...discordgo.ChannelType) discordgo.MessageComponent {
 		return discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.SelectMenu{
-				MenuType:    discordgo.ChannelSelectMenu,
-				CustomID:    fmt.Sprintf("%s:%s", messages.AdminBillboardSetPrefix, format),
-				Placeholder: placeholder,
+				MenuType:     discordgo.ChannelSelectMenu,
+				CustomID:     customID,
+				Placeholder:  placeholder,
+				ChannelTypes: types,
 			},
 		}}
 	}
 	return []discordgo.MessageComponent{
-		sel(messages.AdminBillboardFormatCampaign, messages.AdminBillboardCampaignPlaceholder),
-		sel(messages.AdminBillboardFormatOneshot, messages.AdminBillboardOneshotPlaceholder),
-		sel(messages.AdminBillboardFormatWestmarch, messages.AdminBillboardWestmarchPlaceholder),
+		chanSel(messages.AdminBillboardSetCategoryPrefix, messages.AdminBillboardCategoryPlaceholder,
+			discordgo.ChannelTypeGuildCategory),
+		chanSel(messages.AdminCampaignChannelSetPrefix, messages.AdminCampaignChannelPlaceholder,
+			discordgo.ChannelTypeGuildText),
+		chanSel(fmt.Sprintf("%s:%s", messages.AdminBillboardSetPrefix, messages.AdminBillboardFormatCampaign),
+			messages.AdminBillboardCampaignPlaceholder, discordgo.ChannelTypeGuildForum),
+		chanSel(fmt.Sprintf("%s:%s", messages.AdminBillboardSetPrefix, messages.AdminBillboardFormatOneshot),
+			messages.AdminBillboardOneshotPlaceholder, discordgo.ChannelTypeGuildForum),
+		chanSel(fmt.Sprintf("%s:%s", messages.AdminBillboardSetPrefix, messages.AdminBillboardFormatWestmarch),
+			messages.AdminBillboardWestmarchPlaceholder, discordgo.ChannelTypeGuildForum),
 	}
 }
 
@@ -150,5 +161,89 @@ func (h *adminBillboardSetHandler) HandleComponents(s *discordgo.Session, i *dis
 	content := fmt.Sprintf(messages.AdminBillboardSavedFmt, formatLabel) +
 		"\n\n" + messages.AdminBillboardHeader + buildBillboardStatus(settings)
 	helpers.RespondWithBack(s, i, discordgo.InteractionResponseUpdateMessage, content,
-		buildBillboardComponents(), router.ViewAdmin)
+		buildSettingsComponents(), router.ViewAdmin)
+}
+
+/*
+adminBillboardSetCategoryHandler persists the admin's category selection for billboard channels.
+
+CustomID: admin_billboard_set_category
+*/
+type adminBillboardSetCategoryHandler struct {
+	db *bun.DB
+}
+
+func (h *adminBillboardSetCategoryHandler) CustomIDPrefix() string {
+	return messages.AdminBillboardSetCategoryPrefix
+}
+
+func (h *adminBillboardSetCategoryHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	userID := helpers.GetUserID(i)
+	if ok, err := auth.Authorize(h.db, userID, auth.ScopeAdmin, ""); err != nil || !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	settings, err := models.GetOrCreateGuildSettings(h.db)
+	if err != nil {
+		log.Printf("admin_billboard_set_category: load settings: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	settings.BillboardCategoryID = values[0]
+	if _, err := h.db.NewUpdate().Model(settings).WherePK().Exec(context.Background()); err != nil {
+		log.Printf("admin_billboard_set_category: save settings: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	content := fmt.Sprintf(messages.AdminBillboardCategorySavedFmt, "<#"+values[0]+">") +
+		"\n\n" + messages.AdminBillboardHeader + buildBillboardStatus(settings)
+	helpers.RespondWithBack(s, i, discordgo.InteractionResponseUpdateMessage, content,
+		buildSettingsComponents(), router.ViewAdmin)
+}
+
+/*
+adminCampaignChannelSetHandler persists the admin's campaign channel selection.
+
+CustomID: admin_campaign_channel_set
+*/
+type adminCampaignChannelSetHandler struct {
+	db *bun.DB
+}
+
+func (h *adminCampaignChannelSetHandler) CustomIDPrefix() string {
+	return messages.AdminCampaignChannelSetPrefix
+}
+
+func (h *adminCampaignChannelSetHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	userID := helpers.GetUserID(i)
+	if ok, err := auth.Authorize(h.db, userID, auth.ScopeAdmin, ""); err != nil || !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	settings, err := models.GetOrCreateGuildSettings(h.db)
+	if err != nil {
+		log.Printf("admin_campaign_channel_set: load settings: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	settings.CampaignChannelID = values[0]
+	if _, err := h.db.NewUpdate().Model(settings).WherePK().Exec(context.Background()); err != nil {
+		log.Printf("admin_campaign_channel_set: save settings: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	content := fmt.Sprintf(messages.AdminCampaignChannelSavedFmt, "<#"+values[0]+">") +
+		"\n\n" + messages.AdminBillboardHeader + buildBillboardStatus(settings)
+	helpers.RespondWithBack(s, i, discordgo.InteractionResponseUpdateMessage, content,
+		buildSettingsComponents(), router.ViewAdmin)
 }

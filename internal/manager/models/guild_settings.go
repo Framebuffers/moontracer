@@ -19,6 +19,20 @@ type GuildSettings struct {
 	BillboardChannelCampaign  string `bun:",default:''" json:"billboard_channel_campaign"`
 	BillboardChannelOneshot   string `bun:",default:''" json:"billboard_channel_oneshot"`
 	BillboardChannelWestmarch string `bun:",default:''" json:"billboard_channel_westmarch"`
+
+	/*
+		BillboardCategoryID is the Discord category channel that contains all billboard
+		forum channels.
+
+		Empty means PostBillboard will find-or-create "Campaigns" by name.
+	*/
+	BillboardCategoryID string `bun:",default:''" json:"billboard_category_id"`
+
+	/*
+		CampaignChannelID is a general-purpose text channel for campaign-related announcements.
+		Empty means the feature is disabled.
+	*/
+	CampaignChannelID string `bun:",default:''" json:"campaign_channel_id"`
 }
 
 // GetOrCreateGuildSettings returns the single GuildSettings row, inserting defaults if absent.

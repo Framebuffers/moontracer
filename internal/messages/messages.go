@@ -886,11 +886,13 @@ const (
 // Admin hub: Settings
 const (
 	// identifiers
-	AdminSettingsPrefix           = "admin_settings"
-	AdminBillboardSetPrefix       = "admin_billboard_set"
-	AdminBillboardFormatCampaign  = "campaign"
-	AdminBillboardFormatOneshot   = "oneshot"
-	AdminBillboardFormatWestmarch = "westmarch"
+	AdminSettingsPrefix             = "admin_settings"
+	AdminBillboardSetPrefix         = "admin_billboard_set"
+	AdminBillboardFormatCampaign    = "campaign"
+	AdminBillboardFormatOneshot     = "oneshot"
+	AdminBillboardFormatWestmarch   = "westmarch"
+	AdminBillboardSetCategoryPrefix = "admin_billboard_set_category"
+	AdminCampaignChannelSetPrefix   = "admin_campaign_channel_set"
 )
 const (
 	// user-facing
@@ -905,6 +907,14 @@ const (
 	AdminBillboardSavedFmt             = "✅ Billboard channel for **%s** set."
 	AdminBillboardCurrentFmt           = "Current: %s"
 	AdminBillboardNotSet               = "_(not set — auto-create)_"
+
+	AdminBillboardCategoryLabel       = "📁 Billboard category"
+	AdminBillboardCategoryPlaceholder = "Select category for billboard channels…"
+	AdminBillboardCategorySavedFmt    = "✅ Billboard category set to %s."
+
+	AdminCampaignChannelLabel       = "📢 Campaign channel"
+	AdminCampaignChannelPlaceholder = "Select campaign announcements channel…"
+	AdminCampaignChannelSavedFmt    = "✅ Campaign channel set to %s."
 )
 
 // Admin hub: Diagnostics
@@ -999,6 +1009,9 @@ const (
 	SessionRSVPDeclinePrefix = "session_rsvp_decline"
 	SessionRSVPConfirmPrefix = "session_rsvp_confirm"
 	SessionRSVPCancelPrefix  = "session_rsvp_cancel"
+
+	SessionConflictPrefix    = "session_conflict"
+	SessionConflictSelPrefix = "session_conflict_sel"
 )
 const (
 	// user-facing
@@ -1041,6 +1054,13 @@ const (
 	SessionRSVPLineEmptyFmt     = "%s (0):-"
 	SessionRSVPLineFmt          = "%s (%d): %s"
 	SessionRSVPLineOverflowFmt  = " +%d more"
+
+	SessionConflictButtonLabel  = "⚠️ Schedule conflict"
+	SessionConflictPrompt       = "You have a conflict with another session around this time. Which one would you want to go?"
+	SessionConflictNone         = "ℹ️ No overlapping sessions found for you right now."
+	SessionConflictDMToAbsent   = "⚠️ <@%s> has a schedule conflict and won't attend **%s**'s session (<t:%d:F>). They're playing in **%s** instead."
+	SessionConflictDMToPresent  = "ℹ️ <@%s> intends to attend **%s**'s session (<t:%d:F>) over **%s**. You need to adjust the roster."
+	SessionConflictConfirmedFmt = "✅ Both DMs have been notified. Your RSVP for **%s** has been set to not going."
 )
 
 // Player campaign card (player self-service)
