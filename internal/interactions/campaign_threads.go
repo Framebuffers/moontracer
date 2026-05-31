@@ -81,7 +81,7 @@ func SetupNewChannel(database *bun.DB, s *discordgo.Session, guildID string, c *
 
 	// Use admin-configured category if set, otherwise find-or-create by name.
 	var categoryID string
-	if settings, err := models.GetOrCreateGuildSettings(database); err == nil && isSnowflake(settings.BillboardCategoryID) {
+	if settings, err := models.GetOrCreateGuildSettings(database); err == nil && messages.IsSnowflake(settings.BillboardCategoryID) {
 		categoryID = settings.BillboardCategoryID
 	} else {
 		var err error
@@ -232,7 +232,7 @@ Errors are logged but non-fatal; the DB operation that triggered retirement alre
 */
 func RetireChannel(s *discordgo.Session, guildID string, campaign *models.Campaign) {
 	channelID := campaign.ChannelID
-	if !isSnowflake(channelID) {
+	if !messages.IsSnowflake(channelID) {
 		log.Printf("campaign_threads: RetireChannel skipped: channelID %q is not a valid snowflake", channelID)
 		return
 	}
@@ -357,7 +357,7 @@ func PostBillboard(database *bun.DB, s *discordgo.Session, c *models.Campaign, g
 	}
 
 	var categoryID string
-	if settings != nil && isSnowflake(settings.BillboardCategoryID) {
+	if settings != nil && messages.IsSnowflake(settings.BillboardCategoryID) {
 		categoryID = settings.BillboardCategoryID
 	} else {
 		var err error
@@ -417,7 +417,7 @@ func PostBillboardToChannel(database *bun.DB, s *discordgo.Session, c *models.Ca
 
 	postJoinButton(s, thread.ID, c)
 
-	if isSnowflake(c.ChannelID) {
+	if messages.IsSnowflake(c.ChannelID) {
 		pinBillboardInChannel(s, c.ChannelID, thread.ID)
 	}
 	return nil
@@ -468,7 +468,7 @@ Nothing happens if the channel is not configured.
 */
 func PostCampaignChannelAnnouncement(database *bun.DB, s *discordgo.Session, c *models.Campaign, callerID string) {
 	settings, err := models.GetOrCreateGuildSettings(database)
-	if err != nil || !isSnowflake(settings.CampaignChannelID) {
+	if err != nil || !messages.IsSnowflake(settings.CampaignChannelID) {
 		return
 	}
 
@@ -480,7 +480,7 @@ func PostCampaignChannelAnnouncement(database *bun.DB, s *discordgo.Session, c *
 	embed := commands.CampaignEmbed(*c, players, coverURL, "", callerID)
 
 	var content string
-	if isSnowflake(c.BillboardThreadID) {
+	if messages.IsSnowflake(c.BillboardThreadID) {
 		content = fmt.Sprintf(messages.CampaignAnnouncementThreadFmt, c.BillboardThreadID)
 	}
 
@@ -491,17 +491,4 @@ func PostCampaignChannelAnnouncement(database *bun.DB, s *discordgo.Session, c *
 	if err != nil {
 		log.Printf("campaign_threads: post announcement for %s to %s: %v", c.ID, settings.CampaignChannelID, err)
 	}
-}
-
-// isSnowflake reports whether s is a non-empty, all-digit string, like a Discord snowflake ID.
-func isSnowflake(s string) bool {
-	if s == "" {
-		return false
-	}
-	for _, c := range s {
-		if c < '0' || c > '9' {
-			return false
-		}
-	}
-	return true
 }

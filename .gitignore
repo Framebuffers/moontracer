@@ -14,6 +14,8 @@ secrets/
 *.p12
 *.pfx
 
+*internal.md
+
 # Env
 .env
 .env.*

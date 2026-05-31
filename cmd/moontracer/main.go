@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	// NOTE: this embeds the IANA timezone database so LoadLocation works without system tzdata
 	_ "time/tzdata"
@@ -44,10 +45,22 @@ func main() {
 	// optional: if empty, mods are admin-assigned only
 	modRole := os.Getenv("MOD_ROLE_NAME")
 
-	dbDir := "data"
+	// init directories: one for data, one for DBs, and another for media served
+	dataDir := os.Getenv("MOONTRACER_DATA_DIR")
+	dbDir := filepath.Join(dataDir, "db")
+	mediaDir := filepath.Join(dataDir, "media")
 
-	if err := os.MkdirAll(dbDir, 0755); err != nil {
-		log.Fatalf("failed to create DB directory %s: %v", dbDir, err)
+	for _, dir := range []struct {
+		path string
+		mode os.FileMode
+	}{
+		{dataDir, 0750},
+		{dbDir, 0700},    // <- owner-only
+		{mediaDir, 0750}, // <- media: served.
+	} {
+		if err := os.MkdirAll(dir.path, dir.mode); err != nil {
+			log.Fatalf("failed to create DB directory %s: %v", dbDir, err)
+		}
 	}
 
 	guildDBM := db.NewGuildDBManager(dbDir)
@@ -66,10 +79,10 @@ func main() {
 		downloadURL = "http://localhost:" + mediaPort
 	}
 	mediaserver.SetDownloadBase(downloadURL)
-	mediaserver.Serve(dbDir, ":"+mediaPort)
+	mediaserver.Serve(mediaDir, ":"+mediaPort)
 	mediaserver.Probe(":" + mediaPort)
 
-	bot, err := discord.New(token, guildID, adminRole, modRole, dbDir, mediaBaseURL, guildDBM)
+	bot, err := discord.New(token, guildID, adminRole, modRole, mediaDir, mediaBaseURL, guildDBM)
 	if err != nil {
 		log.Fatalf("failed to create bot: %v", err)
 	}
