@@ -75,5 +75,5 @@ func Probe(addr string) {
 		log.Printf("mediaserver: reachable (status %d)", resp.StatusCode)
 		return
 	}
-	log.Printf("mediaserver: probe failed — CDN may not be reachable: %v", lastErr)
+	log.Printf("mediaserver: probe failed- CDN may not be reachable: %v", lastErr)
 }

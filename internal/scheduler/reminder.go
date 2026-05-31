@@ -98,7 +98,7 @@ func fireReminder(s *Scheduler, guildID, campaignID string) {
 		sent++
 	}
 
-	log.Printf("scheduler: fired reminder for %s (%s, guild %s) — %d DM(s) queued",
+	log.Printf("scheduler: fired reminder for %s (%s, guild %s)- %d DM(s) queued",
 		campaign.Name, campaignID, guildID, sent)
 }
 
@@ -154,8 +154,8 @@ func fireSessionReminder(s *Scheduler, guildID, sessionID string) {
 		)
 		_ = displayTime // shown via Discord <t:> timestamp in content
 		s.dispatcher.Push(dispatch.DirectMessage{
-			ID:     fmt.Sprintf("session-reminder:%s:%s", sessionID, p.PlayerID),
-			Target: p.PlayerID,
+			ID:      fmt.Sprintf("session-reminder:%s:%s", sessionID, p.PlayerID),
+			Target:  p.PlayerID,
 			Content: content,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
@@ -174,7 +174,7 @@ func fireSessionReminder(s *Scheduler, guildID, sessionID string) {
 		})
 		sent++
 	}
-	log.Printf("scheduler: fired session reminder for %s (guild %s) — %d DM(s) queued", sessionID, guildID, sent)
+	log.Printf("scheduler: fired session reminder for %s (guild %s)- %d DM(s) queued", sessionID, guildID, sent)
 }
 
 func formatReminderLinks(c *models.Campaign, sheetURL string) string {

@@ -78,7 +78,7 @@ func NewHandler(
 		guildDB, err := guildDBM.GetOrCreate(guildID)
 		if err != nil {
 			log.Printf("handler: failed to get DB for guild %s: %v", guildID, err)
-			respondEphemeral(s, i, "Internal error — please try again later.")
+			respondEphemeral(s, i, "Internal error- please try again later.")
 			return
 		}
 

@@ -13,7 +13,7 @@ package interactions
 		2. AllComponents calls RegisterAllViews(db) as its first statement,
 		   before returning the ComponentHandler list.
 		3. For each ViewID, RegisterAllViews calls router.Register with an
-		   adapter closure of shape RenderFunc — func(s, i, args).
+		   adapter closure of shape RenderFunc- func(s, i, args).
 		4. The adapter unpacks `args` (e.g. args[0] as a campaignID) and
 		   forwards to the underlying render function with its natural
 		   signature. This keeps render functions free of the router's
@@ -23,8 +23,8 @@ package interactions
 */
 
 import (
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"github.com/bwmarrin/discordgo"
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"github.com/uptrace/bun"
 
 	"github.com/framebuffers/moontracer/internal/commands"

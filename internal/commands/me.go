@@ -42,7 +42,7 @@ import (
 		   - Probe auth.Authorize(ScopeMod): if true, add Admin Panel.
 		     ScopeAdmin is a superset of ScopeMod so this covers both.
 		4. On probe failure (DB error), the button is silently omitted
-		   rather than blocking the whole hub — /me must always render
+		   rather than blocking the whole hub- /me must always render
 		   something for a registered user.
 */
 

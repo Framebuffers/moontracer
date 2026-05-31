@@ -98,7 +98,7 @@ func (b *Bot) Run() error {
 	// Initialize new guilds joined mid-runtime.
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildCreate) {
 		if guard.DebugGuildID != "" && e.Guild.ID != guard.DebugGuildID {
-			log.Printf("bot: skipping guild %s (%s) — scoped to %s", e.Guild.Name, e.Guild.ID, guard.DebugGuildID)
+			log.Printf("bot: skipping guild %s (%s)- scoped to %s", e.Guild.Name, e.Guild.ID, guard.DebugGuildID)
 			return
 		}
 		guildDB, err := b.guildDBM.GetOrCreate(e.Guild.ID)
@@ -134,7 +134,7 @@ func (b *Bot) Run() error {
 	var guildIDs []string
 	for _, g := range b.session.State.Guilds {
 		if guard.DebugGuildID != "" && g.ID != guard.DebugGuildID {
-			log.Printf("bot: skipping guild %s (%s) — scoped to %s", g.Name, g.ID, guard.DebugGuildID)
+			log.Printf("bot: skipping guild %s (%s)- scoped to %s", g.Name, g.ID, guard.DebugGuildID)
 			continue
 		}
 		guildIDs = append(guildIDs, g.ID)
@@ -172,7 +172,7 @@ func (b *Bot) Run() error {
 		return err
 	}
 
-	log.Println("bot is running — press Ctrl+C to exit")
+	log.Println("bot is running- press Ctrl+C to exit")
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)

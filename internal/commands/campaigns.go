@@ -112,7 +112,7 @@ func buildCampaignSelectMenu(campaigns []models.Campaign, customID, placeholder 
 		if c.Slots > 0 && c.Slots <= 10 {
 			slots = fmt.Sprintf("%s slots", slots)
 		}
-		desc := fmt.Sprintf("%s — %s, %s", format, status, slots)
+		desc := fmt.Sprintf("%s- %s, %s", format, status, slots)
 
 		options = append(options, discordgo.SelectMenuOption{
 			Label:       c.Name,

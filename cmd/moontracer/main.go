@@ -19,7 +19,7 @@ Flow:
  3. Each guild gets its own SQLite DB in the "data" directory (bind-mounted via Docker).
  4. Create GuildDBManager (per-guild databases are created on demand).
  5. Create Discord bot with token, guild ID, admin role name, and GuildDBManager.
- 6. Start the bot — open gateway, discover guilds, init DBs, register commands, listen for interactions.
+ 6. Start the bot- open gateway, discover guilds, init DBs, register commands, listen for interactions.
  7. Block until SIGINT/SIGTERM (Ctrl+C), then clean up and exit.
 */
 func main() {

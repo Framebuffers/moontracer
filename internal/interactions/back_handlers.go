@@ -116,7 +116,7 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 		label := e.Campaign.Name
 		desc := "DM"
 		if !e.Campaign.IsApproved {
-			desc = "Pending approval — enter to cancel"
+			desc = "Pending approval- enter to cancel"
 		} else if e.Campaign.IsArchived {
 			desc = "Archived"
 		}

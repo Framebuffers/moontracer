@@ -24,6 +24,7 @@ func Migrate(db *bun.DB) error {
 		(*models.PlayerSettings)(nil),
 		(*models.Session)(nil),
 		(*models.SessionRSVP)(nil),
+		(*models.GuildSettings)(nil),
 	}
 
 	for _, model := range tables {

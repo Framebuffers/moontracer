@@ -91,7 +91,7 @@ func (s *Scheduler) BootScan(guildIDs []string) {
 			total++
 		}
 	}
-	log.Printf("scheduler: boot scan complete — %d reminder(s) scheduled across %d guild(s)", total, len(guildIDs))
+	log.Printf("scheduler: boot scan complete- %d reminder(s) scheduled across %d guild(s)", total, len(guildIDs))
 }
 
 /*

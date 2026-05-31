@@ -26,7 +26,7 @@ import (
 manageSetCover is a cosmetic entry point for setting a campaign cover.
 
 Clicking it just surfaces ephemeral instructions pointing at /campaignupload.
-The actual upload pipeline lives on the slash command — no plumbing here.
+The actual upload pipeline lives on the slash command- no plumbing here.
 */
 type manageSetCover struct {
 	db *bun.DB

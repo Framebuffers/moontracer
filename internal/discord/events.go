@@ -73,7 +73,7 @@ func HandleGuildMemberRemove(guildDBM *db.GuildDBManager, sched *scheduler.Sched
 				log.Printf("events: failed to write audit entry for campaign %s: %v", cp.CampaignID, err)
 			}
 
-			log.Printf("events: auto-archived campaign %s (%s) — DM %s left server", cp.Campaign.Name, cp.CampaignID, userID)
+			log.Printf("events: auto-archived campaign %s (%s)- DM %s left server", cp.Campaign.Name, cp.CampaignID, userID)
 		}
 	}
 }

@@ -477,7 +477,7 @@ func handleSessionRSVP(
 			}
 		}
 	} else {
-		// Update the channel embed in-place — the updated player list is the confirmation.
+		// Update the channel embed in-place- the updated player list is the confirmation.
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseUpdateMessage,
 			Data: &discordgo.InteractionResponseData{
@@ -529,7 +529,7 @@ func buildSessionEmbed(session *models.Session, campaign *models.Campaign, rsvps
 	}
 }
 
-// rsvpLine formats "Label (N): @A, @B, +X more" or "Label (0): —".
+// rsvpLine formats "Label (N): @A, @B, +X more" or "Label (0):-".
 func rsvpLine(label string, names []string, max int) string {
 	if len(names) == 0 {
 		return fmt.Sprintf(messages.SessionRSVPLineEmptyFmt, label)

@@ -125,6 +125,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&adminBroadcastHandler{db: db, dispatcher: d},
 		&adminDatabaseHandler{db: db},
 		&adminSettingsHandler{db: db},
+		&adminBillboardSetHandler{db: db},
 		&adminDiagHandler{db: db},
 
 		// Manage: new campaign from button, links, player tokens

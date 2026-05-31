@@ -1,8 +1,6 @@
 package messages
 
 import (
-	"strings"
-
 	"github.com/framebuffers/moontracer/internal/manager/models"
 )
 
@@ -14,16 +12,14 @@ func BuildFlags(c models.Campaign) string {
 	if !c.DeletedAt.IsZero() {
 		return "deleted"
 	}
-	flags := []string{"unapproved"}
-	if c.IsApproved {
-		flags[0] = "approved"
-	}
 	if c.IsArchived {
-		flags = append(flags, "archived", "closed")
-	} else if c.IsOpen {
-		flags = append(flags, "open")
-	} else {
-		flags = append(flags, "closed")
+		return "archived"
 	}
-	return strings.Join(flags, ", ")
+	if !c.IsApproved {
+		return "pending"
+	}
+	if c.IsOpen {
+		return "active, open"
+	}
+	return "active, closed"
 }

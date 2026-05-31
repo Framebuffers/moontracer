@@ -886,11 +886,25 @@ const (
 // Admin hub: Settings
 const (
 	// identifiers
-	AdminSettingsPrefix = "admin_settings"
+	AdminSettingsPrefix           = "admin_settings"
+	AdminBillboardSetPrefix       = "admin_billboard_set"
+	AdminBillboardFormatCampaign  = "campaign"
+	AdminBillboardFormatOneshot   = "oneshot"
+	AdminBillboardFormatWestmarch = "westmarch"
 )
 const (
 	// user-facing
-	AdminSettingsHeader = "Bot settings:"
+	AdminSettingsHeader                = "Bot settings:"
+	AdminBillboardHeader               = "**⚙️ Billboard Channel Settings**\nSelect which forum channel each campaign format posts to when approved.\n\n"
+	AdminBillboardCampaignLabel        = "🏰 Campaigns"
+	AdminBillboardOneshotLabel         = "📖 One-shots"
+	AdminBillboardWestmarchLabel       = "🛡️ Westmarches"
+	AdminBillboardCampaignPlaceholder  = "Select forum channel for campaigns…"
+	AdminBillboardOneshotPlaceholder   = "Select forum channel for one-shots…"
+	AdminBillboardWestmarchPlaceholder = "Select forum channel for westmarches…"
+	AdminBillboardSavedFmt             = "✅ Billboard channel for **%s** set."
+	AdminBillboardCurrentFmt           = "Current: %s"
+	AdminBillboardNotSet               = "_(not set — auto-create)_"
 )
 
 // Admin hub: Diagnostics

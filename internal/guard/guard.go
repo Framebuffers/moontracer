@@ -63,18 +63,18 @@ var DebugGuildID = os.Getenv("DISCORD_GUILD_ID")
 
 func init() {
 	if SafeMode {
-		log.Println("guard: SAFE_MODE is ON — Discord-mutating operations will be logged but not executed")
+		log.Println("guard: SAFE_MODE is ON- Discord-mutating operations will be logged but not executed")
 	}
 	if DevMode {
-		log.Println("guard: DEV_MODE is ON — debug UI surfaces (Diagnostics, /campaigndatabase) are visible")
+		log.Println("guard: DEV_MODE is ON- debug UI surfaces (Diagnostics, /campaigndatabase) are visible")
 		if DebugGuildID != "" {
-			log.Printf("guard: DEV_MODE scoped to guild %s — interactions from other guilds will be rejected", DebugGuildID)
+			log.Printf("guard: DEV_MODE scoped to guild %s- interactions from other guilds will be rejected", DebugGuildID)
 		}
 	}
 	if DebugAdminID != "" {
-		log.Printf("guard: DEBUG_ADMIN_ID is set — user %s will be treated as admin", DebugAdminID)
+		log.Printf("guard: DEBUG_ADMIN_ID is set- user %s will be treated as admin", DebugAdminID)
 		if !SafeMode {
-			log.Println("guard: WARNING — DEBUG_ADMIN_ID is set with SAFE_MODE OFF; elevation requires the Discord admin role as confirmation")
+			log.Println("guard: WARNING- DEBUG_ADMIN_ID is set with SAFE_MODE OFF; elevation requires the Discord admin role as confirmation")
 		}
 	}
 }

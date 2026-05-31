@@ -82,7 +82,7 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
-	// Pending campaigns are awaiting staff approval — only show the danger zone.
+	// Pending campaigns are awaiting staff approval- only show the danger zone.
 	if !campaign.IsApproved {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseUpdateMessage,
@@ -302,7 +302,7 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 		}
 		label := p.PlayerID
 		if p.Player != nil {
-			label = p.Player.ID // Discord user ID — shown as fallback
+			label = p.Player.ID // Discord user ID- shown as fallback
 		}
 		options = append(options, discordgo.SelectMenuOption{
 			Label: label,

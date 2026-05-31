@@ -318,13 +318,23 @@ func findForumChannel(s *discordgo.Session, guildID, categoryID, name string) (s
 }
 
 /*
-PostBillboard resolves the correct billboard forum channel for c's format (find or create),
-creates a new forum thread with the formatted campaign post, and stores the resulting thread
-ID on c.
+PostBillboard resolves the correct billboard forum channel for c's format and creates a forum
+thread with the formatted campaign post.
+
+Resolution order:
+ 1. GuildSettings.BillboardChannel{Format}: explicitly configured by an admin.
+ 2. findOrCreateForumChannel: find by name inside the Campaigns category, or create.
 
 Callers must db.Update(c) after this returns to persist BillboardChannelID and BillboardThreadID.
 */
 func PostBillboard(database *bun.DB, s *discordgo.Session, c *models.Campaign, guildID string) error {
+	// Check admin-configured channel first.
+	if settings, err := models.GetOrCreateGuildSettings(database); err == nil {
+		if ch := billboardChannelFromSettings(settings, c); ch != "" {
+			return PostBillboardToChannel(database, s, c, ch)
+		}
+	}
+
 	categoryID, err := findOrCreateCampaignsCategory(s, guildID)
 	if err != nil {
 		return fmt.Errorf("resolve campaigns category: %w", err)
@@ -336,6 +346,17 @@ func PostBillboard(database *bun.DB, s *discordgo.Session, c *models.Campaign, g
 	}
 
 	return PostBillboardToChannel(database, s, c, channelID)
+}
+
+// billboardChannelFromSettings returns the configured forum channel ID for c's format, or "".
+func billboardChannelFromSettings(s *models.GuildSettings, c *models.Campaign) string {
+	if c.IsOneshot {
+		return s.BillboardChannelOneshot
+	}
+	if c.IsWestmarch {
+		return s.BillboardChannelWestmarch
+	}
+	return s.BillboardChannelCampaign
 }
 
 /*

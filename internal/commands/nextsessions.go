@@ -77,7 +77,7 @@ func (c *nextSessionsCommand) Execute(s *discordgo.Session, i *discordgo.Interac
 			campaignName = sess.Campaign.Name
 		}
 		formatted := helpers.FormatInLocation(sess.ScheduledAt, messages.SessionListFormat, loc) + " " + helpers.TZLabel(loc)
-		lines = append(lines, fmt.Sprintf("• **%s** — %s · %s", campaignName, formatted, helpers.TimeRemaining(sess.ScheduledAt)))
+		lines = append(lines, fmt.Sprintf("• **%s**- %s · %s", campaignName, formatted, helpers.TimeRemaining(sess.ScheduledAt)))
 	}
 	content := messages.NextSessionsHeader + "\n" + strings.Join(lines, "\n")
 

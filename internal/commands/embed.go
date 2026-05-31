@@ -39,7 +39,7 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL,
 		if p.Status == models.StatusBanned {
 			continue
 		}
-		playerLines = append(playerLines, fmt.Sprintf("<@%s> — %s (%s, %d sessions)",
+		playerLines = append(playerLines, fmt.Sprintf("<@%s>- %s (%s, %d sessions)",
 			p.PlayerID, p.Role, p.Status, p.SessionsPlayed))
 	}
 	playersValue := messages.NoneLabel
@@ -87,7 +87,7 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL,
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title:  fmt.Sprintf("%s — %s", campaignType, c.Name),
+		Title:  fmt.Sprintf("%s- %s", campaignType, c.Name),
 		Color:  messages.EmbedColor,
 		Fields: fields,
 	}
@@ -224,10 +224,10 @@ func FormatSchedule(c models.Campaign) string {
 		if sched.Frequency == "" {
 			return "Schedule not set"
 		}
-		return fmt.Sprintf("%s — schedule not set", sched.Frequency)
+		return fmt.Sprintf("%s- schedule not set", sched.Frequency)
 	}
 
-	line := fmt.Sprintf("%s — %s %s UTC (%.0fh)", sched.Frequency, sched.DayName(), sched.StartTime, sched.DurationHours)
+	line := fmt.Sprintf("%s- %s %s UTC (%.0fh)", sched.Frequency, sched.DayName(), sched.StartTime, sched.DurationHours)
 
 	if !sched.NextSession.IsZero() {
 		line += fmt.Sprintf("\nNext: %s", sched.NextSession.Format("2006-01-02"))

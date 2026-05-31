@@ -108,7 +108,7 @@ func TestTokenApplyModal_RejectsCrossUser(t *testing.T) {
 		Where("owner_id = ?", tokConfirmVictimID).Count(context.Background())
 	require.NoError(t, err)
 	assert.Equal(t, 0, count,
-		"attacker created a Media row owned by the victim — TokenApplyModal must check helpers.GetUserID == playerID")
+		"attacker created a Media row owned by the victim- TokenApplyModal must check helpers.GetUserID == playerID")
 }
 
 /*
@@ -194,5 +194,5 @@ func TestPlayerTokenPostcreate_RejectsCrossOwnerMedia(t *testing.T) {
 		Where("media_id = ?", tokVictimMID).Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 0, count,
-		"attacker stamped victim's mediaID into their own roster row — postcreate must verify media.OwnerID == userID")
+		"attacker stamped victim's mediaID into their own roster row- postcreate must verify media.OwnerID == userID")
 }

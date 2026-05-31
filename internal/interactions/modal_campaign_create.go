@@ -1,11 +1,12 @@
 package interactions
 
 import (
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
+
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -94,7 +95,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		conf,
 		slots,
 		true,  // open by default
-		false, // isOneshot — chosen later via dropdown
+		false, // isOneshot- chosen later via dropdown
 		nil,
 		"",
 		schedule,

@@ -371,7 +371,7 @@ func TestAuthorize_ModIsNotAdmin(t *testing.T) {
 }
 
 /*
-AuthorizeAny: DM or Mod — user is DM.
+AuthorizeAny: DM or Mod- user is DM.
 
 When:
 
@@ -422,7 +422,7 @@ func TestAuthorize_ModCannotScopeDM(t *testing.T) {
 	_, err = database.NewInsert().Model(newCampaignPlayer("dm", "camp1", models.RoleDM, models.StatusActive)).Exec(ctx)
 	require.NoError(t, err)
 
-	// Mod as a regular player in the campaign — cannot claim DM.
+	// Mod as a regular player in the campaign- cannot claim DM.
 	_, err = database.NewInsert().Model(newCampaignPlayer("mod", "camp1", models.RolePlayer, models.StatusActive)).Exec(ctx)
 	require.NoError(t, err)
 
@@ -430,7 +430,7 @@ func TestAuthorize_ModCannotScopeDM(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, ok, "Mod who is a campaign member (RolePlayer) must not pass ScopeDM")
 
-	// Mod not in the campaign at all — still cannot claim DM.
+	// Mod not in the campaign at all- still cannot claim DM.
 	_, err = database.NewInsert().Model(newPlayer("mod2", models.ServerRoleMod, false)).Exec(ctx)
 	require.NoError(t, err)
 
@@ -464,12 +464,12 @@ func TestAuthorize_AdminCannotScopeDM(t *testing.T) {
 	_, err = database.NewInsert().Model(newCampaignPlayer("dm", "camp1", models.RoleDM, models.StatusActive)).Exec(ctx)
 	require.NoError(t, err)
 
-	// Admin not in the campaign — cannot claim DM.
+	// Admin not in the campaign- cannot claim DM.
 	ok, err := Authorize(database, "admin", ScopeDM, "camp1")
 	require.NoError(t, err)
 	assert.False(t, ok, "Admin who is not in the campaign must not pass ScopeDM")
 
-	// Admin as a regular player in the campaign — still cannot claim DM.
+	// Admin as a regular player in the campaign- still cannot claim DM.
 	_, err = database.NewInsert().Model(newCampaignPlayer("admin", "camp1", models.RolePlayer, models.StatusActive)).Exec(ctx)
 	require.NoError(t, err)
 
