@@ -19,7 +19,8 @@ services:
       MEDIA_BASE_URL: ${MEDIA_BASE_URL}
       MEDIA_PORT: ${MEDIA_PORT}
     volumes:
-      - ${MOONTRACER_DATA_DIR:-./data}:/app/data
+      - ${MOONTRACER_DATA_DIR:-./db}:/app/data/db
+      - ${MOONTRACER_DATA_DIR:-./media}:/app/data/media
     networks:
       - web_proxy
 
