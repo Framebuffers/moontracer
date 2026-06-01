@@ -148,7 +148,7 @@ func TestTokenDiscard_RejectsCrossUser(t *testing.T) {
 
 /*
 Attacker uses the postcreate select to stamp the victim's mediaID into their
-own roster row.
+own party row.
 
 When:
 
@@ -194,5 +194,5 @@ func TestPlayerTokenPostcreate_RejectsCrossOwnerMedia(t *testing.T) {
 		Where("media_id = ?", tokVictimMID).Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 0, count,
-		"attacker stamped victim's mediaID into their own roster row- postcreate must verify media.OwnerID == userID")
+		"attacker stamped victim's mediaID into their own party row- postcreate must verify media.OwnerID == userID")
 }

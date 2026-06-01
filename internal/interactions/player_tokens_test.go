@@ -29,7 +29,7 @@ There is no `WHERE owner_id = ?` clause and no post-load comparison against
 helpers.GetUserID(i). A user who learns or guesses another user's mediaID
 (via leaked link, message scrape, or simply iterating UUIDs in dev) can:
 
-	- Assign someone else's token to their own campaign roster
+	- Assign someone else's token to their own campaign party
 	- Download the raw PNG bytes
 	- Delete the record + file
 

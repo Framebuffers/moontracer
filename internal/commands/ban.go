@@ -132,7 +132,7 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 		The global ban flag blocks all auth checks (auth.go:70), so the player
 		cannot interact with the bot anymore.
 
-		Campaign memberships are left untouched, the DM retains sovereignty over their roster and can
+		Campaign memberships are left untouched, the DM retains sovereignty over their party and can
 		campaign-ban the player separately if desired.
 
 	*/

@@ -23,7 +23,7 @@ func Migrate(db *bun.DB) error {
 		(*models.AuditEntry)(nil),
 		(*models.PlayerSettings)(nil),
 		(*models.Session)(nil),
-		(*models.SessionRSVP)(nil),
+		(*models.SessionAssistance)(nil),
 		(*models.GuildSettings)(nil),
 	}
 
@@ -96,7 +96,7 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE campaigns ADD COLUMN session_capacity INTEGER NOT NULL DEFAULT 6",
 		"UPDATE campaigns SET slots = 2147483647 WHERE is_westmarch = 1 AND slots = -1",
 		"ALTER TABLE player_settings ADD COLUMN timezone TEXT NOT NULL DEFAULT 'UTC'",
-		"ALTER TABLE campaign_players ADD COLUMN rsvp_status TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE campaign_players ADD COLUMN response_status TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE campaign_players ADD COLUMN media_id TEXT",
 		"ALTER TABLE media ADD COLUMN url TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE campaigns ADD COLUMN player_sheet_url TEXT NOT NULL DEFAULT ''",

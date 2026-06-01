@@ -19,7 +19,7 @@ package messages
 // Generic
 const (
 	// identifiers
-	BotVersion = "v1.1.0-adamantine"
+	BotVersion = "v1.1.0b-adamantine"
 	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
 	// 2026-05-29: started implementing for real on my first big server
 )
@@ -139,7 +139,7 @@ const (
 	PlayerJoinedCampaignMessage    = "🐺 You have joined **%s**!"
 
 	// Westmarch session-capacity tripwire (FCFS soft alert).
-	WestmarchOverCapacityDMAlert      = "⚠️ **INFO:** <@%s> just joined westmarch **%s**. Roster is now %d active player(s). Session capacity is %d. They've been admitted; bring an extra seat or trim attendance for the next session."
+	WestmarchOverCapacityDMAlert      = "⚠️ **INFO:** <@%s> just joined westmarch **%s**. party is now %d active player(s). Session capacity is %d. They've been admitted; bring an extra seat or trim attendance for the next session."
 	WestmarchOverCapacityPlayerNotice = "🐺 You're in **%s**! \n⚠️ Warning!: this westmarch's session capacity (%d) is already met, so the DM has been notified. Talk to your DM for more help."
 )
 
@@ -978,25 +978,25 @@ const (
 	InviteCampaignFull     = "⚠️ Cannot invite- campaign **%s** is full."
 )
 
-// Session RSVP- legacy (campaign-level, reminder DMs only)
+// Session response - legacy (campaign-level, reminder DMs only)
 const (
 	// identifiers
-	RSVPAcceptPrefix  = "rsvp_accept"
-	RSVPDeclinePrefix = "rsvp_decline"
+	ResponseAcceptPrefix  = "response_accept"
+	ResponseDeclinePrefix = "response_decline"
 )
 const (
 	// user-facing
-	RSVPAcceptLabel      = "✅ I'm Going!"
-	RSVPDeclineLabel     = "❌ I'm Not Going"
-	RSVPAcceptedPlayer   = "✅ Confirmed! The DM has been notified. May the RNG be with you!"
-	RSVPDeclinedPlayer   = "❌ Noted. The DM has been notified. Have a good day!"
-	RSVPDMNotifyAccept   = "✅ <@%s> confirmed assistance at **%s**\n%s."
-	RSVPDMNotifyDecline  = "❌ <@%s> won't be coming for **%s**:\n%s."
-	RSVPAlreadyResponded = "ℹ️ You've already responded for this session. If you changed your mind, talk to your DM."
-	RSVPCampaignGone     = "ℹ️ This campaign is no longer active."
+	ResponseAcceptLabel      = "✅ I'm Going!"
+	ResponseDeclineLabel     = "❌ I'm Not Going"
+	ResponseAcceptedPlayer   = "✅ Confirmed! The DM has been notified. May the RNG be with you!"
+	ResponseDeclinedPlayer   = "❌ Noted. The DM has been notified. Have a good day!"
+	ResponseDMNotifyAccept   = "✅ <@%s> confirmed assistance at **%s**\n%s."
+	ResponseDMNotifyDecline  = "❌ <@%s> won't be coming for **%s**:\n%s."
+	ResponseAlreadyResponded = "ℹ️ You've already responded for this session. If you changed your mind, talk to your DM."
+	ResponseCampaignGone     = "ℹ️ This campaign is no longer active."
 )
 
-// New Session command + per-session RSVP (sessions table)
+// New Session command + per-session response (sessions table)
 const (
 	// identifiers
 	NewSessionCommandName  = "newsession"
@@ -1007,10 +1007,11 @@ const (
 	NewSessionNotesFieldID = "new_session_notes"
 	ManageNewSessionPrefix = "manage_new_session"
 
-	SessionRSVPAcceptPrefix  = "session_rsvp_accept"
-	SessionRSVPDeclinePrefix = "session_rsvp_decline"
-	SessionRSVPConfirmPrefix = "session_rsvp_confirm"
-	SessionRSVPCancelPrefix  = "session_rsvp_cancel"
+	SessionResponseAcceptPrefix  = "session_response_accept"
+	SessionResponseDeclinePrefix = "session_response_decline"
+	SessionResponseConfirmPrefix = "session_response_confirm"
+	SessionResponseCancelPrefix  = "session_response_cancel"
+	SessionResponseRetractPrefix = "session_response_retract"
 
 	SessionConflictPrefix    = "session_conflict"
 	SessionConflictSelPrefix = "session_conflict_sel"
@@ -1026,23 +1027,28 @@ const (
 
 	SessionEmbedGoingFmt = "✅ Going: %d  ·  ❌ Not Going: %d"
 
-	SessionRSVPAcceptLabel  = "✅ Going"
-	SessionRSVPDeclineLabel = "❌ Not Going"
+	SessionResponseAcceptLabel  = "✅ Going"
+	SessionResponseDeclineLabel = "❌ Not Going"
+	SessionResponseRetractLabel = "↩️ Retract"
 
-	SessionRSVPAcceptedMsg   = "✅ You're in! The DM has been notified."
-	SessionRSVPDeclinedMsg   = "❌ Can't make it- the DM has been notified."
-	SessionRSVPWaitlistedMsg = "⏳ Session is full- you're on the waitlist. The DM will confirm the final roster."
-	SessionRSVPConflictFmt   = "⚠️ You already have a session at this time: **%s** on %s.\nConfirm anyway?"
-	SessionRSVPConfirmLabel  = "Confirm anyway"
-	SessionRSVPCancelLabel   = "Cancel"
-	SessionRSVPAlreadySet    = "ℹ️ You've already responded to this session."
-	SessionRSVPNotMember     = "⚠️ Join this campaign before RSVPing to its sessions."
-	SessionRSVPGone          = "ℹ️ This session is no longer active."
+	SessionResponseAcceptedMsg      = "✅ You're in! The DM has been notified."
+	SessionResponseDeclinedMsg      = "❌ Can't make it- the DM has been notified."
+	SessionResponseWaitlistedMsg    = "⏳ Session is full: you're on the waitlist. The DM will confirm the final party."
+	SessionResponseConflictFmt      = "⚠️ You already have a session at this time: **%s** on %s.\nConfirm anyway?"
+	SessionResponseConfirmLabel     = "Confirm anyway"
+	SessionResponseCancelLabel      = "Cancel"
+	SessionResponseRetractedMsg     = "↩️ Your session slot has been retracted. The DM has been notified."
+	SessionResponseRetractNone      = "ℹ️ You haven't given a response to this session yet."
+	SessionResponseDMNotifyRetract  = "↩️ <@%s> retracted their session assistance response for **%s** · %s"
+	SessionResponseWaitlistPromoted = "✅ A spot opened up for **%s** · %s. You have been moved out of the waiting list. You can play now!"
+	SessionResponseAlreadySet       = "ℹ️ You've already responded to this session."
+	SessionResponseNotMember        = "⚠️ Join this campaign before responding to its sessions."
+	SessionResponseGone             = "ℹ️ This session is no longer active."
 
-	SessionRSVPDMNotifyAccept         = "✅ <@%s> is going to **%s** · %s"
-	SessionRSVPDMNotifyAcceptConflict = "✅ <@%s> is going to **%s** · %s ⚠️ They have a scheduling conflict: going to **%s** at the same time."
-	SessionRSVPDMNotifyDecline        = "❌ <@%s> can't make it for **%s** · %s"
-	SessionRSVPDMNotifyWaitlist       = "⏳ <@%s> is on the waitlist for **%s** · %s (session full)"
+	SessionResponseDMNotifyAccept         = "✅ <@%s> is going to **%s** · %s"
+	SessionResponseDMNotifyAcceptConflict = "✅ <@%s> is going to **%s** · %s ⚠️ They have a scheduling conflict: going to **%s** at the same time."
+	SessionResponseDMNotifyDecline        = "❌ <@%s> can't make it for **%s** · %s"
+	SessionResponseDMNotifyWaitlist       = "⏳ <@%s> is on the waitlist for **%s** · %s (session full)"
 
 	NewSessionAnnouncedFmt    = "✅ Session for **%s** announced- %d member(s) notified."
 	NewSessionNoChannel       = "⚠️ This campaign has no channel. Set one up in campaign settings first."
@@ -1053,17 +1059,17 @@ const (
 	SessionEmbedGoingLabel      = "✅ Going"
 	SessionEmbedNotGoingLabel   = "❌ Not Going"
 	SessionEmbedWaitlistedLabel = "⏳ Waitlisted"
-	SessionRSVPCancelledMsg     = "ℹ️ RSVP cancelled."
-	SessionRSVPLineEmptyFmt     = "%s (0):-"
-	SessionRSVPLineFmt          = "%s (%d): %s"
-	SessionRSVPLineOverflowFmt  = " +%d more"
+	SessionResponseCancelledMsg     = "ℹ️ Response cancelled."
+	SessionResponseLineEmptyFmt     = "%s (0):-"
+	SessionResponseLineFmt          = "%s (%d): %s"
+	SessionResponseLineOverflowFmt  = " +%d more"
 
 	SessionConflictButtonLabel  = "⚠️ Schedule conflict"
 	SessionConflictPrompt       = "You have a conflict with another session around this time. Which one would you want to go?"
 	SessionConflictNone         = "ℹ️ No overlapping sessions found for you right now."
 	SessionConflictDMToAbsent   = "⚠️ <@%s> has a schedule conflict and won't attend **%s**'s session (<t:%d:F>). They're playing in **%s** instead."
-	SessionConflictDMToPresent  = "ℹ️ <@%s> intends to attend **%s**'s session (<t:%d:F>) over **%s**. You need to adjust the roster."
-	SessionConflictConfirmedFmt = "✅ Both DMs have been notified. Your RSVP for **%s** has been set to not going."
+	SessionConflictDMToPresent  = "ℹ️ <@%s> intends to attend **%s**'s session (<t:%d:F>) over **%s**. You need to adjust the party."
+	SessionConflictConfirmedFmt = "✅ Both DMs have been notified. Your response for **%s** has been set to not going."
 )
 
 // Player campaign card (player self-service)

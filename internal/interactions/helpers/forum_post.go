@@ -163,7 +163,7 @@ func activeCampaignPlayers(players []models.CampaignPlayer) []models.CampaignPla
 		if cp.BannedFromCampaign || cp.Status == models.StatusBanned {
 			continue
 		}
-		if cp.RSVPStatus == models.RSVPDeclined {
+		if cp.ResponseStatus == models.ResponseDeclined {
 			continue
 		}
 		if cp.Status != models.StatusActive {

@@ -98,12 +98,13 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// Quick registration button (shown on all "not registered" surfaces).
 		&quickRegisterHandler{db: db},
 
-		// Session announce + RSVP
+		// Session announce + response
 		&manageNewSessionButton{db: db},
-		&sessionRSVPAcceptHandler{db: db, dispatcher: d},
-		&sessionRSVPDeclineHandler{db: db, dispatcher: d},
-		&sessionRSVPConfirmHandler{db: db, dispatcher: d},
-		&sessionRSVPCancelHandler{},
+		&sessionResponseAcceptHandler{db: db, dispatcher: d},
+		&sessionResponseDeclineHandler{db: db, dispatcher: d},
+		&sessionResponseConfirmHandler{db: db, dispatcher: d},
+		&sessionResponseCancelHandler{},
+		&sessionResponseRetractHandler{db: db, dispatcher: d},
 		&sessionConflictHandler{db: db, dispatcher: d},
 		&sessionConflictSelHandler{db: db, dispatcher: d},
 
@@ -163,9 +164,9 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&playerDownloadTokensHandler{db: db},
 		&playerDownloadSelectHandler{db: db},
 
-		// Session RSVP (buttons on reminder DMs)
-		&rsvpAcceptHandler{db: db, dispatcher: d},
-		&rsvpDeclineHandler{db: db, dispatcher: d},
+		// Session response (buttons on reminder DMs)
+		&responseAcceptHandler{db: db, dispatcher: d},
+		&responseDeclineHandler{db: db, dispatcher: d},
 
 		// Invitations
 		&manageCampaignInvite{db: db, dispatcher: d},

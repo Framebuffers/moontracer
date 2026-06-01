@@ -60,17 +60,17 @@ const (
 )
 
 /*
-RSVPStatus records a player's attendance response for the current session.
+ResponseStatus records a player's attendance response for the current session.
 
-Reset to RSVPPending whenever NextSession changes.
+Reset to ResponsePending whenever NextSession changes.
 */
-type RSVPStatus string
+type ResponseStatus string
 
 const (
-	RSVPPending    RSVPStatus = ""
-	RSVPAccepted   RSVPStatus = "accepted"
-	RSVPDeclined   RSVPStatus = "declined"
-	RSVPWaitlisted RSVPStatus = "waitlisted"
+	ResponsePending    ResponseStatus = ""
+	ResponseAccepted   ResponseStatus = "accepted"
+	ResponseDeclined   ResponseStatus = "declined"
+	ResponseWaitlisted ResponseStatus = "waitlisted"
 )
 
 /*
@@ -94,7 +94,7 @@ type CampaignPlayer struct {
 	BanReason             string               `bun:",nullzero" json:"ban_reason,omitempty"`
 	BannedFromCampaign    bool                 `bun:",notnull,default:false" json:"banned_from_campaign"`
 	BanReasonFromCampaign string               `bun:",nullzero" json:"ban_reason_from_campaign,omitempty"`
-	RSVPStatus            RSVPStatus           `bun:",notnull,default:''" json:"rsvp_status"`
+	ResponseStatus        ResponseStatus       `bun:"response_status,notnull,default:''" json:"response_status"`
 	SheetURL              string               `bun:",nullzero" json:"sheet_url,omitempty"`
 }
 
@@ -211,13 +211,13 @@ func BulkAddCampaignMembers(db *bun.DB, campaignID string, playerIDs []string) e
 }
 
 /*
-ResetCampaignRSVPs clears the RSVP status for all players in a campaign.
+ResetCampaignResponses clears the response status for all players in a campaign.
 
 Call whenever NextSession is updated so responses from the previous session don't persist.
 */
-func ResetCampaignRSVPs(db *bun.DB, campaignID string) error {
+func ResetCampaignResponses(db *bun.DB, campaignID string) error {
 	_, err := db.NewUpdate().Model((*CampaignPlayer)(nil)).
-		Set("rsvp_status = ?", RSVPPending).
+		Set("response_status = ?", ResponsePending).
 		Where("campaign_id = ?", campaignID).
 		Exec(context.Background())
 	return err

@@ -165,7 +165,7 @@ func (h *sessionConflictSelHandler) HandleComponents(s *discordgo.Session, i *di
 	}
 
 	// set that they're not going
-	if err := models.UpsertSessionRSVP(h.db, thisSessionID, playerID, models.RSVPDeclined); err != nil {
+	if err := models.UpsertSessionPlayers(h.db, thisSessionID, playerID, models.ResponseDeclined); err != nil {
 		log.Printf("session_conflict_sel: decline RSVP for %s/%s: %v", thisSessionID, playerID, err)
 	}
 

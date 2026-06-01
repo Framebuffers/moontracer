@@ -3,6 +3,7 @@ package interactions
 import (
 	"fmt"
 	"log"
+
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
@@ -108,7 +109,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	}
 
 	/*
-		Roster cap.
+		Party cap.
 
 		Westmarches store math.MaxInt32, so this never trips for them;
 		their tripwire is SessionCapacity, evaluated below after admission.

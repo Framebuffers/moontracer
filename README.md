@@ -14,7 +14,7 @@ A **D&D Campaign Manager Discord bot** for players, DMs and spectators!
 
 Moontracer can manage everything you need to organise your TTRPG experience online: **manage campaigns, players, alerts, and more!**
 
-## 🚀 Quick Start
+## 🎲 Quick Start
 
 ### 1. Create a Discord application
 
@@ -85,7 +85,7 @@ Once the bot is online in your server, run `/register` to create your player pro
 
 - DMs schedule their sessions via `/newsession` (modal: date DD/MM/YYYY, time, and optional notes).
 - Sessions announce to the campaign's `#announcements` thread with a role mention.
-- Session embed includes: title, date/time, DM, capacity, RSVP counts (who's going/not going/on a waitlist).
+- Session embed includes: title, date/time, DM, capacity, Response counts (who's going/not going/on a waitlist).
 - Players can say if they're going or not via a button on their DMs or on the `#announcements` message.
 - Conflict detection: warns when a player already has a session scheduled at the same time.
 - Session reminders: if the player opts-in, they can receive notifications 1 hour before a session starts.

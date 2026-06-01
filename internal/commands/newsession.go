@@ -24,7 +24,7 @@ Flow:
  2. Bot opens the shared new-session modal.
  3. DM fills in date, time, and optional notes, then submits.
  4. The newSessionModal handler (interactions package) creates the session record,
-    posts the channel announcement with RSVP buttons, and DMs all active members.
+    posts the channel announcement with Response buttons, and DMs all active members.
 */
 type newSessionCommand struct {
 	db *bun.DB

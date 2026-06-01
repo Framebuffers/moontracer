@@ -208,7 +208,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		}
 	}()
 	h.sched.Schedule(i.GuildID, campaign)
-	if err := models.ResetCampaignRSVPs(h.db, campaign.ID); err != nil {
+	if err := models.ResetCampaignResponses(h.db, campaign.ID); err != nil {
 		log.Printf("manage_set_session: reset RSVPs for %s: %v", campaign.ID, err)
 	}
 

@@ -31,18 +31,18 @@ type Session struct {
 	Status       SessionStatus `bun:",notnull,default:'upcoming'"`
 	CreatedAt    time.Time     `bun:",nullzero"`
 
-	Campaign *Campaign     `bun:"rel:belongs-to,join:campaign_id=id"`
-	RSVPs    []SessionRSVP `bun:"rel:has-many,join:id=session_id"`
+	Campaign  *Campaign           `bun:"rel:belongs-to,join:campaign_id=id"`
+	Responses []SessionAssistance `bun:"rel:has-many,join:id=session_id"`
 }
 
-// SessionRSVP records a player's RSVP for a specific session slot.
-type SessionRSVP struct {
-	bun.BaseModel `bun:"table:session_rsvps"`
+// SessionAssistance records a player's response for a specific session slot.
+type SessionAssistance struct {
+	bun.BaseModel `bun:"table:session_responses"`
 
-	SessionID string     `bun:",pk,notnull"`
-	PlayerID  string     `bun:",pk,notnull"`
-	Status    RSVPStatus `bun:",notnull,default:''"`
-	UpdatedAt time.Time  `bun:",nullzero"`
+	SessionID string         `bun:",pk,notnull"`
+	PlayerID  string         `bun:",pk,notnull"`
+	Status    ResponseStatus `bun:",notnull,default:''"`
+	UpdatedAt time.Time      `bun:",nullzero"`
 
 	Session *Session `bun:"rel:belongs-to,join:session_id=id"`
 }
@@ -90,20 +90,20 @@ func GetAllUpcomingSessionsForPlayer(db *bun.DB, playerID string) ([]Session, er
 	return sessions, err
 }
 
-// GetSessionRSVPs returns all RSVPs for a session slot.
-func GetSessionRSVPs(db *bun.DB, sessionID string) ([]SessionRSVP, error) {
+// GetSessionConfirmations returns all responses for a session slot.
+func GetSessionConfirmations(db *bun.DB, sessionID string) ([]SessionAssistance, error) {
 	ctx := context.Background()
-	var rsvps []SessionRSVP
+	var rsvps []SessionAssistance
 	err := db.NewSelect().Model(&rsvps).
 		Where("session_id = ?", sessionID).
 		Scan(ctx)
 	return rsvps, err
 }
 
-// GetPlayerSessionRSVP returns the RSVP for a specific player and session, or nil if not found.
-func GetPlayerSessionRSVP(db *bun.DB, sessionID, playerID string) (*SessionRSVP, error) {
+// GetPlayerSessionConfirmation returns the response for a specific player and session, or nil if not found.
+func GetPlayerSessionConfirmation(db *bun.DB, sessionID, playerID string) (*SessionAssistance, error) {
 	ctx := context.Background()
-	r := &SessionRSVP{}
+	r := &SessionAssistance{}
 	err := db.NewSelect().Model(r).
 		Where("session_id = ? AND player_id = ?", sessionID, playerID).
 		Scan(ctx)
@@ -113,10 +113,10 @@ func GetPlayerSessionRSVP(db *bun.DB, sessionID, playerID string) (*SessionRSVP,
 	return r, nil
 }
 
-// UpsertSessionRSVP creates or updates a player's RSVP for a session.
-func UpsertSessionRSVP(db *bun.DB, sessionID, playerID string, status RSVPStatus) error {
+// UpsertSessionPlayers creates or updates a player's response for a session.
+func UpsertSessionPlayers(db *bun.DB, sessionID, playerID string, status ResponseStatus) error {
 	ctx := context.Background()
-	r := &SessionRSVP{
+	r := &SessionAssistance{
 		SessionID: sessionID,
 		PlayerID:  playerID,
 		Status:    status,
@@ -128,13 +128,27 @@ func UpsertSessionRSVP(db *bun.DB, sessionID, playerID string, status RSVPStatus
 	return err
 }
 
-// CountAcceptedRSVPs returns the number of players who accepted a session (not waitlisted).
-func CountAcceptedRSVPs(db *bun.DB, sessionID string) (int, error) {
+// CountAcceptedPlayers returns the number of players who accepted a session (not waitlisted).
+func CountAcceptedPlayers(db *bun.DB, sessionID string) (int, error) {
 	ctx := context.Background()
-	count, err := db.NewSelect().Model((*SessionRSVP)(nil)).
-		Where("session_id = ? AND status = ?", sessionID, RSVPAccepted).
+	count, err := db.NewSelect().Model((*SessionAssistance)(nil)).
+		Where("session_id = ? AND status = ?", sessionID, ResponseAccepted).
 		Count(ctx)
 	return count, err
+}
+
+// GetFirstWaitlistedPlayer returns the earliest waitlisted player in the queue for a session, or nil if none.
+func GetFirstWaitlistedPlayer(db *bun.DB, sessionID string) (*SessionAssistance, error) {
+	r := &SessionAssistance{}
+	err := db.NewSelect().Model(r).
+		Where("session_id = ? AND status = ?", sessionID, ResponseWaitlisted).
+		OrderExpr("updated_at ASC").
+		Limit(1).
+		Scan(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
 }
 
 /*
@@ -148,8 +162,8 @@ func GetPlayerConflictingSessions(db *bun.DB, playerID string, at time.Time) ([]
 
 	var sessions []Session
 	err := db.NewSelect().Model(&sessions).
-		Join("JOIN session_rsvps sr ON sr.session_id = session.id").
-		Where("sr.player_id = ? AND sr.status = ?", playerID, RSVPAccepted).
+		Join("JOIN session_responses sr ON sr.session_id = session.id").
+		Where("sr.player_id = ? AND sr.status = ?", playerID, ResponseAccepted).
 		Where("session.scheduled_at >= ? AND session.scheduled_at <= ?", windowStart, windowEnd).
 		Where("session.status = ?", SessionUpcoming).
 		OrderExpr("session.scheduled_at ASC").
