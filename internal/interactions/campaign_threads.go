@@ -79,9 +79,11 @@ func SetupNewChannel(database *bun.DB, s *discordgo.Session, guildID string, c *
 		log.Printf("campaign_threads: role for new channel: %v", err)
 	}
 
-	// Use admin-configured category if set, otherwise find-or-create by name.
 	var categoryID string
-	if settings, err := models.GetOrCreateGuildSettings(database); err == nil && messages.IsSnowflake(settings.BillboardCategoryID) {
+	settings, settingsErr := models.GetOrCreateGuildSettings(database)
+	if settingsErr == nil && messages.IsSnowflake(settings.CampaignsCategoryID) {
+		categoryID = settings.CampaignsCategoryID
+	} else if settingsErr == nil && messages.IsSnowflake(settings.BillboardCategoryID) {
 		categoryID = settings.BillboardCategoryID
 	} else {
 		var err error

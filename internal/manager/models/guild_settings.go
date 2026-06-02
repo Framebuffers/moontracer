@@ -21,6 +21,12 @@ type GuildSettings struct {
 	BillboardChannelWestmarch string `bun:",default:''" json:"billboard_channel_westmarch"`
 
 	/*
+		CampaignsCategoryID is the Discord category where new campaign channels are created on approval.
+		Empty means SetupNewChannel will find-or-create "Campaigns" by name.
+	*/
+	CampaignsCategoryID string `bun:",default:''" json:"campaigns_category_id"`
+
+	/*
 		BillboardCategoryID is the Discord category channel that contains all billboard
 		forum channels.
 

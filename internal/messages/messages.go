@@ -891,8 +891,9 @@ const (
 	AdminBillboardFormatCampaign    = "campaign"
 	AdminBillboardFormatOneshot     = "oneshot"
 	AdminBillboardFormatWestmarch   = "westmarch"
-	AdminBillboardSetCategoryPrefix = "admin_billboard_set_category"
-	AdminCampaignChannelSetPrefix   = "admin_campaign_channel_set"
+	AdminBillboardSetCategoryPrefix  = "admin_billboard_set_category"
+	AdminCampaignChannelSetPrefix    = "admin_campaign_channel_set"
+	AdminCampaignsCategorySetPrefix  = "admin_campaigns_category_set"
 )
 const (
 	// user-facing
@@ -913,6 +914,9 @@ const (
 	AdminBillboardCategoryLabel       = "📁 Billboard category"
 	AdminBillboardCategoryPlaceholder = "Select category for billboard channels…"
 	AdminBillboardCategorySavedFmt    = "✅ Billboard category set to %s."
+
+	AdminCampaignsCategoryLabel       = "📁 Campaign channels category"
+	AdminCampaignsCategoryPlaceholder = "Select category for new campaign channels…"
 
 	AdminCampaignChannelLabel       = "📢 Campaign channel"
 	AdminCampaignChannelPlaceholder = "Select campaign announcements channel…"
