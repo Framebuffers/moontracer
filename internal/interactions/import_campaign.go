@@ -79,7 +79,7 @@ func (h *importThreadSelHandler) HandleComponents(s *discordgo.Session, i *disco
 */
 
 /*
-importNextHandler moves forward, from step 1 to step 2.
+importNextHandler moves forward from step 1 to step 2.
 
 CustomID: import_next:<sessionID>
 */
@@ -106,7 +106,34 @@ func (h *importNextHandler) HandleComponents(s *discordgo.Session, i *discordgo.
 }
 
 /*
-importBackHandler returns backward, from step 2 to step 1.
+importNext2Handler moves forward from step 2 to step 3.
+
+CustomID: import_next2:<sessionID>
+*/
+type importNext2Handler struct{}
+
+func (h *importNext2Handler) CustomIDPrefix() string { return messages.ImportNext2Prefix }
+
+func (h *importNext2Handler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	sessionID := parts[1]
+
+	sess, ok := importsession.Get(sessionID)
+	if !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.ImportCampaignErrSession)
+		return
+	}
+
+	content := fmt.Sprintf(messages.ImportStep3Header, sess.ChannelName)
+	helpers.RespondUpdate(s, i, content, []*discordgo.MessageEmbed{},
+		importsession.BuildStep3Components(sessionID, sess.ExistingThreads, sess))
+}
+
+/*
+importBackHandler returns from step 2 to step 1.
 
 CustomID: import_back:<sessionID>
 */
@@ -130,6 +157,33 @@ func (h *importBackHandler) HandleComponents(s *discordgo.Session, i *discordgo.
 	content := fmt.Sprintf(messages.ImportStep1Header, sess.ChannelName)
 	helpers.RespondUpdate(s, i, content, []*discordgo.MessageEmbed{},
 		importsession.BuildStep1Components(sessionID, sess.ExistingThreads, sess))
+}
+
+/*
+importBack2Handler returns from step 3 to step 2.
+
+CustomID: import_back2:<sessionID>
+*/
+type importBack2Handler struct{}
+
+func (h *importBack2Handler) CustomIDPrefix() string { return messages.ImportBack2Prefix }
+
+func (h *importBack2Handler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	sessionID := parts[1]
+
+	sess, ok := importsession.Get(sessionID)
+	if !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.ImportCampaignErrSession)
+		return
+	}
+
+	content := fmt.Sprintf(messages.ImportStep2Header, sess.ChannelName)
+	helpers.RespondUpdate(s, i, content, []*discordgo.MessageEmbed{},
+		importsession.BuildStep2Components(sessionID, sess.ExistingThreads, sess))
 }
 
 /*

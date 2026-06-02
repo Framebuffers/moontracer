@@ -1153,10 +1153,12 @@ const (
 	ImportCampaignOptRole    = "role"
 	ImportCampaignOptDM      = "dm"
 
-	// Custom-ID prefixes for the two-step thread-mapping flow.
+	// Custom-ID prefixes for the three-step thread-mapping flow.
 	ImportThreadSelPrefix = "import_thread_sel" // import_thread_sel:<sessionID>:<threadName>
-	ImportNextPrefix      = "import_next"       // import_next:<sessionID>
-	ImportBackPrefix      = "import_back"       // import_back:<sessionID>
+	ImportNextPrefix      = "import_next"       // import_next:<sessionID>  (step 1 -> 2)
+	ImportNext2Prefix     = "import_next2"      // import_next2:<sessionID> (step 2 -> 3)
+	ImportBackPrefix      = "import_back"       // import_back:<sessionID>  (step 2 -> 1)
+	ImportBack2Prefix     = "import_back2"      // import_back2:<sessionID> (step 3 -> 2)
 	ImportConfirmPrefix   = "import_confirm"    // import_confirm:<sessionID>
 	ImportCancelPrefix    = "import_cancel"     // import_cancel:<sessionID>
 
@@ -1164,14 +1166,20 @@ const (
 	ImportCreateNew = "new"
 
 	// Step headers.
-	ImportStep1Header = "**Map threads for #%s** (step 1 of 2)\nChoose an existing thread for each slot, or leave as **Create new**."
-	ImportStep2Header = "**Map threads for #%s** (step 2 of 2)\nChoose an existing thread for each slot, or leave as **Create new**."
+	ImportStep1Header = "**Map threads for #%s** (step 1 of 3 - core)\nChoose an existing thread for each slot, or leave as **Create new**."
+	ImportStep2Header = "**Map threads for #%s** (step 2 of 3 - social)\nChoose an existing thread for each slot, or leave as **Create new**."
+	ImportStep3Header = "**Map threads for #%s** (step 3 of 3 - resources)\nChoose an existing thread for each slot, or leave as **Create new**."
 
 	// Select-menu placeholders.
-	ImportSelWelcome       = "Welcome: intro pinned for new players"
-	ImportSelAnnouncements = "Announcements: new sessions and info"
-	ImportSelSessions      = "Sessions: journal of past sessions"
-	ImportSelDiceRolls     = "Dice rolls: live dice roll registry"
+	ImportSelWelcome       = "🐺 Welcome!"
+	ImportSelAnnouncements = "🗣️ Announcements"
+	ImportSelSessions      = "📅 Sessions"
+	ImportSelDiceRolls     = "🎲 Dice rolls"
+	ImportSelCharacters    = "🎭 Characters"
+	ImportSelMemes         = "🤣 Memes"
+	ImportSelArt           = "🖼️ Art"
+	ImportSelDowntime      = "🍂 Downtime"
+	ImportSelResources     = "📚 Resources"
 
 	// "Create new" option shown at the top of every select menu.
 	ImportOptCreateNew      = "Create new"

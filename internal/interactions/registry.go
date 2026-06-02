@@ -179,7 +179,9 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// Campaign import thread-mapping flow
 		&importThreadSelHandler{},
 		&importNextHandler{},
+		&importNext2Handler{},
 		&importBackHandler{},
+		&importBack2Handler{},
 		&importCancelHandler{},
 		&importConfirmHandler{db: db},
 

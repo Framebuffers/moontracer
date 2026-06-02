@@ -8,12 +8,13 @@ import (
 	"github.com/framebuffers/moontracer/internal/messages"
 )
 
-// BuildStep1Components returns the three select menus (welcome/announcements/sessions) plus nav buttons.
+// BuildStep1Components returns core thread selects (welcome/announcements/sessions/dice-rolls) plus nav buttons.
 func BuildStep1Components(sessionID string, threads []ThreadOption, sess *Session) []discordgo.MessageComponent {
 	return []discordgo.MessageComponent{
 		threadSelectRow(sessionID, "welcome", messages.ImportSelWelcome, threads, currentMapping(sess, "welcome")),
 		threadSelectRow(sessionID, "announcements", messages.ImportSelAnnouncements, threads, currentMapping(sess, "announcements")),
 		threadSelectRow(sessionID, "sessions", messages.ImportSelSessions, threads, currentMapping(sess, "sessions")),
+		threadSelectRow(sessionID, "dice-rolls", messages.ImportSelDiceRolls, threads, currentMapping(sess, "dice-rolls")),
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
 				Label:    messages.ImportCancelLabel,
@@ -29,15 +30,42 @@ func BuildStep1Components(sessionID string, threads []ThreadOption, sess *Sessio
 	}
 }
 
-// BuildStep2Components returns the dice-rolls select menu plus nav buttons.
+// BuildStep2Components returns social thread selects (characters/memes/art/downtime) plus nav buttons.
 func BuildStep2Components(sessionID string, threads []ThreadOption, sess *Session) []discordgo.MessageComponent {
 	return []discordgo.MessageComponent{
-		threadSelectRow(sessionID, "dice-rolls", messages.ImportSelDiceRolls, threads, currentMapping(sess, "dice-rolls")),
+		threadSelectRow(sessionID, "characters", messages.ImportSelCharacters, threads, currentMapping(sess, "characters")),
+		threadSelectRow(sessionID, "memes", messages.ImportSelMemes, threads, currentMapping(sess, "memes")),
+		threadSelectRow(sessionID, "art", messages.ImportSelArt, threads, currentMapping(sess, "art")),
+		threadSelectRow(sessionID, "downtime", messages.ImportSelDowntime, threads, currentMapping(sess, "downtime")),
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			discordgo.Button{
 				Label:    messages.ImportBackLabel,
 				Style:    discordgo.SecondaryButton,
 				CustomID: messages.ImportBackPrefix + ":" + sessionID,
+			},
+			discordgo.Button{
+				Label:    messages.ImportCancelLabel,
+				Style:    discordgo.DangerButton,
+				CustomID: messages.ImportCancelPrefix + ":" + sessionID,
+			},
+			discordgo.Button{
+				Label:    messages.ImportNextLabel,
+				Style:    discordgo.PrimaryButton,
+				CustomID: messages.ImportNext2Prefix + ":" + sessionID,
+			},
+		}},
+	}
+}
+
+// BuildStep3Components returns the resources thread select plus final nav buttons.
+func BuildStep3Components(sessionID string, threads []ThreadOption, sess *Session) []discordgo.MessageComponent {
+	return []discordgo.MessageComponent{
+		threadSelectRow(sessionID, "resources", messages.ImportSelResources, threads, currentMapping(sess, "resources")),
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.ImportBackLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: messages.ImportBack2Prefix + ":" + sessionID,
 			},
 			discordgo.Button{
 				Label:    messages.ImportCancelLabel,
