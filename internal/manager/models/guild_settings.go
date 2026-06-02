@@ -27,6 +27,12 @@ type GuildSettings struct {
 	CampaignsCategoryID string `bun:",default:''" json:"campaigns_category_id"`
 
 	/*
+		ArchivedCategoryID is the Discord category that retired campaign channels are moved to on
+		archive or deletion. Empty means channels are not moved.
+	*/
+	ArchivedCategoryID string `bun:",default:''" json:"archived_category_id"`
+
+	/*
 		BillboardCategoryID is the Discord category channel that contains all billboard
 		forum channels.
 

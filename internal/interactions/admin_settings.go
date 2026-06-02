@@ -54,8 +54,9 @@ func renderAdminGeneralSettings(s *discordgo.Session, i *discordgo.InteractionCr
 	}
 
 	content := messages.AdminSettingsGeneralHeader +
-		fmt.Sprintf("**%s:** %s\n**%s:** %s",
+		fmt.Sprintf("**%s:** %s\n**%s:** %s\n**%s:** %s",
 			messages.AdminCampaignsCategoryLabel, channelRef(settings.CampaignsCategoryID),
+			messages.AdminArchivedCategoryLabel, channelRef(settings.ArchivedCategoryID),
 			messages.AdminCampaignChannelLabel, channelRef(settings.CampaignChannelID),
 		)
 
@@ -72,6 +73,8 @@ func renderAdminGeneralSettings(s *discordgo.Session, i *discordgo.InteractionCr
 
 	components := []discordgo.MessageComponent{
 		chanSel(messages.AdminCampaignsCategorySetPrefix, messages.AdminCampaignsCategoryPlaceholder,
+			discordgo.ChannelTypeGuildCategory),
+		chanSel(messages.AdminArchivedCategorySetPrefix, messages.AdminArchivedCategoryPlaceholder,
 			discordgo.ChannelTypeGuildCategory),
 		chanSel(messages.AdminCampaignChannelSetPrefix, messages.AdminCampaignChannelPlaceholder,
 			discordgo.ChannelTypeGuildText),
@@ -181,6 +184,45 @@ func (h *adminCampaignsCategoryHandler) HandleComponents(s *discordgo.Session, i
 	settings.CampaignsCategoryID = values[0]
 	if _, err := h.db.NewUpdate().Model(settings).WherePK().Exec(context.Background()); err != nil {
 		log.Printf("admin_campaigns_category_set: save settings: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	renderAdminGeneralSettings(s, i, h.db)
+}
+
+/*
+adminArchivedCategoryHandler persists the admin's category for retired campaign channels.
+
+CustomID: admin_archived_category_set
+*/
+type adminArchivedCategoryHandler struct {
+	db *bun.DB
+}
+
+func (h *adminArchivedCategoryHandler) CustomIDPrefix() string {
+	return messages.AdminArchivedCategorySetPrefix
+}
+
+func (h *adminArchivedCategoryHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	userID := helpers.GetUserID(i)
+	if ok, err := auth.Authorize(h.db, userID, auth.ScopeAdmin, ""); err != nil || !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	settings, err := models.GetOrCreateGuildSettings(h.db)
+	if err != nil {
+		log.Printf("admin_archived_category_set: load settings: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	settings.ArchivedCategoryID = values[0]
+	if _, err := h.db.NewUpdate().Model(settings).WherePK().Exec(context.Background()); err != nil {
+		log.Printf("admin_archived_category_set: save settings: %v", err)
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
 	}

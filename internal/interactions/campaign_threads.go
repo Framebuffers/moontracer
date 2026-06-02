@@ -278,6 +278,70 @@ func RetireChannel(s *discordgo.Session, guildID string, campaign *models.Campai
 	}
 }
 
+/*
+MoveToArchivedCategory moves a campaign's Discord channel into the admin-configured archived
+category.
+
+No-op if ArchivedCategoryID is not configured or the campaign has no channel.
+
+Errors are logged but non-fatal.
+*/
+func MoveToArchivedCategory(database *bun.DB, s *discordgo.Session, campaign *models.Campaign) {
+	if !messages.IsSnowflake(campaign.ChannelID) {
+		return
+	}
+	settings, err := models.GetOrCreateGuildSettings(database)
+	if err != nil || !messages.IsSnowflake(settings.ArchivedCategoryID) {
+		return
+	}
+	tag := campaign.Tag
+	if tag == "" {
+		tag = models.NormalizeTag(campaign.Name)
+	}
+	archivedName := "archive-" + tag
+	if _, err := s.ChannelEditComplex(campaign.ChannelID, &discordgo.ChannelEdit{
+		Name:     archivedName,
+		ParentID: settings.ArchivedCategoryID,
+	}); err != nil {
+		log.Printf("campaign_threads: move channel %s to archived category: %v", campaign.ChannelID, err)
+	}
+}
+
+/*
+DeleteBillboard deletes the campaign's billboard forum thread from Discord.
+No-op if BillboardThreadID is empty.
+
+Before deleting, it fetches the channel and verifies:
+ 1. It is a public thread (not a text channel, category, or anything else).
+ 2. Its parent matches campaign.BillboardChannelID (if that field is set).
+
+This prevents an accidental delete if the stored ID is stale or wrong.
+
+Errors are logged but non-fatal.
+*/
+func DeleteBillboard(s *discordgo.Session, campaign *models.Campaign) {
+	if !messages.IsSnowflake(campaign.BillboardThreadID) {
+		return
+	}
+	ch, err := s.Channel(campaign.BillboardThreadID)
+	if err != nil {
+		log.Printf("campaign_threads: DeleteBillboard: fetch channel %s: %v", campaign.BillboardThreadID, err)
+		return
+	}
+	if ch.Type != discordgo.ChannelTypeGuildPublicThread && ch.Type != discordgo.ChannelTypeGuildPrivateThread {
+		log.Printf("campaign_threads: DeleteBillboard: %s is not a thread (type %d), skipping", campaign.BillboardThreadID, ch.Type)
+		return
+	}
+	if messages.IsSnowflake(campaign.BillboardChannelID) && ch.ParentID != campaign.BillboardChannelID {
+		log.Printf("campaign_threads: DeleteBillboard: thread %s parent %s != expected %s, skipping",
+			campaign.BillboardThreadID, ch.ParentID, campaign.BillboardChannelID)
+		return
+	}
+	if _, err := s.ChannelDelete(campaign.BillboardThreadID); err != nil {
+		log.Printf("campaign_threads: DeleteBillboard: delete thread %s: %v", campaign.BillboardThreadID, err)
+	}
+}
+
 // billboardChannelName returns the per-format forum channel name for Campaign c.
 func billboardChannelName(c *models.Campaign) string {
 	if c.IsOneshot {

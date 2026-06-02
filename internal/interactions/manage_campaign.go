@@ -204,6 +204,8 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 	}
 
 	RetireChannel(s, i.GuildID, campaign)
+	MoveToArchivedCategory(h.db, s, campaign)
+	DeleteBillboard(s, campaign)
 
 	if campaign.RoleID != "" {
 		if err := guard.GuildRoleDelete(s, i.GuildID, campaign.RoleID); err != nil {

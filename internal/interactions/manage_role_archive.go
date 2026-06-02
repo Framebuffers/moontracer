@@ -239,6 +239,8 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 	}
 	h.sched.Cancel(i.GuildID, campaign.ID)
 	RetireChannel(s, i.GuildID, campaign)
+	MoveToArchivedCategory(h.db, s, campaign)
+	DeleteBillboard(s, campaign)
 
 	if err := models.InsertAuditEntry(h.db, userID, userID, models.AuditCampaignArchive, fmt.Sprintf("archived campaign %s (%s) via manage menu", campaign.Name, campaign.Tag)); err != nil {
 		log.Printf("manage_archive: failed to write audit entry: %v", err)

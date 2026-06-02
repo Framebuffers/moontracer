@@ -107,6 +107,7 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE guild_settings ADD COLUMN billboard_category_id TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE guild_settings ADD COLUMN campaign_channel_id TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE guild_settings ADD COLUMN campaigns_category_id TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE guild_settings ADD COLUMN archived_category_id TEXT NOT NULL DEFAULT ''",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {
