@@ -64,33 +64,32 @@ func NewCampaignForumPost(db *bun.DB, s *discordgo.Session, c *models.Campaign) 
 
 	var b strings.Builder
 
-	fmt.Fprintf(&b, "# %s\n\n", c.Name)
+	// fmt.Fprintf(&b, "# %s\n\n", c.Name)
 	fmt.Fprintf(&b, "%s\n\n", c.Description)
 
 	fmt.Fprintf(&b, "## Campaign details\n\n")
-	fmt.Fprintf(&b, "**DM:** <@%s>\n", c.DungeonMaster)
-	fmt.Fprintf(&b, "**Format:** %s\n", format)
-	fmt.Fprintf(&b, "**Schedule:** %s\n\n", schedule)
+	fmt.Fprintf(&b, "👤 **DM:** <@%s>\n", c.DungeonMaster)
+	fmt.Fprintf(&b, "🏰 **Format:** %s\n", format)
+	fmt.Fprintf(&b, "📅 **Schedule:** %s\n\n", schedule)
 
 	fmt.Fprintf(&b, "## Format\n\n")
-	fmt.Fprintf(&b, "- Edition: %s\n", c.Game.Edition)
-	fmt.Fprintf(&b, "- Rules: %s\n", c.Game.Rules)
-	fmt.Fprintf(&b, "- VTT: %s\n", c.Game.VTT)
-	fmt.Fprintf(&b, "- Books: %s\n", books)
-	fmt.Fprintf(&b, "- Extras: %s\n\n", extras)
+	fmt.Fprintf(&b, "- 📖 **Edition:** %s\n", c.Game.Edition)
+	fmt.Fprintf(&b, "- 🧾 **Rules:** %s\n", c.Game.Rules)
+	fmt.Fprintf(&b, "- 🎲 **VTT:** %s\n", c.Game.VTT)
+	fmt.Fprintf(&b, "- 📚 **Books:** %s\n", books)
+	fmt.Fprintf(&b, "- ℹ️ **Extras:** %s\n\n", extras)
 
 	if len(c.Warnings) > 0 {
-		fmt.Fprintf(&b, "## Trigger warnings\n\n%s\n\n", strings.Join(c.Warnings, ", "))
+		fmt.Fprintf(&b, "## ⚠️ Trigger warnings\n\n%s\n\n", strings.Join(c.Warnings, ", "))
 	}
 
 	if c.Extra != "" {
-		fmt.Fprintf(&b, "## Extra info\n\n%s\n\n", c.Extra)
+		fmt.Fprintf(&b, "## ℹ️ Extra info\n\n%s\n\n", c.Extra)
 	}
 
-	fmt.Fprintf(&b, "---\n\n")
-	fmt.Fprintf(&b, "## Players\n\n")
-	fmt.Fprintf(&b, "- **Status:** %s\n", status)
-	fmt.Fprintf(&b, "- **Slots:** %s\n", slotsLine)
+	fmt.Fprintf(&b, "-# **Players**\n\n")
+	fmt.Fprintf(&b, "-# **Status:** %s\n", status)
+	fmt.Fprintf(&b, "-# **Slots:** %s\n", slotsLine)
 
 	if len(confirmed) > 0 {
 		fmt.Fprintf(&b, "- **Confirmed players:** %s\n", strings.Join(playerMentions(confirmed), ", "))

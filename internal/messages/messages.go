@@ -904,7 +904,7 @@ const (
 	AdminSettingsHeader                = "Bot settings:"
 	AdminSettingsGeneralHeader         = "**⚙️ General Settings**\n\n"
 	AdminBillboardHeader               = "**⚙️ Billboard Channels**\nSelect which forum channel each campaign format posts to when approved.\n\n"
-	AdminBillboardChannelsLabel        = "Billboard channels ->"
+	AdminBillboardChannelsLabel        = "Billboard channels ➡️"
 	AdminBillboardCampaignLabel        = "🏰 Campaigns"
 	AdminBillboardOneshotLabel         = "📖 One-shots"
 	AdminBillboardWestmarchLabel       = "🛡️ Westmarches"
