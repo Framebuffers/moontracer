@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/cooldown"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/dispatch"
 	"github.com/framebuffers/moontracer/internal/guard"
@@ -127,6 +129,13 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 
 	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
+		return
+	}
+
+	cdKey := "announce:" + campaignID
+	if !cooldown.Global.Allow(cdKey, 15*time.Minute) {
+		remaining := cooldown.Global.Remaining(cdKey)
+		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.AnnounceCooldown, cooldown.FormatRemaining(remaining)))
 		return
 	}
 

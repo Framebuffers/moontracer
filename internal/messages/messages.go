@@ -486,6 +486,7 @@ const (
 	AnnounceNoMembers        = "ℹ️ This campaign has no members to announce to."
 	AnnounceError            = "⚠️ Failed to send announcement."
 	AnnouncePostedToThread   = "🗣️ Announcement posted to the **%s** announcements thread."
+	AnnounceCooldown         = "⏳ You can post another announcement in %s."
 	AnnounceThreadContent    = "%s**🗣️Announcement from <@%s>:**\n\n%s"
 	AnnounceDMContent        = "**[%s]** 🗣️ Announcement from <@%s>:\n\n%s"
 )
@@ -1048,6 +1049,8 @@ const (
 	SessionResponseConfirmLabel     = "Confirm anyway"
 	SessionResponseCancelLabel      = "Cancel"
 	SessionResponseRetractedMsg     = "↩️ Your session slot has been retracted. The DM has been notified."
+	SessionResponseCooldown         = "⏳ You just responded. Try again in %s."
+	SessionResponseRetractUsed      = "ℹ️ You can only retract your response once per session."
 	SessionResponseRetractNone      = "ℹ️ You haven't given a response to this session yet."
 	SessionResponseDMNotifyRetract  = "↩️ <@%s> retracted their session assistance response for **%s** · %s"
 	SessionResponseWaitlistPromoted = "✅ A spot opened up for **%s** · %s. You have been moved out of the waiting list. You can play now!"

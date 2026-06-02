@@ -38,6 +38,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/framebuffers/moontracer/internal/commands"
+	"github.com/framebuffers/moontracer/internal/cooldown"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/dispatch"
 	"github.com/framebuffers/moontracer/internal/guard"
@@ -366,6 +367,12 @@ func (h *sessionResponseRetractHandler) HandleComponents(s *discordgo.Session, i
 		responseError(messages.SessionResponseRetractNone)
 		return
 	}
+
+	if !cooldown.Global.AllowOnce("retract:" + playerID + ":" + sessionID) {
+		responseError(messages.SessionResponseRetractUsed)
+		return
+	}
+
 	wasAccepted := existing.Status == models.ResponseAccepted
 
 	if err := models.UpsertSessionPlayers(h.db, sessionID, playerID, models.ResponsePending); err != nil {
@@ -515,7 +522,15 @@ func handleSessionResponse(
 		return
 	}
 
-	// 4. Idempotency: already responded?
+	// 4. Cooldown: prevent rapid re-clicks.
+	cdKey := "session-response:" + playerID + ":" + sessionID
+	if !cooldown.Global.Allow(cdKey, 15*time.Minute) {
+		remaining := cooldown.Global.Remaining(cdKey)
+		responseError(fmt.Sprintf(messages.SessionResponseCooldown, cooldown.FormatRemaining(remaining)))
+		return
+	}
+
+	// 5. Idempotency: already responded?
 	existing, _ := models.GetPlayerSessionConfirmation(guildDB, sessionID, playerID)
 	if existing != nil && existing.Status != models.ResponsePending {
 		responseError(messages.SessionResponseAlreadySet)
