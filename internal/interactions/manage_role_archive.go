@@ -232,8 +232,15 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 		return
 	}
 
-	// defer, takes more than the Discord 3-second limit
-	helpers.DeferUpdate(s, i)
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content:    messages.ManageArchiveInProgress,
+			Embeds:     []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{},
+			Flags:      discordgo.MessageFlagsEphemeral,
+		},
+	})
 
 	if err := commands.ArchiveCampaign(h.db, campaign, messages.AbandonReasonDM); err != nil {
 		log.Printf("manage_archive: failed to archive campaign %s: %v", campaign.ID, err)

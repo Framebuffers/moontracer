@@ -306,6 +306,7 @@ const (
 	ManageNoDMCampaigns        = "⚠️ You are not the DM of any campaigns."
 	ManageNotAuthorized        = "ℹ️ You must be the DM of this campaign to manage it."
 	ManageCampaignNotFound     = "ℹ️ Campaign not found."
+	ManageDeleteInProgress     = "⏳ Deleting campaign..."
 	ManageDeleteSuccess        = "ℹ️ Campaign **%s** has been deleted."
 	ManageDeleteFailure        = "🚫 Failed to delete campaign."
 	ManageBanNoMembers         = "ℹ️ This campaign has no members to ban."
@@ -730,6 +731,7 @@ const (
 	ManageArchiveConfirm      = "⚠️ Are you sure you want to archive **%s**? This is permanent and cannot be undone."
 	ManageArchiveConfirmLabel = "✅ Yes, Archive"
 	ManageArchiveCancelLabel  = "❌ Cancel"
+	ManageArchiveInProgress   = "⏳ Archiving campaign..."
 	ManageArchiveSuccess      = "ℹ️ Campaign **%s** has been archived. It is now an immutable record."
 	ManageArchiveFailed       = "🚫 Failed to archive campaign."
 )

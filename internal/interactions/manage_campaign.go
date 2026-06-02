@@ -203,8 +203,15 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		return
 	}
 
-	// discord API calls are too slow, defer them
-	helpers.DeferUpdate(s, i)
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content:    messages.ManageDeleteInProgress,
+			Embeds:     []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{},
+			Flags:      discordgo.MessageFlagsEphemeral,
+		},
+	})
 
 	RetireChannel(s, i.GuildID, campaign)
 	MoveToArchivedCategory(h.db, s, campaign)
