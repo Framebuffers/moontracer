@@ -60,6 +60,27 @@ func NewSession(campaignID string, scheduledAt time.Time, title string, capacity
 	}
 }
 
+/*
+GetSessionsThisWeek returns all upcoming sessions from approved, non-archived campaigns
+scheduled within the next 7 days, sorted soonest first.
+
+Used by /thisweek.
+*/
+func GetSessionsThisWeek(db *bun.DB) ([]Session, error) {
+	ctx := context.Background()
+	var sessions []Session
+	err := db.NewSelect().Model(&sessions).
+		Relation("Campaign").
+		Join("JOIN campaigns AS cam ON cam.id = session.campaign_id").
+		Where("cam.is_approved = ?", true).
+		Where("cam.is_archived = ?", false).
+		Where("session.status = ? AND session.scheduled_at > ? AND session.scheduled_at <= ?",
+			SessionUpcoming, time.Now().UTC(), time.Now().UTC().Add(7*24*time.Hour)).
+		OrderExpr("session.scheduled_at ASC").
+		Scan(ctx)
+	return sessions, err
+}
+
 // GetUpcomingSessions returns all upcoming sessions for a campaign, sorted soonest first.
 func GetUpcomingSessions(db *bun.DB, campaignID string) ([]Session, error) {
 	ctx := context.Background()

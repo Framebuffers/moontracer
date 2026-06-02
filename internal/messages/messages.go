@@ -816,12 +816,21 @@ const (
 	// identifiers
 	NextSessionsPrefix      = "next_sessions"
 	NextSessionsCommandName = "nextsessions"
+	ThisWeekCommandName     = "thisweek"
 )
 const (
 	// user-facing
 	NextSessionsHeader      = "Upcoming sessions:"
 	NextSessionsNone        = "ℹ️ You have no upcoming sessions."
 	NextSessionsCommandDesc = "Show your upcoming sessions."
+
+	ThisWeekHeader      = "📅 Sessions happening this week:"
+	ThisWeekNone        = "ℹ️ No sessions are scheduled in the next 7 days."
+	ThisWeekCommandDesc = "Browse all sessions scheduled this week."
+	ThisWeekSlotsFmt    = "%d/%d slots"
+	ThisWeekSlotsOpen   = "open slots"
+	ThisWeekFull        = "full"
+	ThisWeekClosed      = "closed"
 )
 
 // Player hub: Notifications

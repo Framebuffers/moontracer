@@ -28,7 +28,8 @@ import (
 const defaultArchiveDuration = 10080
 
 // standardThreads are the threads auto-created in every approved campaign's channel.
-var standardThreads = []string{"welcome", "announcements", "sessions", "dice-rolls"}
+// Locked threads (welcome, announcements, sessions) are DM/bot-only; the rest are open to players.
+var standardThreads = []string{"welcome", "announcements", "sessions", "dice-rolls", "characters", "memes", "art", "downtime", "resources"}
 
 // threadInitMessages is the pinned welcome message sent to each standard thread on creation.
 var threadInitMessages = map[string]string{
