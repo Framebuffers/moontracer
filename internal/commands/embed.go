@@ -221,10 +221,14 @@ func FormatSchedule(c models.Campaign) string {
 	sched := c.Schedule
 
 	if !sched.HasSchedule() {
-		if sched.Frequency == "" {
-			return "Schedule not set"
+		nextPart := ""
+		if !sched.NextSession.IsZero() {
+			nextPart = fmt.Sprintf("\nNext: %s", sched.NextSession.Format("2006-01-02"))
 		}
-		return fmt.Sprintf("%s- schedule not set", sched.Frequency)
+		if sched.Frequency == "" {
+			return "Schedule not set" + nextPart
+		}
+		return fmt.Sprintf("%s- schedule not set", sched.Frequency) + nextPart
 	}
 
 	line := fmt.Sprintf("%s- %s %s UTC (%.0fh)", sched.Frequency, sched.DayName(), sched.StartTime, sched.DurationHours)

@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"log"
 	"math"
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strings"
 	"time"
+
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
@@ -72,7 +73,7 @@ func newCampaignConfigComponents(campaignID string) []discordgo.MessageComponent
 			{Label: messages.NewCampaignFreqLabelWeekly, Value: string(models.Weekly)},
 			{Label: messages.NewCampaignFreqLabelBiweekly, Value: string(models.Biweekly)},
 			{Label: messages.NewCampaignFreqLabelMonthly, Value: string(models.Monthly)},
-			{Label: messages.NewCampaignFreqLabelIrregular, Value: string(models.Irregular)},
+			{Label: messages.NewCampaignFreqLabelOnce, Value: string(models.Irregular)},
 		},
 	}
 

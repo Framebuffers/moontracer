@@ -779,10 +779,10 @@ const (
 	NewCampaignBookLabelOther = "Other / Homebrew"
 
 	// Frequency dropdown option labels
-	NewCampaignFreqLabelWeekly    = "Weekly"
-	NewCampaignFreqLabelBiweekly  = "Bi-weekly"
-	NewCampaignFreqLabelMonthly   = "Monthly"
-	NewCampaignFreqLabelIrregular = "Irregular / As-needed"
+	NewCampaignFreqLabelWeekly   = "Weekly"
+	NewCampaignFreqLabelBiweekly = "Bi-weekly"
+	NewCampaignFreqLabelMonthly  = "Monthly"
+	NewCampaignFreqLabelOnce     = "Once"
 
 	// Browse more after joining
 	BrowseMoreLabel = "🔍 Browse more campaigns"
@@ -894,8 +894,8 @@ const (
 	AdminBillboardFormatCampaign    = "campaign"
 	AdminBillboardFormatOneshot     = "oneshot"
 	AdminBillboardFormatWestmarch   = "westmarch"
-	AdminBillboardSetCategoryPrefix  = "admin_billboard_set_category"
-	AdminCampaignChannelSetPrefix    = "admin_campaign_channel_set"
+	AdminBillboardSetCategoryPrefix = "admin_billboard_set_category"
+	AdminCampaignChannelSetPrefix   = "admin_campaign_channel_set"
 	AdminCampaignsCategorySetPrefix = "admin_campaigns_category_set"
 	AdminArchivedCategorySetPrefix  = "admin_archived_category_set"
 )
@@ -1068,14 +1068,14 @@ const (
 	NewSessionDMContentFmt    = "📅 **%s**- New Session!\n<t:%d:F> · <t:%d:R>%s"
 	SessionReminderContentFmt = "⏰ Reminder: **%s** starts in ~1 hour!\n<t:%d:F>%s"
 
-	SessionEmbedTitleFmt        = "📅 New Session- %s"
-	SessionEmbedGoingLabel      = "✅ Going"
-	SessionEmbedNotGoingLabel   = "❌ Not Going"
-	SessionEmbedWaitlistedLabel = "⏳ Waitlisted"
-	SessionResponseCancelledMsg     = "ℹ️ Response cancelled."
-	SessionResponseLineEmptyFmt     = "%s (0):-"
-	SessionResponseLineFmt          = "%s (%d): %s"
-	SessionResponseLineOverflowFmt  = " +%d more"
+	SessionEmbedTitleFmt           = "📅 New Session- %s"
+	SessionEmbedGoingLabel         = "✅ Going"
+	SessionEmbedNotGoingLabel      = "❌ Not Going"
+	SessionEmbedWaitlistedLabel    = "⏳ Waitlisted"
+	SessionResponseCancelledMsg    = "ℹ️ Response cancelled."
+	SessionResponseLineEmptyFmt    = "%s (0):-"
+	SessionResponseLineFmt         = "%s (%d): %s"
+	SessionResponseLineOverflowFmt = " +%d more"
 
 	SessionConflictButtonLabel  = "⚠️ Schedule conflict"
 	SessionConflictPrompt       = "You have a conflict with another session around this time. Which one would you want to go?"
