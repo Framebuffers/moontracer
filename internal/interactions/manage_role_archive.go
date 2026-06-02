@@ -232,9 +232,12 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 		return
 	}
 
+	// defer, takes more than the Discord 3-second limit
+	helpers.DeferUpdate(s, i)
+
 	if err := commands.ArchiveCampaign(h.db, campaign, messages.AbandonReasonDM); err != nil {
 		log.Printf("manage_archive: failed to archive campaign %s: %v", campaign.ID, err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageArchiveFailed)
+		helpers.EditTerminal(s, i, messages.ManageArchiveFailed)
 		return
 	}
 	h.sched.Cancel(i.GuildID, campaign.ID)
@@ -247,7 +250,5 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 	}
 
 	log.Printf("manage_archive: %s archived campaign %s (%s)", userID, campaign.Name, campaign.ID)
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name), nil, []discordgo.MessageComponent{
-		helpers.BackRow(router.ViewManage),
-	})
+	helpers.EditTerminal(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name))
 }

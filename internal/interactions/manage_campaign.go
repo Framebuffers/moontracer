@@ -203,6 +203,9 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		return
 	}
 
+	// discord API calls are too slow, defer them
+	helpers.DeferUpdate(s, i)
+
 	RetireChannel(s, i.GuildID, campaign)
 	MoveToArchivedCategory(h.db, s, campaign)
 	DeleteBillboard(s, campaign)
@@ -218,12 +221,12 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 	_, err := h.db.NewDelete().Model(campaign).WherePK().Exec(ctx)
 	if err != nil {
 		log.Printf("manage_delete_confirm: failed to soft-delete campaign: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageDeleteFailure)
+		helpers.EditTerminal(s, i, messages.ManageDeleteFailure)
 		return
 	}
 
 	log.Printf("manage_delete_confirm: %s deleted campaign %s (%s)", userID, campaign.Name, campaignID)
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
+	helpers.EditTerminal(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
 }
 
 /*
