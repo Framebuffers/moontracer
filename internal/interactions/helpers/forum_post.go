@@ -151,6 +151,90 @@ func BillboardComponents(c *models.Campaign) []discordgo.MessageComponent {
 	}
 }
 
+/*
+WelcomeThreadSections returns the campaign info as ordered message sections for the
+welcome thread. Each string fits within Discord's 2000-character message limit.
+
+The player list is omitted, since it's already maintained on the billboard and it's unnecessary
+inside the channel.
+*/
+func WelcomeThreadSections(c *models.Campaign, coverReminder string) []string {
+	if !c.IsApproved || c.IsArchived {
+		return nil
+	}
+
+	format := messages.ForumPostFormatCampaign
+	if c.IsOneshot {
+		format = messages.ForumPostFormatOneshot
+	} else if c.IsWestmarch {
+		format = messages.ForumPostFormatWestmarch
+	}
+
+	schedule := messages.ForumPostScheduleUnset
+	if c.Schedule.HasSchedule() {
+		schedule = fmt.Sprintf("%ss at %s UTC (%s, %.0fh sessions)",
+			c.Schedule.DayName(),
+			c.Schedule.StartTime,
+			c.Schedule.Frequency,
+			c.Schedule.DurationHours,
+		)
+	}
+
+	books := strings.Join(c.Game.BooksAllowed, ", ")
+	if books == "" {
+		books = messages.NoneLabel
+	}
+
+	var sections []string
+
+	// 1) description
+	if c.Description != "" {
+		sections = append(sections, truncate(c.Description, 2000))
+	}
+
+	// 2) campaign details + game info
+	var b strings.Builder
+	fmt.Fprintf(&b, "## Campaign details\n\n")
+	fmt.Fprintf(&b, "👤 **DM:** <@%s>\n", c.DungeonMaster)
+	fmt.Fprintf(&b, "🏰 **Format:** %s\n", format)
+	fmt.Fprintf(&b, "📅 **Schedule:** %s\n\n", schedule)
+	fmt.Fprintf(&b, "## Game info\n\n")
+	fmt.Fprintf(&b, "- 📖 **Edition:** %s\n", c.Game.Edition)
+	if c.Game.Rules != "" {
+		fmt.Fprintf(&b, "- 🧾 **Rules:** %s\n", c.Game.Rules)
+	}
+	if c.Game.VTT != "" {
+		fmt.Fprintf(&b, "- 🎲 **VTT:** %s\n", c.Game.VTT)
+	}
+	fmt.Fprintf(&b, "- 📚 **Books:** %s\n", books)
+	sections = append(sections, truncate(b.String(), 2000))
+
+	// 3) trigger warnings (optional)
+	if len(c.Warnings) > 0 {
+		sections = append(sections, truncate("## ⚠️ Trigger warnings\n\n"+strings.Join(c.Warnings, ", "), 2000))
+	}
+
+	// 4) extra info (optional)
+	if c.Extra != "" {
+		sections = append(sections, truncate("## ℹ️ Extra info\n\n"+c.Extra, 2000))
+	}
+
+	// cover reminder for the DM
+	if coverReminder != "" {
+		sections = append(sections, coverReminder)
+	}
+
+	return sections
+}
+
+func truncate(s string, max int) string {
+	r := []rune(s)
+	if len(r) <= max {
+		return s
+	}
+	return string(r[:max-1]) + "…"
+}
+
 func activeCampaignPlayers(players []models.CampaignPlayer) []models.CampaignPlayer {
 	var out []models.CampaignPlayer
 	for _, cp := range players {

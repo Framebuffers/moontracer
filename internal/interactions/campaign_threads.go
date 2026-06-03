@@ -183,7 +183,18 @@ func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Cam
 			if body == "" {
 				body = fmt.Sprintf(messages.ThreadInitMsgWelcomeFmt, c.Name)
 			}
-			initMsg = body + "\n" + messages.WelcomeThreadCoverReminder
+			reminder := "\n" + messages.WelcomeThreadCoverReminder
+			combined := body + reminder
+			if len([]rune(combined)) > 2000 {
+				// Truncate body to fit; keep the reminder intact.
+				max := 2000 - len([]rune(reminder)) - 1
+				runes := []rune(body)
+				if len(runes) > max {
+					body = string(runes[:max]) + "…"
+				}
+				combined = body + reminder
+			}
+			initMsg = combined
 		} else if msg, ok := threadInitMessages[name]; ok {
 			initMsg = msg
 		}
