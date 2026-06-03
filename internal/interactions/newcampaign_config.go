@@ -442,47 +442,23 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 		}
 	}
 
-	// Open the game-details modal as the next step; staff DMs are sent after that.
+	// Show a bridge message with two buttons: open game-details modal or submit directly.
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseModal,
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			CustomID: fmt.Sprintf("%s:%s", messages.NewCampaignGameDetailsModalID, c.ID),
-			Title:    messages.NewCampaignGameDetailsModalTitle,
+			Content: messages.NewCampaignGameDetailsPrompt,
+			Flags:   discordgo.MessageFlagsEphemeral,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.NewCampaignRulesFieldID,
-						Label:       messages.NewCampaignRulesLabel,
-						Style:       discordgo.TextInputParagraph,
-						Required:    false,
-						Placeholder: messages.NewCampaignRulesPlaceholder,
+					discordgo.Button{
+						Label:    messages.NewCampaignGameDetailsOpenLabel,
+						Style:    discordgo.PrimaryButton,
+						CustomID: fmt.Sprintf("%s:%s", messages.NewCampaignGameDetailsOpenPrefix, c.ID),
 					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.NewCampaignVTTFieldID,
-						Label:       messages.NewCampaignVTTLabel,
-						Style:       discordgo.TextInputShort,
-						Required:    false,
-						Placeholder: messages.NewCampaignVTTPlaceholder,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.NewCampaignBooksFieldID,
-						Label:       messages.NewCampaignBooksLabel,
-						Style:       discordgo.TextInputShort,
-						Required:    false,
-						Placeholder: messages.NewCampaignBooksPlaceholder,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.NewCampaignExtraFieldID,
-						Label:       messages.NewCampaignExtraLabel,
-						Style:       discordgo.TextInputParagraph,
-						Required:    false,
-						Placeholder: messages.NewCampaignExtraPlaceholder,
+					discordgo.Button{
+						Label:    messages.NewCampaignSubmitApprovalLabel,
+						Style:    discordgo.SuccessButton,
+						CustomID: fmt.Sprintf("%s:%s", messages.NewCampaignSubmitApprovalPrefix, c.ID),
 					},
 				}},
 			},
@@ -530,10 +506,159 @@ func (h *newCampaignCancelHandler) HandleComponents(s *discordgo.Session, i *dis
 }
 
 /*
+dispatchApprovalRequest sends approval DMs to all staff and responds to the interaction
+with a submitted confirmation.
+
+Used by both the submit-approval button and game-details modal.
+*/
+func dispatchApprovalRequest(d *dispatch.Dispatcher, database *bun.DB, s *discordgo.Session, i *discordgo.InteractionCreate, c *models.Campaign, userID string) {
+	staffMembers, err := db.GetStaff(database)
+	if err != nil {
+		log.Printf("newcampaign: failed to get staff for campaign %s: %v", c.ID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignStaffNotifyFailureMessage)
+		return
+	}
+
+	guildID := i.GuildID
+	approvalButtons := []discordgo.MessageComponent{
+		discordgo.ActionsRow{
+			Components: []discordgo.MessageComponent{
+				discordgo.Button{
+					Label:    messages.ApproveButtonLabel,
+					Style:    discordgo.SuccessButton,
+					CustomID: messages.CampaignApprovePrefix + ":" + guildID + ":" + c.ID,
+				},
+				discordgo.Button{
+					Label:    messages.DenyButtonLabel,
+					Style:    discordgo.DangerButton,
+					CustomID: messages.CampaignDenyPrefix + ":" + guildID + ":" + c.ID,
+				},
+			},
+		},
+	}
+
+	players, _ := models.GetCampaignPlayers(database, c.ID)
+	coverURL := models.CoverURLForCampaign(database, c.ID)
+	campaignEmbed := commands.CampaignEmbed(*c, players, coverURL, "", userID)
+
+	msgID := uuid.NewString()
+	for _, staff := range staffMembers {
+		d.Push(dispatch.DirectMessage{
+			ID:         msgID,
+			Sender:     userID,
+			Target:     staff.ID,
+			Content:    fmt.Sprintf(messages.CampaignApprovalRequestMessage, c.Name, userID),
+			Components: approvalButtons,
+			Embeds:     []*discordgo.MessageEmbed{campaignEmbed},
+		})
+	}
+
+	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.NewCampaignSubmittedMessage, c.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+		helpers.BackRow(router.ViewManage),
+	})
+}
+
+/*
+	Game Details Open Button: opens the game-details modal from the bridge message.
+*/
+
+type newCampaignGameDetailsOpenHandler struct {
+	db *bun.DB
+}
+
+func (h *newCampaignGameDetailsOpenHandler) CustomIDPrefix() string {
+	return messages.NewCampaignGameDetailsOpenPrefix
+}
+
+func (h *newCampaignGameDetailsOpenHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	campaignID, ok := parseConfigCustomID(i.MessageComponentData().CustomID)
+	if !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+	if _, err := loadCampaignForConfig(h.db, campaignID, helpers.GetUserID(i)); err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID: fmt.Sprintf("%s:%s", messages.NewCampaignGameDetailsModalID, campaignID),
+			Title:    messages.NewCampaignGameDetailsModalTitle,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignRulesFieldID,
+						Label:       messages.NewCampaignRulesLabel,
+						Style:       discordgo.TextInputParagraph,
+						Required:    false,
+						Placeholder: messages.NewCampaignRulesPlaceholder,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignVTTFieldID,
+						Label:       messages.NewCampaignVTTLabel,
+						Style:       discordgo.TextInputShort,
+						Required:    false,
+						Placeholder: messages.NewCampaignVTTPlaceholder,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignBooksFieldID,
+						Label:       messages.NewCampaignBooksLabel,
+						Style:       discordgo.TextInputShort,
+						Required:    false,
+						Placeholder: messages.NewCampaignBooksPlaceholder,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignExtraFieldID,
+						Label:       messages.NewCampaignExtraLabel,
+						Style:       discordgo.TextInputParagraph,
+						Required:    false,
+						Placeholder: messages.NewCampaignExtraPlaceholder,
+					},
+				}},
+			},
+		},
+	})
+}
+
+/*
+	Submit Approval Button: skips game details and sends approval DMs directly.
+*/
+
+type newCampaignSubmitApprovalHandler struct {
+	db         *bun.DB
+	dispatcher *dispatch.Dispatcher
+}
+
+func (h *newCampaignSubmitApprovalHandler) CustomIDPrefix() string {
+	return messages.NewCampaignSubmitApprovalPrefix
+}
+
+func (h *newCampaignSubmitApprovalHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	campaignID, ok := parseConfigCustomID(i.MessageComponentData().CustomID)
+	if !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+	userID := helpers.GetUserID(i)
+	c, err := loadCampaignForConfig(h.db, campaignID, userID)
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+	dispatchApprovalRequest(h.dispatcher, h.db, s, i, c, userID)
+}
+
+/*
 	Game Details Modal: parses rules, VTT platform, books allowed, and extra info,
 	saves them to the campaign, then sends approval DMs to staff.
-
-	This is the final step of the new-campaign creation flow.
 */
 
 type newCampaignGameDetailsModal struct {
@@ -596,55 +721,5 @@ func (h *newCampaignGameDetailsModal) HandleModal(s *discordgo.Session, i *disco
 		}
 	}
 
-	staffMembers, err := db.GetStaff(h.db)
-	if err != nil {
-		log.Printf("newcampaign_gamedetails: failed to get staff: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.CampaignStaffNotifyFailureMessage)
-		return
-	}
-
-	guildID := i.GuildID
-	approvalButtons := []discordgo.MessageComponent{
-		discordgo.ActionsRow{
-			Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    messages.ApproveButtonLabel,
-					Style:    discordgo.SuccessButton,
-					CustomID: messages.CampaignApprovePrefix + ":" + guildID + ":" + c.ID,
-				},
-				discordgo.Button{
-					Label:    messages.DenyButtonLabel,
-					Style:    discordgo.DangerButton,
-					CustomID: messages.CampaignDenyPrefix + ":" + guildID + ":" + c.ID,
-				},
-			},
-		},
-	}
-
-	players, _ := models.GetCampaignPlayers(h.db, c.ID)
-	coverURL := models.CoverURLForCampaign(h.db, c.ID)
-	campaignEmbed := commands.CampaignEmbed(*c, players, coverURL, "", userID)
-
-	msgID := uuid.NewString()
-	for _, staff := range staffMembers {
-		h.dispatcher.Push(dispatch.DirectMessage{
-			ID:         msgID,
-			Sender:     userID,
-			Target:     staff.ID,
-			Content:    fmt.Sprintf(messages.CampaignApprovalRequestMessage, c.Name, userID),
-			Components: approvalButtons,
-			Embeds:     []*discordgo.MessageEmbed{campaignEmbed},
-		})
-	}
-
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseChannelMessageWithSource,
-		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf(messages.NewCampaignSubmittedMessage, c.Name),
-			Components: []discordgo.MessageComponent{
-				helpers.BackRow(router.ViewManage),
-			},
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
-	})
+	dispatchApprovalRequest(h.dispatcher, h.db, s, i, c, userID)
 }

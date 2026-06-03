@@ -757,12 +757,14 @@ const (
 // New campaign config (post-modal dropdowns)
 const (
 	// identifiers
-	NewCampaignBookPrefix      = "newcampaign_book"
-	NewCampaignFormatPrefix    = "newcampaign_format"
-	NewCampaignFreqPrefix      = "newcampaign_freq"
-	NewCampaignSubmitPrefix    = "newcampaign_submit"
-	NewCampaignCancelPrefix    = "newcampaign_cancel"
-	NewCampaignScheduleModalID = "modal_newcampaign_schedule"
+	NewCampaignBookPrefix            = "newcampaign_book"
+	NewCampaignFormatPrefix          = "newcampaign_format"
+	NewCampaignFreqPrefix            = "newcampaign_freq"
+	NewCampaignSubmitPrefix          = "newcampaign_submit"
+	NewCampaignCancelPrefix          = "newcampaign_cancel"
+	NewCampaignScheduleModalID       = "modal_newcampaign_schedule"
+	NewCampaignGameDetailsOpenPrefix = "newcampaign_gamedetails_open"
+	NewCampaignSubmitApprovalPrefix  = "newcampaign_submit_approval"
 
 	NewCampaignScheduleDateFieldID = "newcampaign_sched_date"
 	NewCampaignScheduleTimeFieldID = "newcampaign_sched_time"
@@ -788,6 +790,10 @@ const (
 	NewCampaignScheduleInvalidDate     = "⚠️ Invalid date format. Use DD/MM/YYYY (e.g. 14/06/2026)."
 	NewCampaignScheduleInvalidTime     = "⚠️ Invalid time format. Use HH:MM (e.g. 19:00)."
 	NewCampaignScheduleInPast          = "⚠️ That date/time is in the past. Please pick a future date."
+
+	NewCampaignGameDetailsPrompt    = "📅 Schedule saved! **Last step:** add game details (rules, VTT, books, extra info)... or skip and submit for approval now."
+	NewCampaignGameDetailsOpenLabel = "🎲 Add Game Details"
+	NewCampaignSubmitApprovalLabel  = "✅ Submit for Approval"
 
 	// Book dropdown option labels
 	NewCampaignBookLabel5e    = "D&D 5e"

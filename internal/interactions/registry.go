@@ -114,6 +114,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&newCampaignFrequencyHandler{db: db},
 		&newCampaignSubmitHandler{db: db, dispatcher: d},
 		&newCampaignCancelHandler{db: db},
+		&newCampaignGameDetailsOpenHandler{db: db},
+		&newCampaignSubmitApprovalHandler{db: db, dispatcher: d},
 
 		// Player hub
 		&nextSessionsHandler{db: db},
