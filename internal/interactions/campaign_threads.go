@@ -176,26 +176,33 @@ func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Cam
 			}
 		}
 
-		// Resolve init message: welcome mirrors the billboard body; others use the static map.
-		var initMsg string
+		// Resolve init messages: welcome sends one message per section; others use the static map.
 		if name == "welcome" {
-			_, body, _ := helpers.NewCampaignForumPost(database, s, c)
-			if body == "" {
-				body = fmt.Sprintf(messages.ThreadInitMsgWelcomeFmt, c.Name)
+			sections := helpers.WelcomeThreadSections(c, messages.WelcomeThreadCoverReminder)
+			if len(sections) == 0 {
+				sections = []string{fmt.Sprintf(messages.ThreadInitMsgWelcomeFmt, c.Name)}
 			}
-			reminder := "\n" + messages.WelcomeThreadCoverReminder
-			combined := body + reminder
-			if len([]rune(combined)) > 2000 {
-				// Truncate body to fit; keep the reminder intact.
-				max := 2000 - len([]rune(reminder)) - 1
-				runes := []rune(body)
-				if len(runes) > max {
-					body = string(runes[:max]) + "…"
+			var pinID string
+			for _, section := range sections {
+				msg, err := guard.ChannelMessageSend(s, thread.ID, section)
+				if err != nil {
+					log.Printf("campaign_threads: send init message to %s: %v", threadName, err)
+					break
 				}
-				combined = body + reminder
+				if pinID == "" {
+					pinID = msg.ID
+				}
 			}
-			initMsg = combined
-		} else if msg, ok := threadInitMessages[name]; ok {
+			if pinID != "" {
+				if err := guard.ChannelMessagePin(s, thread.ID, pinID); err != nil {
+					log.Printf("campaign_threads: pin init message in %s: %v", threadName, err)
+				}
+			}
+			continue
+		}
+
+		var initMsg string
+		if msg, ok := threadInitMessages[name]; ok {
 			initMsg = msg
 		}
 
