@@ -135,9 +135,10 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&adminCampaignChannelSetHandler{db: db},
 		&adminDiagHandler{db: db},
 
-		// Manage: new campaign from button, links, player tokens
+		// Manage: new campaign from button, links, game info, player tokens
 		&manageNewCampaignButton{db: db},
 		&manageLinksHandler{db: db},
+		&manageGameInfoHandler{db: db},
 		&manageDownloadTokensHandler{db: db},
 
 		// Token generator confirm/discard/assign
@@ -196,12 +197,14 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, d
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
 		&newCampaignScheduleModal{db: db, dispatcher: d},
+		&newCampaignGameDetailsModal{db: db, dispatcher: d},
 		&newSessionModal{db: db, dispatcher: d, sched: sched},
 		&campaignDenyModal{db: db, dispatcher: d},
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},
 		&manageSetRoleModal{db: db},
 		&manageLinksModal{db: db},
+		&manageGameInfoModal{db: db},
 		&manageSetSessionModal{db: db, sched: sched},
 		&adminBroadcastModal{db: db, dispatcher: d},
 		&playerSetSheetModal{db: db},

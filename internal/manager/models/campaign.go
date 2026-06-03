@@ -203,7 +203,7 @@ func UniqueTag(database *bun.DB, base string) (string, error) {
 	candidate := base
 	ctx := context.Background()
 	for n := 2; n < 1000; n++ {
-		exists, err := database.NewSelect().Model((*Campaign)(nil)).Where("tag = ?", candidate).Exists(ctx)
+		exists, err := database.NewSelect().Model((*Campaign)(nil)).WhereAllWithDeleted().Where("tag = ?", candidate).Exists(ctx)
 		if err != nil {
 			return "", fmt.Errorf("checking tag %q: %w", candidate, err)
 		}

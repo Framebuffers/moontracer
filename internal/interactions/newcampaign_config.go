@@ -329,15 +329,6 @@ func (h *newCampaignSubmitHandler) HandleComponents(s *discordgo.Session, i *dis
 						Placeholder: messages.NewCampaignWarningsPlaceholder,
 					},
 				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.TextInput{
-						CustomID:    messages.NewCampaignExtraFieldID,
-						Label:       messages.NewCampaignExtraLabel,
-						Style:       discordgo.TextInputParagraph,
-						Required:    false,
-						Placeholder: messages.NewCampaignExtraPlaceholder,
-					},
-				}},
 			},
 		},
 	})
@@ -380,7 +371,7 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 	}
 	loc := settings.Location()
 
-	var dateStr, timeStr, warningsStr, extraStr string
+	var dateStr, timeStr, warningsStr string
 	for _, row := range i.ModalSubmitData().Components {
 		for _, comp := range row.(*discordgo.ActionsRow).Components {
 			input := comp.(*discordgo.TextInput)
@@ -391,8 +382,6 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 				timeStr = strings.TrimSpace(input.Value)
 			case messages.NewCampaignWarningsFieldID:
 				warningsStr = strings.TrimSpace(input.Value)
-			case messages.NewCampaignExtraFieldID:
-				extraStr = strings.TrimSpace(input.Value)
 			}
 		}
 	}
@@ -405,9 +394,8 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 			}
 		}
 	}
-	c.Extra = extraStr
 
-	needsSave := len(c.Warnings) > 0 || c.Extra != ""
+	needsSave := len(c.Warnings) > 0
 
 	if dateStr != "" || timeStr != "" {
 		if dateStr == "" || timeStr == "" {
@@ -454,9 +442,163 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 		}
 	}
 
+	// Open the game-details modal as the next step; staff DMs are sent after that.
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID: fmt.Sprintf("%s:%s", messages.NewCampaignGameDetailsModalID, c.ID),
+			Title:    messages.NewCampaignGameDetailsModalTitle,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignRulesFieldID,
+						Label:       messages.NewCampaignRulesLabel,
+						Style:       discordgo.TextInputParagraph,
+						Required:    false,
+						Placeholder: messages.NewCampaignRulesPlaceholder,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignVTTFieldID,
+						Label:       messages.NewCampaignVTTLabel,
+						Style:       discordgo.TextInputShort,
+						Required:    false,
+						Placeholder: messages.NewCampaignVTTPlaceholder,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignBooksFieldID,
+						Label:       messages.NewCampaignBooksLabel,
+						Style:       discordgo.TextInputShort,
+						Required:    false,
+						Placeholder: messages.NewCampaignBooksPlaceholder,
+					},
+				}},
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.NewCampaignExtraFieldID,
+						Label:       messages.NewCampaignExtraLabel,
+						Style:       discordgo.TextInputParagraph,
+						Required:    false,
+						Placeholder: messages.NewCampaignExtraPlaceholder,
+					},
+				}},
+			},
+		},
+	})
+}
+
+/*
+	Cancellation
+*/
+
+type newCampaignCancelHandler struct {
+	db *bun.DB
+}
+
+func (h *newCampaignCancelHandler) CustomIDPrefix() string { return messages.NewCampaignCancelPrefix }
+
+func (h *newCampaignCancelHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	campaignID, ok := parseConfigCustomID(i.MessageComponentData().CustomID)
+	if !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+
+	c, err := loadCampaignForConfig(h.db, campaignID, helpers.GetUserID(i))
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	ctx := context.Background()
+	if _, err := h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
+		Where("campaign_id = ?", c.ID).Exec(ctx); err != nil {
+		log.Printf("newcampaign_cancel: failed to delete campaign players: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	if err := db.Delete[models.Campaign](h.db, c.ID); err != nil {
+		log.Printf("newcampaign_cancel: failed to delete campaign: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
+	helpers.RespondUpdate(s, i, messages.NewCampaignCancelledMessage, nil, nil)
+}
+
+/*
+	Game Details Modal: parses rules, VTT platform, books allowed, and extra info,
+	saves them to the campaign, then sends approval DMs to staff.
+
+	This is the final step of the new-campaign creation flow.
+*/
+
+type newCampaignGameDetailsModal struct {
+	db         *bun.DB
+	dispatcher *dispatch.Dispatcher
+}
+
+func (h *newCampaignGameDetailsModal) CustomIDPrefix() string {
+	return messages.NewCampaignGameDetailsModalID
+}
+
+func (h *newCampaignGameDetailsModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts := strings.SplitN(i.ModalSubmitData().CustomID, ":", 2)
+	if len(parts) < 2 || parts[1] == "" {
+		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
+		return
+	}
+	campaignID := parts[1]
+	userID := helpers.GetUserID(i)
+
+	c, err := loadCampaignForConfig(h.db, campaignID, userID)
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	var rulesStr, vttStr, booksStr, extraStr string
+	for _, row := range i.ModalSubmitData().Components {
+		for _, comp := range row.(*discordgo.ActionsRow).Components {
+			input := comp.(*discordgo.TextInput)
+			switch input.CustomID {
+			case messages.NewCampaignRulesFieldID:
+				rulesStr = strings.TrimSpace(input.Value)
+			case messages.NewCampaignVTTFieldID:
+				vttStr = strings.TrimSpace(input.Value)
+			case messages.NewCampaignBooksFieldID:
+				booksStr = strings.TrimSpace(input.Value)
+			case messages.NewCampaignExtraFieldID:
+				extraStr = strings.TrimSpace(input.Value)
+			}
+		}
+	}
+
+	c.Game.Rules = rulesStr
+	c.Game.VTT = vttStr
+	c.Extra = extraStr
+	if booksStr != "" {
+		for _, b := range strings.FieldsFunc(booksStr, func(r rune) bool { return r == ',' || r == '\n' }) {
+			if b = strings.TrimSpace(b); b != "" {
+				c.Game.BooksAllowed = append(c.Game.BooksAllowed, b)
+			}
+		}
+	}
+
+	if rulesStr != "" || vttStr != "" || booksStr != "" || extraStr != "" {
+		if err := db.Update(h.db, c); err != nil {
+			log.Printf("newcampaign_gamedetails: update failed: %v", err)
+			helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+			return
+		}
+	}
+
 	staffMembers, err := db.GetStaff(h.db)
 	if err != nil {
-		log.Printf("newcampaign_schedule: failed to get staff: %v", err)
+		log.Printf("newcampaign_gamedetails: failed to get staff: %v", err)
 		helpers.RespondUpdateTerminal(s, i, messages.CampaignStaffNotifyFailureMessage)
 		return
 	}
@@ -505,43 +647,4 @@ func (h *newCampaignScheduleModal) HandleModal(s *discordgo.Session, i *discordg
 			Flags: discordgo.MessageFlagsEphemeral,
 		},
 	})
-}
-
-/*
-	Cancellation
-*/
-
-type newCampaignCancelHandler struct {
-	db *bun.DB
-}
-
-func (h *newCampaignCancelHandler) CustomIDPrefix() string { return messages.NewCampaignCancelPrefix }
-
-func (h *newCampaignCancelHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	campaignID, ok := parseConfigCustomID(i.MessageComponentData().CustomID)
-	if !ok {
-		helpers.RespondUpdateTerminal(s, i, messages.InvalidButtonDataMessage)
-		return
-	}
-
-	c, err := loadCampaignForConfig(h.db, campaignID, helpers.GetUserID(i))
-	if err != nil {
-		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
-		return
-	}
-
-	ctx := context.Background()
-	if _, err := h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
-		Where("campaign_id = ?", c.ID).Exec(ctx); err != nil {
-		log.Printf("newcampaign_cancel: failed to delete campaign players: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
-		return
-	}
-	if err := db.Delete[models.Campaign](h.db, c.ID); err != nil {
-		log.Printf("newcampaign_cancel: failed to delete campaign: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
-		return
-	}
-
-	helpers.RespondUpdate(s, i, messages.NewCampaignCancelledMessage, nil, nil)
 }

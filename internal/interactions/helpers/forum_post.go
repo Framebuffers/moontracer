@@ -57,10 +57,6 @@ func NewCampaignForumPost(db *bun.DB, s *discordgo.Session, c *models.Campaign) 
 	if books == "" {
 		books = messages.NoneLabel
 	}
-	extras := strings.Join(c.Game.OtherGame, ", ")
-	if extras == "" {
-		extras = messages.NoneLabel
-	}
 
 	var b strings.Builder
 
@@ -72,12 +68,11 @@ func NewCampaignForumPost(db *bun.DB, s *discordgo.Session, c *models.Campaign) 
 	fmt.Fprintf(&b, "🏰 **Format:** %s\n", format)
 	fmt.Fprintf(&b, "📅 **Schedule:** %s\n\n", schedule)
 
-	fmt.Fprintf(&b, "## Format\n\n")
+	fmt.Fprintf(&b, "## Game info\n\n")
 	fmt.Fprintf(&b, "- 📖 **Edition:** %s\n", c.Game.Edition)
 	fmt.Fprintf(&b, "- 🧾 **Rules:** %s\n", c.Game.Rules)
 	fmt.Fprintf(&b, "- 🎲 **VTT:** %s\n", c.Game.VTT)
-	fmt.Fprintf(&b, "- 📚 **Books:** %s\n", books)
-	fmt.Fprintf(&b, "- ℹ️ **Extras:** %s\n\n", extras)
+	fmt.Fprintf(&b, "- 📚 **Books:** %s\n\n", books)
 
 	if len(c.Warnings) > 0 {
 		fmt.Fprintf(&b, "## ⚠️ Trigger warnings\n\n%s\n\n", strings.Join(c.Warnings, ", "))

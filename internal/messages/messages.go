@@ -499,8 +499,10 @@ const (
 	ThreadInitMsgAnnouncements = "📣 Campaign announcements and session news will be posted here."
 	ThreadInitMsgSessions      = "📅 Session schedules and notes will be posted here."
 	ThreadInitMsgDiceRolls     = "🎲 Roll your dice and share your results here!"
+
 	// ThreadInitMsgWelcomeFmt takes the campaign name as its argument.
-	ThreadInitMsgWelcomeFmt = "🐺 Welcome to **%s**! This is your campaign channel. \nCheck the other threads for announcements, sessions, dice rolls, and general discussion."
+	ThreadInitMsgWelcomeFmt    = "🐺 Welcome to **%s**! This is your campaign channel. \nCheck the other threads for announcements, sessions, dice rolls, and general discussion."
+	WelcomeThreadCoverReminder = "-# 📷 DM: Don't forget to add a cover image in campaign settings: it'll appear here and in the billboard! Use `/campaignupload` to upload an image."
 )
 
 // DayOfWeekInput maps accepted day-name inputs (lower-cased) to 0-based weekday index (Mon=0).
@@ -684,6 +686,9 @@ const (
 	// identifiers
 	ManageLinksPrefix  = "manage_links"
 	ManageLinksModalID = "modal_manage_links"
+
+	ManageGameInfoPrefix  = "manage_game_info"
+	ManageGameInfoModalID = "modal_manage_game_info"
 )
 const (
 	// user-facing
@@ -695,10 +700,22 @@ const (
 	ManageLinksResourcesPlaceholder = "https://drive.google.com/...\nhttps://example.com/map"
 	ManageLinksSuccess              = "✅ Links updated for **%s**."
 	ManageLinksEmbedTitle           = "🔗 Links"
-	ManageReminderLinks             = "\n\n🔗 **Links for tonight:**"
-	ManageReminderVTT               = "\nVTT: %s"
-	ManageReminderSheets            = "\nSheets: %s"
-	ManageReminderResource          = "\n• %s"
+
+	ManageGameInfoLabel            = "🎲 Game Info"
+	ManageGameInfoModalTitle       = "🎲 Game Details"
+	ManageGameInfoRulesLabel       = "House rules / variant (optional)"
+	ManageGameInfoRulesPlaceholder = "e.g. Milestone levelling, no flanking..."
+	ManageGameInfoVTTLabel         = "VTT platform (optional)"
+	ManageGameInfoVTTPlaceholder   = "e.g. Roll20, Foundry VTT, Owlbear Rodeo..."
+	ManageGameInfoBooksLabel       = "Books allowed (comma-separated, optional)"
+	ManageGameInfoBooksPlaceholder = "e.g. PHB, Xanathar's, Tasha's"
+	ManageGameInfoExtraLabel       = "Extra info for players (optional)"
+	ManageGameInfoExtraPlaceholder = "Tone, session zero notes, Discord links..."
+	ManageGameInfoSuccess          = "✅ Game info updated for **%s**."
+	ManageReminderLinks            = "\n\n🔗 **Links for tonight:**"
+	ManageReminderVTT              = "\nVTT: %s"
+	ManageReminderSheets           = "\nSheets: %s"
+	ManageReminderResource         = "\n• %s"
 )
 
 // Manage campaign: additional buttons
@@ -1243,18 +1260,37 @@ Args: campaign name, DM user ID, message content.
 */
 const AnnouncementDMFmt = "🗣️ **[%s]** <@%s> says:\n\n%s"
 
-// New campaign modal: schedule step additions (internal)
+// New campaign modal: schedule step (internal)
 const (
 	NewCampaignWarningsFieldID = "newcampaign_warnings"
-	NewCampaignExtraFieldID    = "newcampaign_extra"
 )
 
-// New campaign modal: schedule step additions (user-facing)
+// New campaign modal: schedule step (user-facing)
 const (
 	NewCampaignWarningsLabel       = "Content warnings (optional)"
 	NewCampaignWarningsPlaceholder = "e.g. Violence, horror (comma-separated)"
-	NewCampaignExtraLabel          = "Extra info for players (optional)"
-	NewCampaignExtraPlaceholder    = "House rules, tone, session zero notes..."
+)
+
+// New campaign modal: game details step (internal)
+const (
+	NewCampaignGameDetailsModalID = "modal_newcampaign_gamedetails"
+	NewCampaignRulesFieldID       = "newcampaign_rules"
+	NewCampaignVTTFieldID         = "newcampaign_vtt"
+	NewCampaignBooksFieldID       = "newcampaign_books"
+	NewCampaignExtraFieldID       = "newcampaign_extra"
+)
+
+// New campaign modal: game details step (user-facing)
+const (
+	NewCampaignGameDetailsModalTitle = "🎲 Game Details"
+	NewCampaignRulesLabel            = "House rules / variant (optional)"
+	NewCampaignRulesPlaceholder      = "e.g. Milestone levelling, no flanking..."
+	NewCampaignVTTLabel              = "VTT platform (optional)"
+	NewCampaignVTTPlaceholder        = "e.g. Roll20, Foundry VTT, Owlbear Rodeo..."
+	NewCampaignBooksLabel            = "Books allowed (comma-separated, optional)"
+	NewCampaignBooksPlaceholder      = "e.g. PHB, Xanathar's, Tasha's"
+	NewCampaignExtraLabel            = "Extra info for players (optional)"
+	NewCampaignExtraPlaceholder      = "Tone, session zero notes, Discord links..."
 )
 
 // Import campaign: billboard channel selector (user-facing)

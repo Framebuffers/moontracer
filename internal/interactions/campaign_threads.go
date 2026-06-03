@@ -133,7 +133,7 @@ func SetupNewChannel(database *bun.DB, s *discordgo.Session, guildID string, c *
 		return fmt.Errorf("create channel: %w", err)
 	}
 	c.ChannelID = ch.ID
-	createStandardThreads(s, c, ch.ID, channelName)
+	createStandardThreads(database, s, c, ch.ID, channelName)
 	return nil
 }
 
@@ -143,17 +143,17 @@ the standard threads inside it.
 
 Mutates campaign in-place with ChannelID and AnnouncementsThreadID.
 */
-func SetupExistingChannel(s *discordgo.Session, c *models.Campaign, channelID string) {
+func SetupExistingChannel(database *bun.DB, s *discordgo.Session, c *models.Campaign, channelID string) {
 	channelName := c.Tag
 	if channelName == "" {
 		channelName = models.NormalizeTag(c.Name)
 	}
 	c.ChannelID = channelID
-	createStandardThreads(s, c, channelID, channelName)
+	createStandardThreads(database, s, c, channelID, channelName)
 }
 
 // createStandardThreads creates the standard threads in channelID and sets AnnouncementsThreadID.
-func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, channelName string) {
+func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Campaign, channelID, channelName string) {
 	for _, name := range standardThreads {
 		threadName := fmt.Sprintf("%s-%s", channelName, name)
 		thread, err := guard.ThreadCreate(s, channelID, threadName, defaultArchiveDuration)
@@ -176,10 +176,14 @@ func createStandardThreads(s *discordgo.Session, c *models.Campaign, channelID, 
 			}
 		}
 
-		// Resolve init message: welcome uses the campaign name; others use the static map.
+		// Resolve init message: welcome mirrors the billboard body; others use the static map.
 		var initMsg string
 		if name == "welcome" {
-			initMsg = fmt.Sprintf(messages.ThreadInitMsgWelcomeFmt, c.Name)
+			_, body, _ := helpers.NewCampaignForumPost(database, s, c)
+			if body == "" {
+				body = fmt.Sprintf(messages.ThreadInitMsgWelcomeFmt, c.Name)
+			}
+			initMsg = body + "\n" + messages.WelcomeThreadCoverReminder
 		} else if msg, ok := threadInitMessages[name]; ok {
 			initMsg = msg
 		}
