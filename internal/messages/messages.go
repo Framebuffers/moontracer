@@ -1339,9 +1339,18 @@ const (
 const (
 	ImportBillboardSelPrefix      = "import_billboard_sel"
 	ImportBillboardSelPlaceholder = "Select the billboard forum channel…"
-	ImportBillboardPrompt         = "**Select the forum channel** where this campaign's post should appear, or skip to auto-create one."
+	ImportBillboardPrompt         = "**Select the forum channel** where this campaign's post should appear, link an existing thread, or skip to auto-create one."
 	ImportBillboardSkipPrefix     = "import_billboard_skip"
 	ImportBillboardSkipLabel      = "Auto-create"
+
+	ImportBillboardLinkPrefix           = "import_billboard_link"
+	ImportBillboardLinkModalID          = "modal_import_billboard_link"
+	ImportBillboardLinkLabel            = "🔗 Link existing thread"
+	ImportBillboardLinkFieldID          = "thread_id"
+	ImportBillboardLinkFieldLabel       = "Billboard Thread ID"
+	ImportBillboardLinkFieldPlaceholder = "Paste the forum thread ID (right-click → Copy ID)…"
+	ImportBillboardLinkSuccess          = "✅ Billboard linked for **%s**."
+	ImportBillboardLinkNotThread        = "🚫 That channel is not a forum thread. Paste the thread ID, not the forum channel ID."
 )
 
 // Timezone preference

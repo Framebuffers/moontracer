@@ -194,6 +194,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// Campaign import billboard channel selector
 		&importBillboardSelHandler{db: db},
 		&importBillboardSkipHandler{db: db},
+		&importBillboardLinkHandler{},
 	}
 }
 
@@ -215,5 +216,6 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, d
 		&playerSetSheetModal{db: db},
 		&playerContactDMModal{db: db, dispatcher: d},
 		&tokenApplyModal{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
+		&importBillboardLinkModal{db: db},
 	}
 }

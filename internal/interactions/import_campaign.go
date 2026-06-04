@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/guard"
 	"github.com/framebuffers/moontracer/internal/importsession"
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
@@ -340,7 +342,7 @@ func containsString(ss []string, s string) bool {
 	return false
 }
 
-// importBillboardStep3Components builds the channel-select + auto-create row for Step 3.
+// importBillboardStep3Components builds the billboard selector row for the post-confirm step.
 func importBillboardStep3Components(campaignID, guildID string) []discordgo.MessageComponent {
 	return []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
@@ -351,6 +353,11 @@ func importBillboardStep3Components(campaignID, guildID string) []discordgo.Mess
 			},
 		}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.ImportBillboardLinkLabel,
+				Style:    discordgo.PrimaryButton,
+				CustomID: fmt.Sprintf("%s:%s:%s", messages.ImportBillboardLinkPrefix, campaignID, guildID),
+			},
 			discordgo.Button{
 				Label:    messages.ImportBillboardSkipLabel,
 				Style:    discordgo.SecondaryButton,
@@ -430,4 +437,117 @@ func (h *importBillboardSkipHandler) HandleComponents(s *discordgo.Session, i *d
 		return
 	}
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ImportCampaignSuccess, campaign.Name, 0, 0, 0))
+}
+
+/*
+importBillboardLinkHandler opens a modal so the admin can paste an existing billboard thread ID.
+
+CustomID: import_billboard_link:<campaignID>:<guildID>
+*/
+type importBillboardLinkHandler struct{}
+
+func (h *importBillboardLinkHandler) CustomIDPrefix() string {
+	return messages.ImportBillboardLinkPrefix
+}
+
+func (h *importBillboardLinkHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+	guildID := parts[2]
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseModal,
+		Data: &discordgo.InteractionResponseData{
+			CustomID: fmt.Sprintf("%s:%s:%s", messages.ImportBillboardLinkModalID, campaignID, guildID),
+			Title:    messages.ImportBillboardLinkLabel,
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.TextInput{
+						CustomID:    messages.ImportBillboardLinkFieldID,
+						Label:       messages.ImportBillboardLinkFieldLabel,
+						Style:       discordgo.TextInputShort,
+						Placeholder: messages.ImportBillboardLinkFieldPlaceholder,
+						Required:    true,
+						MaxLength:   25,
+					},
+				}},
+			},
+		},
+	})
+}
+
+/*
+importBillboardLinkModal handles the admin submitting an existing billboard thread ID.
+
+It fetches the thread from Discord to resolve its parent forum channel, validates it is
+actually a thread (not a text channel or category), then persists both IDs on the campaign.
+
+CustomID: modal_import_billboard_link:<campaignID>:<guildID>
+*/
+type importBillboardLinkModal struct {
+	db *bun.DB
+}
+
+func (h *importBillboardLinkModal) CustomIDPrefix() string {
+	return messages.ImportBillboardLinkModalID
+}
+
+func (h *importBillboardLinkModal) HandleModal(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.ModalSubmitData().CustomID, 3)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+
+	var threadID string
+	for _, row := range i.ModalSubmitData().Components {
+		ar, ok := row.(*discordgo.ActionsRow)
+		if !ok {
+			continue
+		}
+		for _, comp := range ar.Components {
+			ti, ok := comp.(*discordgo.TextInput)
+			if !ok {
+				continue
+			}
+			if ti.CustomID == messages.ImportBillboardLinkFieldID {
+				threadID = strings.TrimSpace(ti.Value)
+			}
+		}
+	}
+
+	if !messages.IsSnowflake(threadID) {
+		helpers.RespondUpdateTerminal(s, i, messages.ImportBillboardLinkNotThread)
+		return
+	}
+
+	// fetch the thread from Discord to validate and resolve its parent forum channel
+	ch, err := s.Channel(threadID)
+	if err != nil {
+		log.Printf("import_billboard_link: fetch channel %s: %v", threadID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	if ch.Type != discordgo.ChannelTypeGuildPublicThread && ch.Type != discordgo.ChannelTypeGuildPrivateThread {
+		helpers.RespondUpdateTerminal(s, i, messages.ImportBillboardLinkNotThread)
+		return
+	}
+
+	campaign, ok := helpers.LoadCampaignAsMod(s, i, h.db, campaignID)
+	if !ok {
+		return
+	}
+
+	campaign.BillboardThreadID = threadID
+	campaign.BillboardChannelID = ch.ParentID
+	if err := db.Update(h.db, campaign); err != nil {
+		log.Printf("import_billboard_link: save billboard IDs for %s: %v", campaignID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ImportBillboardLinkSuccess, campaign.Name))
 }
