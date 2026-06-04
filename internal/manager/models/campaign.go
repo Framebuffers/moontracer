@@ -364,3 +364,53 @@ func GetCampaignByAnnouncementsThreadID(database *bun.DB, threadID string) (*Cam
 		Scan(context.Background())
 	return c, err
 }
+
+/*
+PurgeCampaignData applies the delete policy: purge all relational data (players, sessions,
+non-cover media) and clear operational Discord fields, keeping only what is needed to
+reconstruct the campaign embed (name, description, game config, schedule, warnings, links,
+cover art).
+
+Call this before soft-deleting the campaign row so bun's soft-delete filter does not
+interfere with the UPDATE.
+*/
+func PurgeCampaignData(database *bun.DB, c *Campaign) error {
+	ctx := context.Background()
+
+	if _, err := database.NewDelete().
+		TableExpr("session_responses").
+		Where("session_id IN (SELECT id FROM sessions WHERE campaign_id = ?)", c.ID).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("delete session_responses: %w", err)
+	}
+
+	if _, err := database.NewDelete().Model((*Session)(nil)).
+		Where("campaign_id = ?", c.ID).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("delete sessions: %w", err)
+	}
+
+	if _, err := database.NewDelete().Model((*CampaignPlayer)(nil)).
+		Where("campaign_id = ?", c.ID).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("delete campaign_players: %w", err)
+	}
+
+	c.RoleID = ""
+	c.ChannelID = ""
+	c.CategoryID = ""
+	c.AnnouncementsThreadID = ""
+	c.BillboardChannelID = ""
+	c.BillboardThreadID = ""
+	c.IsApproved = false
+	c.IsOpen = false
+	c.CanOverflow = false
+
+	_, err := database.NewUpdate().Model(c).
+		Column("role_id", "channel_id", "category_id", "announcements_thread_id",
+			"billboard_channel_id", "billboard_thread_id",
+			"is_approved", "is_open", "can_overflow").
+		WherePK().
+		Exec(ctx)
+	return err
+}

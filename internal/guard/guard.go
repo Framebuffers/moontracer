@@ -92,6 +92,19 @@ func GuildRoleCreate(s *discordgo.Session, guildID string, params *discordgo.Rol
 	return s.GuildRoleCreate(guildID, params)
 }
 
+// GuildRoleEdit renames (or otherwise edits) an existing guild role, or logs in safe mode.
+func GuildRoleEdit(s *discordgo.Session, guildID, roleID string, params *discordgo.RoleParams) (*discordgo.Role, error) {
+	if SafeMode {
+		name := ""
+		if params != nil {
+			name = params.Name
+		}
+		log.Printf("guard: [SAFE_MODE] would rename role %s to %q in guild %s", roleID, name, guildID)
+		return &discordgo.Role{ID: roleID, Name: name}, nil
+	}
+	return s.GuildRoleEdit(guildID, roleID, params)
+}
+
 // GuildMemberRoleAdd adds a role to a member, or logs in safe mode.
 func GuildMemberRoleAdd(s *discordgo.Session, guildID, userID, roleID string) error {
 	if SafeMode {

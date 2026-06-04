@@ -52,6 +52,25 @@ func (h *manageSetRole) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	}
 	campaignID := parts[1]
 
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
+	if !ok {
+		return
+	}
+
+	// Pre-fill with the current Discord role name when one is already assigned.
+	var currentName string
+	if campaign.RoleID != "" {
+		roles, err := s.GuildRoles(i.GuildID)
+		if err == nil {
+			for _, r := range roles {
+				if r.ID == campaign.RoleID {
+					currentName = r.Name
+					break
+				}
+			}
+		}
+	}
+
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
@@ -66,6 +85,7 @@ func (h *manageSetRole) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 						Required:    true,
 						MaxLength:   100,
 						Placeholder: "e.g. Curse of Strahd",
+						Value:       currentName,
 					},
 				}},
 			},
@@ -103,48 +123,37 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 		return
 	}
 
-	roleName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
+	roleName := strings.TrimSpace(i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value)
 	if roleName == "" {
 		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
 		return
 	}
 
-	// discord role: find or create
-	var roleID string
-	roles, err := s.GuildRoles(i.GuildID)
-	if err != nil {
-		log.Printf("manage_role: failed to fetch guild roles: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
-		return
-	}
-
-	for _, role := range roles {
-		if strings.EqualFold(role.Name, roleName) {
-			roleID = role.ID
-			break
+	if campaign.RoleID != "" {
+		// Rename the existing campaign role.
+		if _, err := guard.GuildRoleEdit(s, i.GuildID, campaign.RoleID, &discordgo.RoleParams{Name: roleName}); err != nil {
+			log.Printf("manage_role: failed to rename role %s: %v", campaign.RoleID, err)
+			helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
+			return
 		}
-	}
-
-	if roleID == "" {
-		role, err := guard.GuildRoleCreate(s, i.GuildID, &discordgo.RoleParams{
-			Name: roleName,
-		})
+		log.Printf("manage_role: %s renamed role %s to %q for campaign %s", userID, campaign.RoleID, roleName, campaign.Name)
+	} else {
+		// No role yet: create one and link it.
+		role, err := guard.GuildRoleCreate(s, i.GuildID, &discordgo.RoleParams{Name: roleName})
 		if err != nil {
 			log.Printf("manage_role: failed to create role: %v", err)
 			helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
 			return
 		}
-		roleID = role.ID
+		campaign.RoleID = role.ID
+		if err := db.Update(h.db, campaign); err != nil {
+			log.Printf("manage_role: failed to update campaign: %v", err)
+			helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
+			return
+		}
+		log.Printf("manage_role: %s created and linked role %s (%s) to campaign %s", userID, roleName, role.ID, campaign.Name)
 	}
 
-	campaign.RoleID = roleID
-	if err := db.Update(h.db, campaign); err != nil {
-		log.Printf("manage_role: failed to update campaign: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
-		return
-	}
-
-	log.Printf("manage_role: %s linked role %s (%s) to campaign %s", userID, roleName, roleID, campaign.Name)
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageSetRoleSuccess, roleName, campaign.Name))
 }
 

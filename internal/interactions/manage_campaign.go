@@ -223,7 +223,13 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		}
 	}
 
-	// all records are soft-deleted: sets deleted-at and keeps it as a historical log.
+	// Purge relational data and clear operational fields, keeping only embed content.
+	if err := models.PurgeCampaignData(h.db, campaign); err != nil {
+		log.Printf("manage_delete_confirm: purge failed for %s: %v", campaignID, err)
+		// Non-fatal: proceed with soft-delete even if purge partially failed.
+	}
+
+	// Soft-delete the campaign row: sets deleted_at, preserves embed snapshot.
 	ctx := context.Background()
 	_, err := h.db.NewDelete().Model(campaign).WherePK().Exec(ctx)
 	if err != nil {
