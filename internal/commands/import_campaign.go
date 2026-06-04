@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/auth"
 	"github.com/framebuffers/moontracer/internal/importsession"
 	"github.com/framebuffers/moontracer/internal/messages"
 )
@@ -45,6 +46,18 @@ func (c *importCampaignCommand) Data() *discordgo.ApplicationCommand {
 }
 
 func (c *importCampaignCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	invokerID := i.Member.User.ID
+	if ok, err := auth.Authorize(c.db, invokerID, auth.ScopeMod, ""); err != nil || !ok {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: messages.CampaignDBNotStaff,
+				Flags:   discordgo.MessageFlagsEphemeral,
+			},
+		})
+		return
+	}
+
 	guildID := i.GuildID
 	opts := i.ApplicationCommandData().Options
 	channelID := opts[0].ChannelValue(s).ID

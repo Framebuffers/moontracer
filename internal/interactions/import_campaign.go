@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/auth"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/guard"
 	"github.com/framebuffers/moontracer/internal/importsession"
@@ -118,6 +119,11 @@ type importConfirmHandler struct {
 func (h *importConfirmHandler) CustomIDPrefix() string { return messages.ImportConfirmPrefix }
 
 func (h *importConfirmHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	if ok, err := auth.Authorize(h.db, helpers.GetUserID(i), auth.ScopeMod, ""); err != nil || !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+
 	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
 	if !ok {
 		return
