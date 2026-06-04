@@ -70,8 +70,9 @@ func NewCampaignForumPost(db *bun.DB, s *discordgo.Session, c *models.Campaign) 
 
 	fmt.Fprintf(&b, "## Game info\n\n")
 	fmt.Fprintf(&b, "- 📖 **Edition:** %s\n", c.Game.Edition)
-	fmt.Fprintf(&b, "- 🧾 **Rules:** %s\n", c.Game.Rules)
-	fmt.Fprintf(&b, "- 🎲 **VTT:** %s\n", c.Game.VTT)
+	if c.Game.Rules != "" {
+		fmt.Fprintf(&b, "- 🧾 **Rules:** %s\n", c.Game.Rules)
+	}
 	fmt.Fprintf(&b, "- 📚 **Books:** %s\n\n", books)
 
 	if len(c.Warnings) > 0 {
@@ -225,6 +226,28 @@ func WelcomeThreadSections(c *models.Campaign, coverReminder string) []string {
 	}
 
 	return sections
+}
+
+/*
+WelcomeNavSection builds the channel navigation block posted at the top of the welcome thread.
+
+channelID is the campaign's private channel. threadIDs maps slot name to the Discord thread ID.
+*/
+func WelcomeNavSection(channelID string, threadIDs map[string]string) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "## 📌 Channel Navigation\n\n**Open the channel here:** <#%s>\n\n", channelID)
+	for _, name := range messages.ThreadNavOrder {
+		id, ok := threadIDs[name]
+		if !ok || id == "" {
+			continue
+		}
+		emoji := messages.ThreadNavEmoji[name]
+		if emoji == "" {
+			emoji = "•"
+		}
+		fmt.Fprintf(&b, "%s <#%s>\n", emoji, id)
+	}
+	return b.String()
 }
 
 func truncate(s string, max int) string {

@@ -3,10 +3,12 @@ package discord
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 
+	"github.com/framebuffers/moontracer/internal/auditlog"
 	"github.com/framebuffers/moontracer/internal/commands"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/dispatch"
@@ -138,11 +140,105 @@ func HandleGuildMemberRemove(guildDBM *db.GuildDBManager, sched *scheduler.Sched
 			}
 			sched.Cancel(e.GuildID, cp.CampaignID)
 
-			if err := models.InsertAuditEntry(database, userID, "system", models.AuditCampaignArchive, "DM left server, campaign auto-archived"); err != nil {
-				log.Printf("events: failed to write audit entry for campaign %s: %v", cp.CampaignID, err)
-			}
+			auditlog.Post(s, database, e.GuildID, userID, "system", models.AuditCampaignArchive, "DM left server, campaign auto-archived")
 
 			log.Printf("events: auto-archived campaign %s (%s)- DM %s left server", cp.Campaign.Name, cp.CampaignID, userID)
 		}
+	}
+}
+
+// joinTriggers are the strings used when a user wants to join a Campaign by typing a specific word.
+var joinTriggers = map[string]bool{"me": true, "yo": true}
+
+/*
+HandleBillboardMessage watches every message in a campaign's billboard thread.
+
+If the message content matches a join trigger, the author is automatically registered
+(if not already) and joins the campaign.
+*/
+func HandleBillboardMessage(guildDBM *db.GuildDBManager, d *dispatch.Dispatcher) func(s *discordgo.Session, m *discordgo.MessageCreate) {
+	return func(s *discordgo.Session, m *discordgo.MessageCreate) {
+		if m.Author == nil || m.Author.Bot {
+			return
+		}
+		if !joinTriggers[strings.ToLower(strings.TrimSpace(m.Content))] {
+			return
+		}
+
+		guildDB, err := guildDBM.GetOrCreate(m.GuildID)
+		if err != nil {
+			return
+		}
+
+		campaign, err := models.GetCampaignByBillboardThreadID(guildDB, m.ChannelID)
+		if err != nil {
+			return // not a billboard thread we know about
+		}
+
+		userID := m.Author.ID
+
+		// auto-register non-members of the bot
+		if _, err := db.GetByID[models.Player](guildDB, userID); err != nil {
+			player := &models.Player{ID: userID}
+			if err := db.Insert(guildDB, player); err != nil {
+				log.Printf("events: billboard join: auto-register %s: %v", userID, err)
+				// try joining anyway
+			}
+		}
+
+		if !campaign.IsApproved || !campaign.CanMutate() {
+			return
+		}
+
+		players, err := models.GetCampaignPlayers(guildDB, campaign.ID)
+		if err != nil {
+			log.Printf("events: billboard join: load players for %s: %v", campaign.ID, err)
+			return
+		}
+		for _, p := range players {
+			if p.PlayerID == userID {
+				return // already in or banned
+			}
+		}
+
+		if !campaign.IsWestmarch && campaign.Slots > 0 {
+			active := 0
+			for _, p := range players {
+				if p.Status == models.StatusActive {
+					active++
+				}
+			}
+			if active >= campaign.Slots {
+				d.Push(dispatch.DirectMessage{
+					ID:      uuid.NewString(),
+					Target:  userID,
+					Content: messages.CampaignFullMessage,
+				})
+				return
+			}
+		}
+
+		cp := &models.CampaignPlayer{
+			PlayerID:   userID,
+			CampaignID: campaign.ID,
+			Role:       models.RolePlayer,
+			Status:     models.StatusActive,
+		}
+		if err := db.Insert(guildDB, cp); err != nil {
+			log.Printf("events: billboard join: insert player %s into %s: %v", userID, campaign.ID, err)
+			return
+		}
+
+		if campaign.RoleID != "" {
+			if err := guard.GuildMemberRoleAdd(s, m.GuildID, userID, campaign.RoleID); err != nil {
+				log.Printf("events: billboard join: assign role to %s: %v", userID, err)
+			}
+		}
+
+		d.Push(dispatch.DirectMessage{
+			ID:      uuid.NewString(),
+			Target:  userID,
+			Content: fmt.Sprintf(messages.PlayerJoinedCampaignMessage, campaign.Name),
+		})
 	}
 }

@@ -24,7 +24,7 @@ import (
 // Generic
 const (
 	// identifiers
-	BotVersion = "v1.1.0b-adamantine"
+	BotVersion = "v1.1.1b-adamantine"
 	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
 	// 2026-05-29: started implementing for real on my first big server
 )
@@ -508,7 +508,32 @@ const (
 	// ThreadInitMsgWelcomeFmt takes the campaign name as its argument.
 	ThreadInitMsgWelcomeFmt    = "🐺 Welcome to **%s**! This is your campaign channel. \nCheck the other threads for announcements, sessions, dice rolls, and general discussion."
 	WelcomeThreadCoverReminder = "-# 📷 DM: Don't forget to add a cover image in campaign settings: it'll appear here and in the billboard! Use `/campaignupload` to upload an image."
+
+	/*
+		ResourcesThreadSyncFmt is the content posted/edited in the resources thread when links change.
+
+		Args: VTT section (may be empty), links section (may be empty).
+	*/
+	ResourcesThreadSyncFmt = "## 🔗 Campaign Resources\n\n%s%s"
+	ResourcesThreadVTTFmt  = "🎲 **VTT:** %s\n"
+	ResourcesThreadLinkFmt = "• %s\n"
+	ResourcesThreadEmpty   = "_No resources set yet. The DM can add links in `/manage` → Settings → 🔗 Links._"
 )
+
+// ThreadNavEmoji maps thread slot names to their display emoji in the welcome nav section.
+var ThreadNavEmoji = map[string]string{
+	"announcements": "📣",
+	"sessions":      "📅",
+	"dice-rolls":    "🎲",
+	"characters":    "🧙",
+	"memes":         "😂",
+	"art":           "🎨",
+	"downtime":      "⏳",
+	"resources":     "🔗",
+}
+
+// ThreadNavOrder defines the display order of threads in the welcome nav section.
+var ThreadNavOrder = []string{"announcements", "sessions", "dice-rolls", "characters", "memes", "art", "downtime", "resources"}
 
 // DayOfWeekInput maps accepted day-name inputs (lower-cased) to 0-based weekday index (Mon=0).
 var DayOfWeekInput = map[string]int{
@@ -965,6 +990,25 @@ const (
 	AdminCampaignChannelLabel       = "📢 Campaign channel"
 	AdminCampaignChannelPlaceholder = "Select campaign announcements channel…"
 	AdminCampaignChannelSavedFmt    = "✅ Campaign channel set to %s."
+
+	AdminAuditLogChannelLabel       = "📋 Audit Log Channel"
+	AdminAuditLogChannelPlaceholder = "Select staff-only audit log channel…"
+	AdminAuditLogChannelSetPrefix   = "admin_audit_log_channel_set"
+)
+
+// Admin hub: Nuke
+const (
+	AdminNukeLabel             = "💣 Nuke Campaign"
+	AdminNukePrefix            = "admin_nuke"
+	AdminNukeSelectPrefix      = "admin_nuke_select"
+	AdminNukeConfirmPrefix     = "admin_nuke_confirm"
+	AdminNukeCancelPrefix      = "admin_nuke_cancel"
+	AdminNukeSelectPlaceholder = "Pick a campaign to permanently delete…"
+	AdminNukeConfirmFmt        = "⚠️ **CONFIRM NUKE** ⚠️\n\nYou are about to permanently delete **%s** (`%s`) from the database *and* Discord.\n\n**This cannot be undone.** All players, sessions, and session data will be erased. An audit entry will be kept."
+	AdminNukeInProgress        = "💣 Nuking campaign…"
+	AdminNukeCancelled         = "❌ Nuke cancelled."
+	AdminNukeChannelMismatch   = "🚫 Safety check failed: the Discord channel does not match the DB record. Aborting."
+	AdminNukeSuccess           = "✅ Campaign **%s** permanently deleted."
 )
 
 // Admin hub: Diagnostics
@@ -1181,41 +1225,28 @@ const (
 	ImportCampaignOptRole    = "role"
 	ImportCampaignOptDM      = "dm"
 
-	// Custom-ID prefixes for the three-step thread-mapping flow.
+	// Custom-ID prefixes for the one-step thread-mapping flow.
 	ImportThreadSelPrefix = "import_thread_sel" // import_thread_sel:<sessionID>:<threadName>
-	ImportNextPrefix      = "import_next"       // import_next:<sessionID>  (step 1 -> 2)
-	ImportNext2Prefix     = "import_next2"      // import_next2:<sessionID> (step 2 -> 3)
-	ImportBackPrefix      = "import_back"       // import_back:<sessionID>  (step 2 -> 1)
-	ImportBack2Prefix     = "import_back2"      // import_back2:<sessionID> (step 3 -> 2)
 	ImportConfirmPrefix   = "import_confirm"    // import_confirm:<sessionID>
 	ImportCancelPrefix    = "import_cancel"     // import_cancel:<sessionID>
 
 	// Sentinel stored in a session mapping when the user wants the bot to create the thread.
 	ImportCreateNew = "new"
 
-	// Step headers.
-	ImportStep1Header = "**Map threads for #%s** (step 1 of 3 - core)\nChoose an existing thread for each slot, or leave as **Create new**."
-	ImportStep2Header = "**Map threads for #%s** (step 2 of 3 - social)\nChoose an existing thread for each slot, or leave as **Create new**."
-	ImportStep3Header = "**Map threads for #%s** (step 3 of 3 - resources)\nChoose an existing thread for each slot, or leave as **Create new**."
+	// Step header.
+	ImportStep1Header = "**Map threads for #%s** (core threads)\nChoose an existing thread for each slot, or leave as **Create new**."
 
-	// Select-menu placeholders.
+	// Select-menu placeholders (core threads only).
 	ImportSelWelcome       = "🐺 Welcome!"
 	ImportSelAnnouncements = "🗣️ Announcements"
 	ImportSelSessions      = "📅 Sessions"
 	ImportSelDiceRolls     = "🎲 Dice rolls"
-	ImportSelCharacters    = "🎭 Characters"
-	ImportSelMemes         = "🤣 Memes"
-	ImportSelArt           = "🖼️ Art"
-	ImportSelDowntime      = "🍂 Downtime"
-	ImportSelResources     = "📚 Resources"
 
 	// "Create new" option shown at the top of every select menu.
 	ImportOptCreateNew      = "Create new"
 	ImportOptCreateNewDescr = "Bot will create this thread automatically."
 
 	// Button labels.
-	ImportNextLabel    = "Next ➡️"
-	ImportBackLabel    = "⬅️ Back"
 	ImportConfirmLabel = "✅ Confirm Import"
 	ImportCancelLabel  = "❌ Cancel"
 

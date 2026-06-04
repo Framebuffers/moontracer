@@ -145,6 +145,18 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		}
 	}
 
+	// Add the player to known campaign threads so they appear in the sidebar.
+	go func() {
+		for _, threadID := range []string{campaign.AnnouncementsThreadID, campaign.ResourcesThreadID} {
+			if threadID == "" {
+				continue
+			}
+			if err := guard.ThreadMemberAdd(s, threadID, userID); err != nil {
+				log.Printf("campaign_join: add %s to thread %s: %v", userID, threadID, err)
+			}
+		}
+	}()
+
 	// Auto-close when the last slot fills.
 	if !campaign.IsWestmarch && campaign.Slots > 0 && newActiveCount >= campaign.Slots && campaign.IsOpen {
 		campaign.IsOpen = false

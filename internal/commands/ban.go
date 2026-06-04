@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/auditlog"
 	"github.com/framebuffers/moontracer/internal/auth"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/manager/models"
@@ -137,9 +138,7 @@ func (r *banCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCreat
 
 	*/
 
-	if err := models.InsertAuditEntry(r.db, target.ID, invokerID, models.AuditBan, reason); err != nil {
-		log.Printf("ban: failed to write audit entry: %v", err)
-	}
+	auditlog.Post(s, r.db, i.GuildID, target.ID, invokerID, models.AuditBan, reason)
 
 	log.Printf("ban: %s banned %s (reason: %s)", invokerID, target.ID, reason)
 	if reason == "" {

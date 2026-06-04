@@ -45,6 +45,12 @@ type GuildSettings struct {
 		Empty means the feature is disabled.
 	*/
 	CampaignChannelID string `bun:",default:''" json:"campaign_channel_id"`
+
+	/*
+		AuditLogChannelID is a staff-only channel where every audit event is posted as an embed.
+		Empty means audit posting is disabled.
+	*/
+	AuditLogChannelID string `bun:",default:''" json:"audit_log_channel_id"`
 }
 
 // GetOrCreateGuildSettings returns the single GuildSettings row, inserting defaults if absent.

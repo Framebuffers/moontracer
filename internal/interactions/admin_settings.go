@@ -54,10 +54,11 @@ func renderAdminGeneralSettings(s *discordgo.Session, i *discordgo.InteractionCr
 	}
 
 	content := messages.AdminSettingsGeneralHeader +
-		fmt.Sprintf("**%s:** %s\n**%s:** %s\n**%s:** %s",
+		fmt.Sprintf("**%s:** %s\n**%s:** %s\n**%s:** %s\n**%s:** %s",
 			messages.AdminCampaignsCategoryLabel, channelRef(settings.CampaignsCategoryID),
 			messages.AdminArchivedCategoryLabel, channelRef(settings.ArchivedCategoryID),
 			messages.AdminCampaignChannelLabel, channelRef(settings.CampaignChannelID),
+			messages.AdminAuditLogChannelLabel, channelRef(settings.AuditLogChannelID),
 		)
 
 	chanSel := func(customID, placeholder string, types ...discordgo.ChannelType) discordgo.MessageComponent {
@@ -77,6 +78,8 @@ func renderAdminGeneralSettings(s *discordgo.Session, i *discordgo.InteractionCr
 		chanSel(messages.AdminArchivedCategorySetPrefix, messages.AdminArchivedCategoryPlaceholder,
 			discordgo.ChannelTypeGuildCategory),
 		chanSel(messages.AdminCampaignChannelSetPrefix, messages.AdminCampaignChannelPlaceholder,
+			discordgo.ChannelTypeGuildText),
+		chanSel(messages.AdminAuditLogChannelSetPrefix, messages.AdminAuditLogChannelPlaceholder,
 			discordgo.ChannelTypeGuildText),
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 			router.BackButton(messages.BackLabel, router.ViewAdmin),
@@ -392,4 +395,54 @@ func (h *adminBillboardSetHandler) HandleComponents(s *discordgo.Session, i *dis
 	}
 
 	renderAdminBillboardSettings(s, i, h.db)
+}
+
+/*
+adminAuditLogChannelSetHandler persists the admin's audit log channel selection.
+
+CustomID: admin_audit_log_channel_set
+*/
+type adminAuditLogChannelSetHandler struct {
+	db *bun.DB
+}
+
+func (h *adminAuditLogChannelSetHandler) CustomIDPrefix() string {
+	return messages.AdminAuditLogChannelSetPrefix
+}
+
+func (h *adminAuditLogChannelSetHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	userID := helpers.GetUserID(i)
+	if ok, err := auth.Authorize(h.db, userID, auth.ScopeAdmin, ""); err != nil || !ok {
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	settings, err := models.GetOrCreateGuildSettings(h.db)
+	if err != nil {
+		log.Printf("admin_audit_log_channel_set: load settings: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	channelID := values[0]
+	settings.AuditLogChannelID = channelID
+	if _, err := h.db.NewUpdate().Model(settings).WherePK().Exec(context.Background()); err != nil {
+		log.Printf("admin_audit_log_channel_set: save settings: %v", err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+
+	// posting: bot -> allow, members -> deny (staff controls view permissions)
+	if s.State != nil && s.State.User != nil {
+		if err := guard.ChannelPermissionSet(s, channelID, s.State.User.ID,
+			discordgo.PermissionOverwriteTypeMember,
+			discordgo.PermissionSendMessages|discordgo.PermissionViewChannel, 0); err != nil {
+			log.Printf("admin_audit_log_channel_set: allow bot in channel %s: %v", channelID, err)
+		}
+	}
+
+	renderAdminGeneralSettings(s, i, h.db)
 }

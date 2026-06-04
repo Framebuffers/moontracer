@@ -56,6 +56,8 @@ type Campaign struct {
 	ChannelID             string `bun:",default:''" json:"channel_id"`
 	CategoryID            string `bun:",default:''" json:"category_id"`
 	AnnouncementsThreadID string `bun:",default:''" json:"announcements_thread_id"`
+	ResourcesThreadID     string `bun:",default:''" json:"resources_thread_id"`
+	ResourcesPinMsgID     string `bun:",default:''" json:"resources_pin_msg_id"`
 
 	// Has this campaign been approved to be published?
 	IsApproved bool `bun:",notnull,default:false"`
@@ -365,6 +367,17 @@ func GetCampaignByAnnouncementsThreadID(database *bun.DB, threadID string) (*Cam
 	return c, err
 }
 
+// GetCampaignByBillboardThreadID finds an approved campaign whose billboard thread matches threadID.
+func GetCampaignByBillboardThreadID(database *bun.DB, threadID string) (*Campaign, error) {
+	c := &Campaign{}
+	err := database.NewSelect().Model(c).
+		Where("billboard_thread_id = ?", threadID).
+		Where("is_approved = 1").
+		Limit(1).
+		Scan(context.Background())
+	return c, err
+}
+
 /*
 PurgeCampaignData applies the delete policy: purge all relational data (players, sessions,
 non-cover media) and clear operational Discord fields, keeping only what is needed to
@@ -400,6 +413,8 @@ func PurgeCampaignData(database *bun.DB, c *Campaign) error {
 	c.ChannelID = ""
 	c.CategoryID = ""
 	c.AnnouncementsThreadID = ""
+	c.ResourcesThreadID = ""
+	c.ResourcesPinMsgID = ""
 	c.BillboardChannelID = ""
 	c.BillboardThreadID = ""
 	c.IsApproved = false
@@ -408,6 +423,7 @@ func PurgeCampaignData(database *bun.DB, c *Campaign) error {
 
 	_, err := database.NewUpdate().Model(c).
 		Column("role_id", "channel_id", "category_id", "announcements_thread_id",
+			"resources_thread_id", "resources_pin_msg_id",
 			"billboard_channel_id", "billboard_thread_id",
 			"is_approved", "is_open", "can_overflow").
 		WherePK().

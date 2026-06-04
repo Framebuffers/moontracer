@@ -25,6 +25,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/auditlog"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/guard"
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
@@ -222,9 +223,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 				log.Printf("manage_set_session: post to thread %s: %v", campaign.AnnouncementsThreadID, err)
 			}
 		}
-		if err := models.InsertAuditEntry(h.db, userID, userID, models.AuditSessionReschedule, reason); err != nil {
-			log.Printf("manage_set_session: audit entry for campaign %s: %v", campaign.ID, err)
-		}
+		auditlog.Post(s, h.db, i.GuildID, userID, userID, models.AuditSessionReschedule, reason)
 		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageSetSessionRescheduleSuccess, campaign.Name, displayTime, remaining))
 		return
 	}

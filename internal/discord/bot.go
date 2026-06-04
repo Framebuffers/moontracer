@@ -95,6 +95,7 @@ func (b *Bot) Run() error {
 
 	b.session.AddHandler(HandleGuildMemberRemove(b.guildDBM, b.scheduler))
 	b.session.AddHandler(HandleAnnouncementMessage(b.guildDBM, b.dispatcher))
+	b.session.AddHandler(HandleBillboardMessage(b.guildDBM, b.dispatcher))
 
 	// Initialize new guilds joined mid-runtime.
 	b.session.AddHandler(func(s *discordgo.Session, e *discordgo.GuildCreate) {

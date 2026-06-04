@@ -27,10 +27,13 @@ import (
 // defaultArchiveDuration is the auto-archive duration for new threads, in minutes (1 week).
 const defaultArchiveDuration = 10080
 
+/*
+standardThreads are the threads auto-created in every approved campaign's channel.
+welcome is last so the nav section can reference all other thread IDs.
 
-// standardThreads are the threads auto-created in every approved campaign's channel.
-// Locked threads (welcome, announcements, sessions) are DM/bot-only; the rest are open to players.
-var standardThreads = []string{"welcome", "announcements", "sessions", "dice-rolls", "characters", "memes", "art", "downtime", "resources"}
+Locked threads (welcome, announcements, sessions) are DM/bot-only. The rest are open to players.
+*/
+var standardThreads = []string{"announcements", "sessions", "dice-rolls", "characters", "memes", "art", "downtime", "resources", "welcome"}
 
 // threadInitMessages is the pinned welcome message sent to each standard thread on creation.
 var threadInitMessages = map[string]string{
@@ -87,7 +90,7 @@ func SetupNewChannel(database *bun.DB, s *discordgo.Session, guildID string, c *
 		categoryID = settings.BillboardCategoryID
 	} else {
 		var err error
-		categoryID, err = findOrCreateCampaignsCategory(s, guildID)
+		categoryID, err = helpers.FindOrCreateCampaignsCategory(s, guildID)
 		if err != nil {
 			return fmt.Errorf("resolve category: %w", err)
 		}
@@ -151,8 +154,14 @@ func SetupExistingChannel(database *bun.DB, s *discordgo.Session, c *models.Camp
 	createStandardThreads(database, s, c, channelID, channelName)
 }
 
-// createStandardThreads creates the standard threads in channelID and sets AnnouncementsThreadID.
+/*
+createStandardThreads creates the standard threads in channelID and updates c with their IDs.
+
+welcome is created last so its nav section can link to all other threads.
+*/
 func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Campaign, channelID, channelName string) {
+	threadIDs := make(map[string]string)
+
 	for _, name := range standardThreads {
 		threadName := fmt.Sprintf("%s-%s", channelName, name)
 		thread, err := guard.ThreadCreate(s, channelID, threadName, defaultArchiveDuration)
@@ -160,14 +169,26 @@ func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Cam
 			log.Printf("campaign_threads: create thread %s: %v", threadName, err)
 			continue
 		}
-		if name == "announcements" {
+		threadIDs[name] = thread.ID
+
+		// Auto-add the DM so threads appear in their sidebar.
+		if err := guard.ThreadMemberAdd(s, thread.ID, c.DungeonMaster); err != nil {
+			log.Printf("campaign_threads: add DM to thread %s: %v", name, err)
+		}
+
+		// Persist IDs for threads needed later
+		switch name {
+		case "announcements":
 			c.AnnouncementsThreadID = thread.ID
+		case "resources":
+			c.ResourcesThreadID = thread.ID
 		}
 
 		/*
 			Lock DM-only threads.
-			Players can view but not post. the DM and bot can post because they have ManageThreads on the parent channel.
-			This is such that this can be used as a broadcasting channel for new announcements without needing to add a role mention.
+
+			Players can view but not post: the DM and bot can post because they have ManageThreads
+			on the parent channel.
 		*/
 		if name == "welcome" || name == "sessions" || name == "announcements" {
 			if err := guard.LockThread(s, thread.ID); err != nil {
@@ -175,14 +196,16 @@ func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Cam
 			}
 		}
 
-		// Resolve init messages: welcome sends one message per section; others use the static map.
+		// welcome is built last with a nav section; other threads get static init messages.
 		if name == "welcome" {
+			nav := helpers.WelcomeNavSection(channelID, threadIDs)
 			sections := helpers.WelcomeThreadSections(c, messages.WelcomeThreadCoverReminder)
 			if len(sections) == 0 {
 				sections = []string{fmt.Sprintf(messages.ThreadInitMsgWelcomeFmt, c.Name)}
 			}
+			// nav is the first message, pin it
 			var pinID string
-			for _, section := range sections {
+			for _, section := range append([]string{nav}, sections...) {
 				msg, err := guard.ChannelMessageSend(s, thread.ID, section)
 				if err != nil {
 					log.Printf("campaign_threads: send init message to %s: %v", threadName, err)
@@ -200,12 +223,7 @@ func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Cam
 			continue
 		}
 
-		var initMsg string
-		if msg, ok := threadInitMessages[name]; ok {
-			initMsg = msg
-		}
-
-		if initMsg != "" {
+		if initMsg, ok := threadInitMessages[name]; ok {
 			msg, err := guard.ChannelMessageSend(s, thread.ID, initMsg)
 			if err != nil {
 				log.Printf("campaign_threads: send init message to %s: %v", threadName, err)
@@ -216,31 +234,11 @@ func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Cam
 			}
 		}
 	}
-}
 
-/*
-findOrCreateCampaignsCategory returns the ID of the shared "Campaigns" Discord category,
-creating it if it doesn't already exist in the guild.
-*/
-func findOrCreateCampaignsCategory(s *discordgo.Session, guildID string) (string, error) {
-	channels, err := s.GuildChannels(guildID)
-	if err != nil {
-		return "", fmt.Errorf("fetch guild channels: %w", err)
+	// Persist the new thread IDs.
+	if err := db.Update(database, c); err != nil {
+		log.Printf("campaign_threads: save thread IDs for %s: %v", c.ID, err)
 	}
-	for _, ch := range channels {
-		if ch.Type == discordgo.ChannelTypeGuildCategory &&
-			strings.EqualFold(ch.Name, messages.CampaignsCategoryName) {
-			return ch.ID, nil
-		}
-	}
-	cat, err := guard.GuildChannelCreateComplex(s, guildID, discordgo.GuildChannelCreateData{
-		Name: messages.CampaignsCategoryName,
-		Type: discordgo.ChannelTypeGuildCategory,
-	})
-	if err != nil {
-		return "", fmt.Errorf("create campaigns category: %w", err)
-	}
-	return cat.ID, nil
 }
 
 /*
@@ -376,56 +374,6 @@ func billboardChannelName(c *models.Campaign) string {
 }
 
 /*
-findOrCreateForumChannel finds a forum (ChannelTypeGuildForum) channel with the given name inside
-categoryID, or creates one if absent.
-
-Follows the same pattern as findOrCreateCampaignsCategory.
-*/
-func findOrCreateForumChannel(s *discordgo.Session, guildID, categoryID, name string) (string, error) {
-	channels, err := s.GuildChannels(guildID)
-	if err != nil {
-		return "", fmt.Errorf("fetch guild channels: %w", err)
-	}
-	for _, ch := range channels {
-		if ch.Type == discordgo.ChannelTypeGuildForum &&
-			ch.ParentID == categoryID &&
-			strings.EqualFold(ch.Name, name) {
-			return ch.ID, nil
-		}
-	}
-	ch, err := guard.GuildChannelCreateComplex(s, guildID, discordgo.GuildChannelCreateData{
-		Name:     name,
-		Type:     discordgo.ChannelTypeGuildForum,
-		ParentID: categoryID,
-	})
-	if err != nil {
-		return "", fmt.Errorf("create forum channel %q: %w", name, err)
-	}
-	return ch.ID, nil
-}
-
-/*
-findForumChannel looks for a forum (ChannelTypeGuildForum) channel with the given name inside
-categoryID.
-
-Returns ("", false) if not found. Does not create one.
-*/
-func findForumChannel(s *discordgo.Session, guildID, categoryID, name string) (string, bool) {
-	channels, err := s.GuildChannels(guildID)
-	if err != nil {
-		return "", false
-	}
-	for _, ch := range channels {
-		if ch.Type == discordgo.ChannelTypeGuildForum &&
-			ch.ParentID == categoryID &&
-			strings.EqualFold(ch.Name, name) {
-			return ch.ID, true
-		}
-	}
-	return "", false
-}
-
-/*
 PostBillboard resolves the correct billboard forum channel for c's format and creates a forum
 thread with the formatted campaign post.
 
@@ -439,7 +387,7 @@ func PostBillboard(database *bun.DB, s *discordgo.Session, c *models.Campaign, g
 	settings, _ := models.GetOrCreateGuildSettings(database)
 
 	if settings != nil {
-		if ch := billboardChannelFromSettings(settings, c); ch != "" {
+		if ch := helpers.BillboardChannelFromSettings(settings, c); ch != "" {
 			return PostBillboardToChannel(database, s, c, ch)
 		}
 	}
@@ -449,29 +397,18 @@ func PostBillboard(database *bun.DB, s *discordgo.Session, c *models.Campaign, g
 		categoryID = settings.BillboardCategoryID
 	} else {
 		var err error
-		categoryID, err = findOrCreateCampaignsCategory(s, guildID)
+		categoryID, err = helpers.FindOrCreateCampaignsCategory(s, guildID)
 		if err != nil {
 			return fmt.Errorf("resolve campaigns category: %w", err)
 		}
 	}
 
-	channelID, err := findOrCreateForumChannel(s, guildID, categoryID, billboardChannelName(c))
+	channelID, err := helpers.FindOrCreateForumChannel(s, guildID, categoryID, billboardChannelName(c))
 	if err != nil {
 		return fmt.Errorf("resolve billboard channel: %w", err)
 	}
 
 	return PostBillboardToChannel(database, s, c, channelID)
-}
-
-// billboardChannelFromSettings returns the configured forum channel ID for c's format, or "".
-func billboardChannelFromSettings(s *models.GuildSettings, c *models.Campaign) string {
-	if c.IsOneshot {
-		return s.BillboardChannelOneshot
-	}
-	if c.IsWestmarch {
-		return s.BillboardChannelWestmarch
-	}
-	return s.BillboardChannelCampaign
 }
 
 /*

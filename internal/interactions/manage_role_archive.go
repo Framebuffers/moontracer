@@ -23,6 +23,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/auditlog"
 	"github.com/framebuffers/moontracer/internal/commands"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/guard"
@@ -261,9 +262,7 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 	MoveToArchivedCategory(h.db, s, campaign)
 	DeleteBillboard(s, campaign)
 
-	if err := models.InsertAuditEntry(h.db, userID, userID, models.AuditCampaignArchive, fmt.Sprintf("archived campaign %s (%s) via manage menu", campaign.Name, campaign.Tag)); err != nil {
-		log.Printf("manage_archive: failed to write audit entry: %v", err)
-	}
+	auditlog.Post(s, h.db, i.GuildID, userID, userID, models.AuditCampaignArchive, fmt.Sprintf("archived campaign %s (%s) via manage menu", campaign.Name, campaign.Tag))
 
 	log.Printf("manage_archive: %s archived campaign %s (%s)", userID, campaign.Name, campaign.ID)
 	helpers.EditTerminal(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name))

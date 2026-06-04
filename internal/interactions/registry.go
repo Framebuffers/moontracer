@@ -135,7 +135,14 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&adminCampaignsCategoryHandler{db: db},
 		&adminArchivedCategoryHandler{db: db},
 		&adminCampaignChannelSetHandler{db: db},
+		&adminAuditLogChannelSetHandler{db: db},
 		&adminDiagHandler{db: db},
+
+		// Admin nuke
+		&adminNukeHandler{db: db},
+		&adminNukeSelectHandler{db: db},
+		&adminNukeCancelHandler{},
+		&adminNukeConfirmHandler{db: db},
 
 		// Manage: new campaign from button, links, game info, player tokens
 		&manageNewCampaignButton{db: db},
@@ -181,10 +188,6 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 
 		// Campaign import thread-mapping flow
 		&importThreadSelHandler{},
-		&importNextHandler{},
-		&importNext2Handler{},
-		&importBackHandler{},
-		&importBack2Handler{},
 		&importCancelHandler{},
 		&importConfirmHandler{db: db},
 

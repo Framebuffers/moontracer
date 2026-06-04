@@ -211,3 +211,21 @@ func GuildRoleDelete(s *discordgo.Session, guildID, roleID string) error {
 	}
 	return s.GuildRoleDelete(guildID, roleID)
 }
+
+// ThreadMemberAdd adds a user to a thread so it appears in their sidebar, or logs in safe mode.
+func ThreadMemberAdd(s *discordgo.Session, threadID, userID string) error {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would add user %s to thread %s", userID, threadID)
+		return nil
+	}
+	return s.ThreadMemberAdd(threadID, userID)
+}
+
+// ChannelMessageEdit edits an existing message in a channel, or logs in safe mode.
+func ChannelMessageEdit(s *discordgo.Session, channelID, messageID, content string) (*discordgo.Message, error) {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would edit message %s in channel %s", messageID, channelID)
+		return &discordgo.Message{ID: messageID}, nil
+	}
+	return s.ChannelMessageEdit(channelID, messageID, content)
+}

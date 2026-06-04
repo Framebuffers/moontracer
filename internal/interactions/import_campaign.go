@@ -79,114 +79,6 @@ func (h *importThreadSelHandler) HandleComponents(s *discordgo.Session, i *disco
 */
 
 /*
-importNextHandler moves forward from step 1 to step 2.
-
-CustomID: import_next:<sessionID>
-*/
-type importNextHandler struct{}
-
-func (h *importNextHandler) CustomIDPrefix() string { return messages.ImportNextPrefix }
-
-func (h *importNextHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
-	if !ok {
-		return
-	}
-	sessionID := parts[1]
-
-	sess, ok := importsession.Get(sessionID)
-	if !ok {
-		helpers.RespondUpdateTerminal(s, i, messages.ImportCampaignErrSession)
-		return
-	}
-
-	content := fmt.Sprintf(messages.ImportStep2Header, sess.ChannelName)
-	helpers.RespondUpdate(s, i, content, []*discordgo.MessageEmbed{},
-		importsession.BuildStep2Components(sessionID, sess.ExistingThreads, sess))
-}
-
-/*
-importNext2Handler moves forward from step 2 to step 3.
-
-CustomID: import_next2:<sessionID>
-*/
-type importNext2Handler struct{}
-
-func (h *importNext2Handler) CustomIDPrefix() string { return messages.ImportNext2Prefix }
-
-func (h *importNext2Handler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
-	if !ok {
-		return
-	}
-	sessionID := parts[1]
-
-	sess, ok := importsession.Get(sessionID)
-	if !ok {
-		helpers.RespondUpdateTerminal(s, i, messages.ImportCampaignErrSession)
-		return
-	}
-
-	content := fmt.Sprintf(messages.ImportStep3Header, sess.ChannelName)
-	helpers.RespondUpdate(s, i, content, []*discordgo.MessageEmbed{},
-		importsession.BuildStep3Components(sessionID, sess.ExistingThreads, sess))
-}
-
-/*
-importBackHandler returns from step 2 to step 1.
-
-CustomID: import_back:<sessionID>
-*/
-type importBackHandler struct{}
-
-func (h *importBackHandler) CustomIDPrefix() string { return messages.ImportBackPrefix }
-
-func (h *importBackHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
-	if !ok {
-		return
-	}
-	sessionID := parts[1]
-
-	sess, ok := importsession.Get(sessionID)
-	if !ok {
-		helpers.RespondUpdateTerminal(s, i, messages.ImportCampaignErrSession)
-		return
-	}
-
-	content := fmt.Sprintf(messages.ImportStep1Header, sess.ChannelName)
-	helpers.RespondUpdate(s, i, content, []*discordgo.MessageEmbed{},
-		importsession.BuildStep1Components(sessionID, sess.ExistingThreads, sess))
-}
-
-/*
-importBack2Handler returns from step 3 to step 2.
-
-CustomID: import_back2:<sessionID>
-*/
-type importBack2Handler struct{}
-
-func (h *importBack2Handler) CustomIDPrefix() string { return messages.ImportBack2Prefix }
-
-func (h *importBack2Handler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
-	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
-	if !ok {
-		return
-	}
-	sessionID := parts[1]
-
-	sess, ok := importsession.Get(sessionID)
-	if !ok {
-		helpers.RespondUpdateTerminal(s, i, messages.ImportCampaignErrSession)
-		return
-	}
-
-	content := fmt.Sprintf(messages.ImportStep2Header, sess.ChannelName)
-	helpers.RespondUpdate(s, i, content, []*discordgo.MessageEmbed{},
-		importsession.BuildStep2Components(sessionID, sess.ExistingThreads, sess))
-}
-
-/*
 	Cancel handlers
 */
 
@@ -332,9 +224,9 @@ func (h *importConfirmHandler) HandleComponents(s *discordgo.Session, i *discord
 
 		// Try to find an existing billboard forum channel for this campaign's format.
 		// If found, post immediately. If not, show a channel selector so the admin can pick one.
-		categoryID, catErr := findOrCreateCampaignsCategory(s, sess.GuildID)
+		categoryID, catErr := helpers.FindOrCreateCampaignsCategory(s, sess.GuildID)
 		if catErr == nil {
-			if chanID, ok := findForumChannel(s, sess.GuildID, categoryID, billboardChannelName(campaign)); ok {
+			if chanID, ok := helpers.FindForumChannel(s, sess.GuildID, categoryID, billboardChannelName(campaign)); ok {
 				if err := PostBillboardToChannel(h.db, s, campaign, chanID); err != nil {
 					log.Printf("importcampaign: billboard for %s: %v", campaign.ID, err)
 				}
@@ -351,16 +243,20 @@ func (h *importConfirmHandler) HandleComponents(s *discordgo.Session, i *discord
 }
 
 /*
-applyThreadMappings binds or creates each one of the standard threads based on
-the user's selections. It updates campaign.AnnouncementsThreadID in place.
+importCoreThreads are the only threads created/mapped during campaign import.
 
-NOTE: consider Unicode characters inside strings being parsed. Bun parametrizes all queries,
-so it shouldn't be a vector for SQL injections.
+Social and resources threads are excluded, the DM can create them manually.
+*/
+var importCoreThreads = []string{"welcome", "announcements", "sessions", "dice-rolls"}
+
+/*
+applyThreadMappings binds or creates each core thread based on the user's selections.
+It updates campaign.AnnouncementsThreadID in place.
 */
 func applyThreadMappings(s *discordgo.Session, sess *importsession.Session, campaign *models.Campaign) (created, bound int) {
 	const archiveDuration = 10080 // 1 week in mins
 
-	for _, name := range standardThreads {
+	for _, name := range importCoreThreads {
 		threadName := fmt.Sprintf("%s-%s", sess.ChannelName, name)
 		choice := sess.GetCurrentThreadName(name)
 
@@ -375,13 +271,15 @@ func applyThreadMappings(s *discordgo.Session, sess *importsession.Session, camp
 			created++
 			threadID = thread.ID
 
-			var initMsg string
 			if name == "welcome" {
-				initMsg = fmt.Sprintf(messages.ThreadInitMsgWelcomeFmt, campaign.Name)
-			} else if msg, ok := threadInitMessages[name]; ok {
-				initMsg = msg
-			}
-			if initMsg != "" {
+				initMsg := fmt.Sprintf(messages.ThreadInitMsgWelcomeFmt, campaign.Name)
+				msg, err := guard.ChannelMessageSend(s, threadID, initMsg)
+				if err != nil {
+					log.Printf("importcampaign: init message for %s: %v", threadName, err)
+				} else if err := guard.ChannelMessagePin(s, threadID, msg.ID); err != nil {
+					log.Printf("importcampaign: pin in %s: %v", threadName, err)
+				}
+			} else if initMsg, ok := threadInitMessages[name]; ok {
 				msg, err := guard.ChannelMessageSend(s, threadID, initMsg)
 				if err != nil {
 					log.Printf("importcampaign: init message for %s: %v", threadName, err)
