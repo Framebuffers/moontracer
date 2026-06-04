@@ -27,6 +27,7 @@ import (
 // defaultArchiveDuration is the auto-archive duration for new threads, in minutes (1 week).
 const defaultArchiveDuration = 10080
 
+
 // standardThreads are the threads auto-created in every approved campaign's channel.
 // Locked threads (welcome, announcements, sessions) are DM/bot-only; the rest are open to players.
 var standardThreads = []string{"welcome", "announcements", "sessions", "dice-rolls", "characters", "memes", "art", "downtime", "resources"}
@@ -48,11 +49,9 @@ func EnsureCampaignRole(s *discordgo.Session, guildID string, c *models.Campaign
 	if c.RoleID != "" {
 		return nil
 	}
-	channelName := c.Tag
-	if channelName == "" {
-		channelName = models.NormalizeTag(c.Name)
-	}
-	role, err := guard.GuildRoleCreate(s, guildID, &discordgo.RoleParams{Name: channelName})
+	roleName := messages.CampaignRoleName(c.Name)
+	color := messages.RandomRoleColor()
+	role, err := guard.GuildRoleCreate(s, guildID, &discordgo.RoleParams{Name: roleName, Color: &color})
 	if err != nil {
 		return fmt.Errorf("create role: %w", err)
 	}

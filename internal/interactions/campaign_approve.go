@@ -98,15 +98,6 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		Sender:  senderID,
 		Target:  campaign.DungeonMaster,
 		Content: fmt.Sprintf(messages.CampaignApprovedDMMessage, campaign.Name),
-		Components: []discordgo.MessageComponent{
-			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-				discordgo.Button{
-					Label:    messages.ManageSetRoleLabel,
-					Style:    discordgo.SecondaryButton,
-					CustomID: fmt.Sprintf("%s:%s", messages.ManageSetRolePrefix, campaignID),
-				},
-			}},
-		},
 	})
 
 	content := fmt.Sprintf(messages.CampaignApprovedStatusMessage, campaign.Name)

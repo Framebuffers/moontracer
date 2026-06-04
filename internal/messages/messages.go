@@ -1,5 +1,10 @@
 package messages
 
+import (
+	"math/rand"
+	"strings"
+)
+
 /*
 
 	Messages:
@@ -1322,3 +1327,57 @@ const (
 	TimezoneSuccess           = "✅ Timezone set to **%s**."
 	TimezoneInvalid           = "⚠️ Unknown timezone. Please select from the list."
 )
+
+// Campaign role naming
+
+// standard discord colors
+var DiscordRoleColors = []int{
+	0x1ABC9C, 0x2ECC71, 0x3498DB, 0x9B59B6, 0xE91E63,
+	0xF1C40F, 0xE67E22, 0xE74C3C, 0x11806A, 0x1F8B4C,
+	0x206694, 0x71368A, 0xAD1457, 0xC27C0E, 0xA84300,
+	0x992D22, 0x607D8B, 0x99AAB5,
+}
+
+// RandomRoleColor returns a random color from the Discord role palette.
+func RandomRoleColor() int {
+	return DiscordRoleColors[rand.Intn(len(DiscordRoleColors))]
+}
+
+/*
+CampaignRoleName derives a short role name from a campaign name.
+
+Truncates at the first separator (":", " - ") or connector word in
+English ("of", "and", "or", ...) or Spanish ("de", "del", "y", "o", ...).
+*/
+func CampaignRoleName(name string) string {
+	lower := strings.ToLower(name)
+	cutAt := len(name)
+
+	for _, sep := range []string{":", " - "} {
+		if idx := strings.Index(lower, sep); idx != -1 && idx < cutAt {
+			cutAt = idx
+		}
+	}
+	connectors := []string{
+		// EN
+		" and ", " or ", " of ", " the ", " a ", " an ",
+		" in ", " into ", " on ", " at ", " to ", " for ",
+		" with ", " by ", " from ", " vs ", " vs. ",
+
+		// ES
+		" de ", " del ", " y ", " o ", " en ", " con ",
+		" por ", " para ", " desde ", " hasta ", " entre ",
+		" sobre ", " hacia ", " sin ",
+	}
+	for _, conn := range connectors {
+		if idx := strings.Index(lower, conn); idx != -1 && idx < cutAt {
+			cutAt = idx
+		}
+	}
+
+	result := strings.TrimSpace(name[:cutAt])
+	if len(result) < 3 {
+		return strings.TrimSpace(name)
+	}
+	return result
+}
