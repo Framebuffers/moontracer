@@ -78,6 +78,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&manageCampaignAnnounce{db: db},
 		&manageCampaignReschedule{db: db},
 		&manageSetRole{db: db},
+		&manageLinkRoleHandler{db: db},
+		&manageLinkRoleSelectHandler{db: db},
 		&manageArchive{db: db},
 		&manageArchiveConfirm{db: db, sched: sched},
 		&manageSetCover{db: db},

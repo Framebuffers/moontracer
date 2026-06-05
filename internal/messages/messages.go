@@ -517,7 +517,7 @@ const (
 	ResourcesThreadSyncFmt = "## 🔗 Campaign Resources\n\n%s%s"
 	ResourcesThreadVTTFmt  = "🎲 **VTT:** %s\n"
 	ResourcesThreadLinkFmt = "• %s\n"
-	ResourcesThreadEmpty   = "_No resources set yet. The DM can add links in `/manage` → Settings → 🔗 Links._"
+	ResourcesThreadEmpty   = "_No resources set yet. The DM can add links in `/manage` ➡️ Settings ➡️ 🔗 Links._"
 )
 
 // ThreadNavEmoji maps thread slot names to their display emoji in the welcome nav section.
@@ -758,6 +758,8 @@ const (
 	ManageDeleteConfirmID      = "manage_delete_confirm"
 	ManageArchiveConfirmID     = "manage_archive_confirm"
 	ManageArchiveCancelID      = "manage_archive_cancel"
+	ManageLinkRolePrefix       = "manage_link_role"
+	ManageLinkRoleSelectPrefix = "manage_link_role_sel"
 )
 const (
 	// user-facing
@@ -769,6 +771,11 @@ const (
 	ManageSetRoleFieldLabel = "Role name (creates if it doesn't exist)"
 	ManageSetRoleSuccess    = "✅ Linked role **%s** to campaign **%s**."
 	ManageSetRoleFailed     = "🚫 Failed to set role."
+
+	// Link existing role selector
+	ManageLinkRoleLabel       = "🔗 Link Existing Role"
+	ManageLinkRolePlaceholder = "Select the Discord role for this campaign…"
+	ManageLinkRoleSuccess     = "✅ Role linked to **%s**."
 
 	// Delete confirmation + handler
 	ManageDeleteConfirm      = "⚠️ Are you sure you want to delete **%s**? This is permanent and cannot be undone. All members will be removed."
@@ -1354,7 +1361,7 @@ const (
 	ImportBillboardLinkLabel            = "🔗 Link existing thread"
 	ImportBillboardLinkFieldID          = "thread_id"
 	ImportBillboardLinkFieldLabel       = "Billboard Thread ID"
-	ImportBillboardLinkFieldPlaceholder = "Paste the forum thread ID (right-click → Copy ID)…"
+	ImportBillboardLinkFieldPlaceholder = "Paste the forum thread ID (right-click ➡️ Copy ID)…"
 	ImportBillboardLinkSuccess          = "✅ Billboard linked for **%s**."
 	ImportBillboardLinkNotThread        = "🚫 That channel is not a forum thread. Paste the thread ID, not the forum channel ID."
 )

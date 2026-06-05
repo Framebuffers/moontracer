@@ -163,6 +163,11 @@ func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 			},
 		}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.ManageLinkRoleLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageLinkRolePrefix, campaignID),
+			},
 			router.NavButton(messages.ManageDangerLabel, discordgo.DangerButton, router.ViewManageDanger, campaignID),
 		}},
 		helpers.BackRow(router.ViewManageCampaign, campaignID),

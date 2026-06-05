@@ -267,3 +267,104 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 	log.Printf("manage_archive: %s archived campaign %s (%s)", userID, campaign.Name, campaign.ID)
 	helpers.EditTerminal(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name))
 }
+
+/*
+manageLinkRoleHandler shows a Discord role select menu so the DM can link an existing
+guild role to their campaign without creating a new one.
+
+CustomID: manage_link_role:<campaignID>
+*/
+type manageLinkRoleHandler struct {
+	db *bun.DB
+}
+
+func (h *manageLinkRoleHandler) CustomIDPrefix() string { return messages.ManageLinkRolePrefix }
+
+func (h *manageLinkRoleHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
+	if !ok {
+		return
+	}
+	if !helpers.IsCampaignMutable(s, i, campaign) {
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("**Link an existing role to %s**\nPick the Discord role that gates access to this campaign's channel.", campaign.Name),
+			Embeds:  []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						MenuType:    discordgo.RoleSelectMenu,
+						CustomID:    fmt.Sprintf("%s:%s", messages.ManageLinkRoleSelectPrefix, campaignID),
+						Placeholder: messages.ManageLinkRolePlaceholder,
+					},
+				}},
+				helpers.BackRow(router.ViewManageSettings, campaignID),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
+/*
+manageLinkRoleSelectHandler saves the selected role to the campaign and applies channel
+permissions so the role grants access immediately.
+
+CustomID: manage_link_role_sel:<campaignID>
+*/
+type manageLinkRoleSelectHandler struct {
+	db *bun.DB
+}
+
+func (h *manageLinkRoleSelectHandler) CustomIDPrefix() string {
+	return messages.ManageLinkRoleSelectPrefix
+}
+
+func (h *manageLinkRoleSelectHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	roleID := values[0]
+
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
+	if !ok {
+		return
+	}
+	if !helpers.IsCampaignMutable(s, i, campaign) {
+		return
+	}
+
+	campaign.RoleID = roleID
+	if err := db.Update(h.db, campaign); err != nil {
+		log.Printf("manage_link_role_sel: update campaign %s: %v", campaignID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
+		return
+	}
+
+	if messages.IsSnowflake(campaign.ChannelID) {
+		if err := guard.ChannelPermissionSet(s, campaign.ChannelID, roleID,
+			discordgo.PermissionOverwriteTypeRole, discordgo.PermissionViewChannel, 0); err != nil {
+			log.Printf("manage_link_role_sel: allow role %s on channel %s: %v", roleID, campaign.ChannelID, err)
+		}
+	}
+
+	_ = strings.TrimSpace // keep strings import used
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageLinkRoleSuccess, campaign.Name))
+}
