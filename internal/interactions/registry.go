@@ -80,6 +80,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&manageSetRole{db: db},
 		&manageLinkRoleHandler{db: db},
 		&manageLinkRoleSelectHandler{db: db},
+		&manageRemapThreadsHandler{db: db},
+		&manageRemapConfirmHandler{db: db},
 		&manageArchive{db: db},
 		&manageArchiveConfirm{db: db, sched: sched},
 		&manageSetCover{db: db},

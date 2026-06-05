@@ -772,6 +772,13 @@ const (
 	ManageSetRoleSuccess    = "✅ Linked role **%s** to campaign **%s**."
 	ManageSetRoleFailed     = "🚫 Failed to set role."
 
+	// Thread remap
+	ManageRemapThreadsLabel   = "🔀 Remap Threads"
+	ManageRemapThreadsPrefix  = "manage_remap_threads"
+	ManageRemapConfirmPrefix  = "manage_remap_confirm"
+	ManageRemapHeader         = "**Remap threads for %s**\nSelect the correct thread for each slot. Leave unchanged to keep the current mapping."
+	ManageRemapSuccess        = "✅ Thread mappings updated for **%s**."
+
 	// Link existing role selector
 	ManageLinkRoleLabel       = "🔗 Link Existing Role"
 	ManageLinkRolePlaceholder = "Select the Discord role for this campaign…"

@@ -90,7 +90,7 @@ func (c *importCampaignCommand) Execute(s *discordgo.Session, i *discordgo.Inter
 			return
 		}
 
-		threads := fetchExistingThreads(s, guildID, channelID)
+		threads := FetchExistingThreads(s, guildID, channelID)
 		sessionID, _ := importsession.New(guildID, channelID, ch.Name, roleID, dmID, threads)
 
 		content := fmt.Sprintf(messages.ImportStep1Header, ch.Name)
@@ -100,8 +100,8 @@ func (c *importCampaignCommand) Execute(s *discordgo.Session, i *discordgo.Inter
 
 func (c *importCampaignCommand) Hidden() bool { return true }
 
-// fetchExistingThreads returns all active and archived threads in channelID.
-func fetchExistingThreads(s *discordgo.Session, guildID, channelID string) []importsession.ThreadOption {
+// FetchExistingThreads returns all active and archived threads in channelID.
+func FetchExistingThreads(s *discordgo.Session, guildID, channelID string) []importsession.ThreadOption {
 	seen := map[string]bool{}
 	var opts []importsession.ThreadOption
 
