@@ -996,6 +996,12 @@ const (
 	AdminAuditLogChannelSetPrefix   = "admin_audit_log_channel_set"
 )
 
+// Admin hub: Billboard repost
+const (
+	AdminRepostBillboardLabel  = "🪧 Repost Billboard"
+	AdminRepostBillboardPrefix = "admin_repost_billboard"
+)
+
 // Admin hub: Nuke
 const (
 	AdminNukeLabel             = "💣 Nuke Campaign"

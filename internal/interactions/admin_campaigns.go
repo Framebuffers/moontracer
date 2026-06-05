@@ -227,9 +227,60 @@ func (h *adminCampaignSelectHandler) HandleComponents(s *discordgo.Session, i *d
 						Style: discordgo.LinkButton,
 						URL:   fmt.Sprintf("discord://-/users/%s", campaign.DungeonMaster),
 					},
+					discordgo.Button{
+						Label:    messages.AdminRepostBillboardLabel,
+						Style:    discordgo.SecondaryButton,
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.AdminRepostBillboardPrefix, campaign.ID, i.GuildID),
+					},
 				}},
 			},
 			Flags: discordgo.MessageFlagsEphemeral,
+		},
+	})
+}
+
+/*
+adminRepostBillboardHandler opens the billboard channel selector for any campaign.
+
+Reuses importBillboardStep3Components, giving three options: pick a forum channel,
+link an existing thread by ID, or auto-create.
+
+CustomID: admin_repost_billboard:<campaignID>:<guildID>
+*/
+type adminRepostBillboardHandler struct {
+	db *bun.DB
+}
+
+func (h *adminRepostBillboardHandler) CustomIDPrefix() string {
+	return messages.AdminRepostBillboardPrefix
+}
+
+func (h *adminRepostBillboardHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 3)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+
+	if authOK, err := auth.Authorize(h.db, helpers.GetUserID(i), auth.ScopeMod, ""); err != nil || !authOK {
+		helpers.RespondUpdateTerminal(s, i, messages.CampaignDBNotStaff)
+		return
+	}
+
+	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
+	if err != nil {
+		helpers.RespondUpdateTerminal(s, i, messages.ManageCampaignNotFound)
+		return
+	}
+
+	prompt := fmt.Sprintf("**Repost billboard for %s**\n\n", campaign.Name) + messages.ImportBillboardPrompt
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content:    prompt,
+			Embeds:     []*discordgo.MessageEmbed{},
+			Components: importBillboardStep3Components(campaignID, i.GuildID),
+			Flags:      discordgo.MessageFlagsEphemeral,
 		},
 	})
 }
