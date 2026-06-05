@@ -141,6 +141,54 @@ func SetupNewChannel(database *bun.DB, s *discordgo.Session, guildID string, c *
 }
 
 /*
+SyncChannelPermissions applies the standard bot-expected permission overwrites to an existing
+campaign channel. Call this during import so the bot can manage threads, the DM can post in
+locked threads, and the campaign role gates channel visibility.
+
+Mirrors the overwrites set by SetupNewChannel.
+*/
+func SyncChannelPermissions(s *discordgo.Session, guildID string, c *models.Campaign) {
+	channelID := c.ChannelID
+	if !messages.IsSnowflake(channelID) {
+		return
+	}
+
+	// @everyone: deny ViewChannel
+	if err := guard.ChannelPermissionSet(s, channelID, guildID,
+		discordgo.PermissionOverwriteTypeRole, 0, discordgo.PermissionViewChannel); err != nil {
+		log.Printf("campaign_threads: sync perms %s: deny everyone: %v", channelID, err)
+	}
+
+	// Bot: full control
+	if s.State != nil && s.State.User != nil {
+		if err := guard.ChannelPermissionSet(s, channelID, s.State.User.ID,
+			discordgo.PermissionOverwriteTypeMember,
+			discordgo.PermissionViewChannel|discordgo.PermissionManageThreads|discordgo.PermissionSendMessages|discordgo.PermissionManageMessages,
+			0); err != nil {
+			log.Printf("campaign_threads: sync perms %s: allow bot: %v", channelID, err)
+		}
+	}
+
+	// DM: can post in locked threads via ManageThreads
+	if messages.IsSnowflake(c.DungeonMaster) {
+		if err := guard.ChannelPermissionSet(s, channelID, c.DungeonMaster,
+			discordgo.PermissionOverwriteTypeMember,
+			discordgo.PermissionViewChannel|discordgo.PermissionSendMessages|discordgo.PermissionManageThreads,
+			0); err != nil {
+			log.Printf("campaign_threads: sync perms %s: allow DM: %v", channelID, err)
+		}
+	}
+
+	// Campaign role: allow ViewChannel
+	if messages.IsSnowflake(c.RoleID) {
+		if err := guard.ChannelPermissionSet(s, channelID, c.RoleID,
+			discordgo.PermissionOverwriteTypeRole, discordgo.PermissionViewChannel, 0); err != nil {
+			log.Printf("campaign_threads: sync perms %s: allow role: %v", channelID, err)
+		}
+	}
+}
+
+/*
 SetupExistingChannel links the campaign to an already-existing Discord channel and creates
 the standard threads inside it.
 

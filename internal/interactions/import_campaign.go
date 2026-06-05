@@ -204,13 +204,7 @@ func (h *importConfirmHandler) HandleComponents(s *discordgo.Session, i *discord
 			return
 		}
 
-		if err := guard.ChannelPermissionSet(s, sess.ChannelID, s.State.User.ID,
-			discordgo.PermissionOverwriteTypeMember,
-			discordgo.PermissionViewChannel|discordgo.PermissionManageThreads|discordgo.PermissionSendMessages|discordgo.PermissionManageMessages,
-			0,
-		); err != nil {
-			log.Printf("importcampaign confirm: set bot perms on %s: %v", sess.ChannelID, err)
-		}
+		SyncChannelPermissions(s, sess.GuildID, campaign)
 
 		created, bound := applyThreadMappings(s, sess, campaign)
 
@@ -553,6 +547,12 @@ func (h *importBillboardLinkModal) HandleModal(s *discordgo.Session, i *discordg
 		log.Printf("import_billboard_link: save billboard IDs for %s: %v", campaignID, err)
 		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
 		return
+	}
+
+	// Post the join button and pin the channel link, same as PostBillboardToChannel does.
+	postJoinButton(s, threadID, campaign)
+	if messages.IsSnowflake(campaign.ChannelID) {
+		pinBillboardInChannel(s, campaign.ChannelID, threadID)
 	}
 
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ImportBillboardLinkSuccess, campaign.Name))
