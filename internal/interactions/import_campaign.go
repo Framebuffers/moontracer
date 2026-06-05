@@ -223,7 +223,7 @@ func (h *importConfirmHandler) HandleComponents(s *discordgo.Session, i *discord
 			}
 		}
 
-		if err := models.BulkAddCampaignMembers(h.db, campaign.ID, memberIDs); err != nil {
+		if err := models.BulkAddCampaignMembers(h.db, campaign.ID, sess.DMID, memberIDs); err != nil {
 			log.Printf("importcampaign confirm: bulk add members: %v", err)
 		}
 

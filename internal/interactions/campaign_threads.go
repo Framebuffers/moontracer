@@ -8,6 +8,7 @@ package interactions
 */
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -235,8 +236,17 @@ func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Cam
 		}
 	}
 
-	// Persist the new thread IDs.
-	if err := db.Update(database, c); err != nil {
+	/*
+		Narrow column update: only write thread IDs.
+
+		A full db.Update would include every Campaign field (including deleted_at)
+		and risks clobbering or misinterpreting nullzero fields when called mid-goroutine
+		before the campaign row is fully settled.
+	*/
+	if _, err := database.NewUpdate().Model(c).
+		Column("announcements_thread_id", "resources_thread_id").
+		WherePK().
+		Exec(context.Background()); err != nil {
 		log.Printf("campaign_threads: save thread IDs for %s: %v", c.ID, err)
 	}
 }

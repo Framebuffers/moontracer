@@ -4,12 +4,14 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 
 	"github.com/framebuffers/moontracer/internal/auditlog"
 	"github.com/framebuffers/moontracer/internal/commands"
+	"github.com/framebuffers/moontracer/internal/cooldown"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/dispatch"
 	"github.com/framebuffers/moontracer/internal/guard"
@@ -59,6 +61,13 @@ func HandleAnnouncementMessage(guildDBM *db.GuildDBManager, d *dispatch.Dispatch
 		}
 
 		if m.Author.ID != campaign.DungeonMaster {
+			return
+		}
+
+		// 5min cooldown
+		if !cooldown.Global.Allow("announce:"+campaign.ID, 5*time.Minute) {
+			remaining := cooldown.Global.Remaining("announce:" + campaign.ID)
+			log.Printf("events: announcement cooldown active for campaign %s (%s remaining)", campaign.ID, cooldown.FormatRemaining(remaining))
 			return
 		}
 

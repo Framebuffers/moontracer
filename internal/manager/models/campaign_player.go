@@ -189,18 +189,24 @@ func BulkSetCampaignPlayerStatus(db *bun.DB, playerID string, campaigns []Campai
 /*
 BulkAddCampaignMembers creates CampaignPlayer rows for each player ID, skipping any that already exist.
 
+dmID receives RoleDM; all other IDs receive RolePlayer.
 Preserves existing membership data (role, ban state, etc.) via ON CONFLICT DO NOTHING.
 */
-func BulkAddCampaignMembers(db *bun.DB, campaignID string, playerIDs []string) error {
+func BulkAddCampaignMembers(db *bun.DB, campaignID, dmID string, playerIDs []string) error {
 	if len(playerIDs) == 0 {
 		return nil
 	}
 	ctx := context.Background()
 	rows := make([]CampaignPlayer, 0, len(playerIDs))
 	for _, id := range playerIDs {
+		role := RolePlayer
+		if id == dmID {
+			role = RoleDM
+		}
 		rows = append(rows, CampaignPlayer{
 			PlayerID:   id,
 			CampaignID: campaignID,
+			Role:       role,
 			Status:     StatusActive,
 		})
 	}
