@@ -85,7 +85,7 @@ func BuildPlayerCampaignSelect(entries []models.CampaignPlayer, customID, placeh
 			continue
 		}
 		name := e.Campaign.Name
-		desc := fmt.Sprintf("%s - %s", e.Role, e.Status)
+		desc := fmt.Sprintf("%s- %s", e.Role, e.Status)
 		options = append(options, discordgo.SelectMenuOption{
 			Label:       truncate(name, 100),
 			Value:       e.CampaignID,
@@ -127,7 +127,7 @@ func campaignOptionDescription(c models.Campaign) string {
 		slots = fmt.Sprintf("%s slots", slots)
 	}
 
-	return fmt.Sprintf("%s - %s, %s", format, status, slots)
+	return fmt.Sprintf("%s- %s, %s", format, status, slots)
 }
 
 func truncate(s string, max int) string {

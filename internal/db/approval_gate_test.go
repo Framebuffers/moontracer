@@ -244,7 +244,7 @@ func TestDoubleApprove_IsIdempotent(t *testing.T) {
 	err = db.Update(database, campaign)
 	require.NoError(t, err)
 
-	// Second approve - should not error
+	// Second approve- should not error
 	campaign.IsApproved = true
 	err = db.Update(database, campaign)
 	require.NoError(t, err)

@@ -13,7 +13,7 @@ package interactions
 		2. AllComponents calls RegisterAllViews(db) as its first statement,
 		   before returning the ComponentHandler list.
 		3. For each ViewID, RegisterAllViews calls router.Register with an
-		   adapter closure of shape RenderFunc - func(s, i, args).
+		   adapter closure of shape RenderFunc- func(s, i, args).
 		4. The adapter unpacks `args` (e.g. args[0] as a campaignID) and
 		   forwards to the underlying render function with its natural
 		   signature. This keeps render functions free of the router's
@@ -114,6 +114,14 @@ func RegisterAllViews(db *bun.DB, d *dispatch.Dispatcher) {
 
 	router.Register(router.ViewAdmin, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
 		commands.RenderAdminHubUpdate(s, i)
+	})
+
+	router.Register(router.ViewAdminSettings, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		renderAdminGeneralSettings(s, i, db)
+	})
+
+	router.Register(router.ViewAdminBillboard, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {
+		renderAdminBillboardSettings(s, i, db)
 	})
 
 	router.Register(router.ViewAdminDiag, func(s *discordgo.Session, i *discordgo.InteractionCreate, args []string) {

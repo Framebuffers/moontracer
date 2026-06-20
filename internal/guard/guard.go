@@ -63,18 +63,18 @@ var DebugGuildID = os.Getenv("DISCORD_GUILD_ID")
 
 func init() {
 	if SafeMode {
-		log.Println("guard: SAFE_MODE is ON - Discord-mutating operations will be logged but not executed")
+		log.Println("guard: SAFE_MODE is ON- Discord-mutating operations will be logged but not executed")
 	}
 	if DevMode {
-		log.Println("guard: DEV_MODE is ON - debug UI surfaces (Diagnostics, /campaigndatabase) are visible")
+		log.Println("guard: DEV_MODE is ON- debug UI surfaces (Diagnostics, /campaigndatabase) are visible")
 		if DebugGuildID != "" {
-			log.Printf("guard: DEV_MODE scoped to guild %s - interactions from other guilds will be rejected", DebugGuildID)
+			log.Printf("guard: DEV_MODE scoped to guild %s- interactions from other guilds will be rejected", DebugGuildID)
 		}
 	}
 	if DebugAdminID != "" {
-		log.Printf("guard: DEBUG_ADMIN_ID is set - user %s will be treated as admin", DebugAdminID)
+		log.Printf("guard: DEBUG_ADMIN_ID is set- user %s will be treated as admin", DebugAdminID)
 		if !SafeMode {
-			log.Println("guard: WARNING - DEBUG_ADMIN_ID is set with SAFE_MODE OFF; elevation requires the Discord admin role as confirmation")
+			log.Println("guard: WARNING- DEBUG_ADMIN_ID is set with SAFE_MODE OFF; elevation requires the Discord admin role as confirmation")
 		}
 	}
 }
@@ -90,6 +90,19 @@ func GuildRoleCreate(s *discordgo.Session, guildID string, params *discordgo.Rol
 		return &discordgo.Role{ID: "safe-mode-role", Name: name}, nil
 	}
 	return s.GuildRoleCreate(guildID, params)
+}
+
+// GuildRoleEdit renames (or otherwise edits) an existing guild role, or logs in safe mode.
+func GuildRoleEdit(s *discordgo.Session, guildID, roleID string, params *discordgo.RoleParams) (*discordgo.Role, error) {
+	if SafeMode {
+		name := ""
+		if params != nil {
+			name = params.Name
+		}
+		log.Printf("guard: [SAFE_MODE] would rename role %s to %q in guild %s", roleID, name, guildID)
+		return &discordgo.Role{ID: roleID, Name: name}, nil
+	}
+	return s.GuildRoleEdit(guildID, roleID, params)
 }
 
 // GuildMemberRoleAdd adds a role to a member, or logs in safe mode.
@@ -128,8 +141,8 @@ func ChannelDelete(s *discordgo.Session, channelID string) (*discordgo.Channel, 
 	return s.ChannelDelete(channelID)
 }
 
-// ThreadStart starts a new thread on a channel (no parent message), or logs in safe mode.
-func ThreadStart(s *discordgo.Session, channelID, name string, archiveDuration int) (*discordgo.Channel, error) {
+// ThreadCreate starts a new thread on a channel (no parent message), or logs in safe mode.
+func ThreadCreate(s *discordgo.Session, channelID, name string, archiveDuration int) (*discordgo.Channel, error) {
 	if SafeMode {
 		log.Printf("guard: [SAFE_MODE] would start thread %q in channel %s", name, channelID)
 		return &discordgo.Channel{ID: "safe-mode-thread-" + name, Name: name}, nil
@@ -148,6 +161,12 @@ func ChannelMessageSend(s *discordgo.Session, channelID, content string) (*disco
 
 // ChannelMessageSendComplex sends a rich message (embeds, components) to a channel, or logs in safe mode.
 func ChannelMessageSendComplex(s *discordgo.Session, channelID string, data *discordgo.MessageSend) (*discordgo.Message, error) {
+	if data.AllowedMentions == nil {
+		data.AllowedMentions = &discordgo.MessageAllowedMentions{
+			Parse: []discordgo.AllowedMentionType{},
+		}
+	}
+
 	if SafeMode {
 		log.Printf("guard: [SAFE_MODE] would send complex message to channel %s", channelID)
 		return &discordgo.Message{ID: "safe-mode-message"}, nil
@@ -182,4 +201,31 @@ func ChannelPermissionSet(s *discordgo.Session, channelID, targetID string, targ
 		return nil
 	}
 	return s.ChannelPermissionSet(channelID, targetID, targetType, allow, deny)
+}
+
+// GuildRoleDelete deletes a Discord role, or logs in safe mode.
+func GuildRoleDelete(s *discordgo.Session, guildID, roleID string) error {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would delete role %s in guild %s", roleID, guildID)
+		return nil
+	}
+	return s.GuildRoleDelete(guildID, roleID)
+}
+
+// ThreadMemberAdd adds a user to a thread so it appears in their sidebar, or logs in safe mode.
+func ThreadMemberAdd(s *discordgo.Session, threadID, userID string) error {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would add user %s to thread %s", userID, threadID)
+		return nil
+	}
+	return s.ThreadMemberAdd(threadID, userID)
+}
+
+// ChannelMessageEdit edits an existing message in a channel, or logs in safe mode.
+func ChannelMessageEdit(s *discordgo.Session, channelID, messageID, content string) (*discordgo.Message, error) {
+	if SafeMode {
+		log.Printf("guard: [SAFE_MODE] would edit message %s in channel %s", messageID, channelID)
+		return &discordgo.Message{ID: messageID}, nil
+	}
+	return s.ChannelMessageEdit(channelID, messageID, content)
 }

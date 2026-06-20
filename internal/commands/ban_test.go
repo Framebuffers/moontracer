@@ -18,7 +18,7 @@ import (
 
 /*
 Unit Testing
-/ban command - hierarchy and cascade
+/ban command- hierarchy and cascade
 
 Covers banCommand.Execute:
 	global-ban flag flip + audit entry insert.

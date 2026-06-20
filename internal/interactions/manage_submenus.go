@@ -152,12 +152,27 @@ func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 				CustomID: fmt.Sprintf("%s:%s", messages.ManageLinksPrefix, campaignID),
 			},
 			discordgo.Button{
+				Label:    messages.ManageGameInfoLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageGameInfoPrefix, campaignID),
+			},
+			discordgo.Button{
 				Label:    toggleLabel,
 				Style:    discordgo.SecondaryButton,
 				CustomID: fmt.Sprintf("campaign_toggle:%s", campaignID),
 			},
 		}},
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.ManageLinkRoleLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageLinkRolePrefix, campaignID),
+			},
+			discordgo.Button{
+				Label:    messages.ManageRemapThreadsLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageRemapThreadsPrefix, campaignID),
+			},
 			router.NavButton(messages.ManageDangerLabel, discordgo.DangerButton, router.ViewManageDanger, campaignID),
 		}},
 		helpers.BackRow(router.ViewManageCampaign, campaignID),

@@ -3,6 +3,7 @@ package interactions
 import (
 	"fmt"
 	"log"
+
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
@@ -13,7 +14,6 @@ import (
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/dispatch"
 	"github.com/framebuffers/moontracer/internal/guard"
-	"github.com/framebuffers/moontracer/internal/interactions/router"
 	"github.com/framebuffers/moontracer/internal/manager/models"
 	"github.com/framebuffers/moontracer/internal/messages"
 )
@@ -47,31 +47,29 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	tag := parts[1]
 	userID := i.Member.User.ID
 
+	respond := func(msg string) { helpers.Respond(s, i, msg) }
+
 	// Is the player registered and not globally banned?
 	ok, err := auth.Authorize(h.db, userID, auth.ScopePlayer, "")
 	if err != nil {
 		log.Printf("campaign_join: auth check failed: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		respond(messages.GenericErrorMessage)
 		return
 	}
 	if !ok {
-		helpers.RespondNotRegistered(s, i)
+		respond(messages.NotRegisteredMessage)
 		return
 	}
 
 	// does the campaign exist and is it active?
 	campaign, err := db.GetByTag[models.Campaign](h.db, tag)
-	if err != nil {
-		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
+	if err != nil || !campaign.IsApproved {
+		respond(messages.CampaignNotFoundMessage)
 		return
 	}
 
-	if !campaign.IsApproved {
-		helpers.RespondUpdateTerminal(s, i, messages.CampaignNotFoundMessage)
-		return
-	}
-
-	if !helpers.IsCampaignMutable(s, i, campaign) {
+	if !campaign.CanMutate() {
+		respond(messages.CampaignArchivedMessage)
 		return
 	}
 
@@ -88,7 +86,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 
 	// Campaign must be open OR the player must have the linked role.
 	if !campaign.IsOpen && !hasLinkedRole {
-		helpers.RespondUpdateTerminal(s, i, messages.CampaignClosedMessage)
+		respond(messages.CampaignClosedMessage)
 		return
 	}
 
@@ -96,22 +94,22 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	players, err := models.GetCampaignPlayers(h.db, campaign.ID)
 	if err != nil {
 		log.Printf("campaign_join: %s: %v", messages.PlayerFetchErrorMessage, err)
-		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		respond(messages.GenericErrorMessage)
 		return
 	}
 	for _, p := range players {
 		if p.PlayerID == userID {
 			if p.Status == models.StatusBanned {
-				helpers.RespondUpdateTerminal(s, i, messages.PlayerBannedMessage)
+				respond(messages.PlayerBannedMessage)
 				return
 			}
-			helpers.RespondUpdateTerminal(s, i, messages.PlayerAlreadyOnCampaignMessage)
+			respond(messages.PlayerAlreadyOnCampaignMessage)
 			return
 		}
 	}
 
 	/*
-		Roster cap.
+		Party cap.
 
 		Westmarches store math.MaxInt32, so this never trips for them;
 		their tripwire is SessionCapacity, evaluated below after admission.
@@ -123,7 +121,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 		}
 	}
 	if !campaign.IsWestmarch && campaign.Slots > 0 && activePlayerCount >= campaign.Slots {
-		helpers.RespondUpdateTerminal(s, i, messages.CampaignFullMessage)
+		respond(messages.CampaignFullMessage)
 		return
 	}
 
@@ -135,7 +133,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	}
 	if err := db.Insert(h.db, cp); err != nil {
 		log.Printf("campaign_join: %s: %v", messages.InsertPlayerErrorMessage, err)
-		helpers.RespondUpdateTerminal(s, i, messages.PlayerFailedToJoinMessage)
+		respond(messages.PlayerFailedToJoinMessage)
 		return
 	}
 	newActiveCount := activePlayerCount + 1
@@ -146,6 +144,18 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 			log.Printf("campaign_join: failed to assign role %s to %s: %v", campaign.RoleID, userID, err)
 		}
 	}
+
+	// Add the player to known campaign threads so they appear in the sidebar.
+	go func() {
+		for _, threadID := range []string{campaign.AnnouncementsThreadID, campaign.ResourcesThreadID} {
+			if threadID == "" {
+				continue
+			}
+			if err := guard.ThreadMemberAdd(s, threadID, userID); err != nil {
+				log.Printf("campaign_join: add %s to thread %s: %v", userID, threadID, err)
+			}
+		}
+	}()
 
 	// Auto-close when the last slot fills.
 	if !campaign.IsWestmarch && campaign.Slots > 0 && newActiveCount >= campaign.Slots && campaign.IsOpen {
@@ -170,15 +180,14 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 			Content: fmt.Sprintf(messages.WestmarchOverCapacityDMAlert,
 				userID, campaign.Name, newActiveCount, campaign.SessionCapacity),
 		})
-		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.WestmarchOverCapacityPlayerNotice,
-			campaign.Name, campaign.SessionCapacity))
+		respond(fmt.Sprintf(messages.WestmarchOverCapacityPlayerNotice, campaign.Name, campaign.SessionCapacity))
 		return
 	}
 
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.PlayerJoinedCampaignMessage, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
-		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			router.NavButton(messages.BrowseMoreLabel, discordgo.SecondaryButton, router.ViewCampaignsBrowse),
-			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
-		}},
-	})
+	respond(fmt.Sprintf(messages.PlayerJoinedCampaignMessage, campaign.Name))
+	go func() {
+		if err := helpers.UpdateBillboard(s, h.db, campaign); err != nil {
+			log.Printf("campaign_join: billboard update for %s: %v", campaign.ID, err)
+		}
+	}()
 }

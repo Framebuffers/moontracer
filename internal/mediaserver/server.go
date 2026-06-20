@@ -10,6 +10,10 @@ import (
 	"time"
 )
 
+var allowedExts = map[string]struct{}{
+	".jpg": {}, ".jpeg": {}, ".png": {}, ".gif": {}, ".webp": {}, ".avif": {},
+}
+
 /*
 Serve starts a read-only HTTP file server rooted at dataDir, listening on addr.
 Files are accessible under the /api/v1/cdn/ prefix:
@@ -18,9 +22,11 @@ Files are accessible under the /api/v1/cdn/ prefix:
 
 This server runs in a background goroutine; does not block the Dispatcher or other goroutines.
 */
-func Serve(dataDir, addr string) {
+func Serve(mediaDir, addr string) {
 	mux := http.NewServeMux()
-	mux.Handle("/api/v1/cdn/", http.StripPrefix("/api/v1/cdn/", filesOnlyHandler(dataDir)))
+
+	mux.Handle("/api/v1/cdn/", http.StripPrefix("/api/v1/cdn/",
+		extAllowListHandler(filesOnlyHandler(mediaDir))))
 	mux.Handle("/dl/", http.StripPrefix("/dl/", http.HandlerFunc(dlHandler)))
 
 	startSweep()
@@ -31,6 +37,17 @@ func Serve(dataDir, addr string) {
 			log.Fatalf("mediaserver: %v", err)
 		}
 	}()
+}
+
+func extAllowListHandler(handler http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ext := strings.ToLower(filepath.Ext(r.URL.Path))
+		if _, ok := allowedExts[ext]; !ok {
+			http.NotFound(w, r)
+			return
+		}
+		handler.ServeHTTP(w, r)
+	})
 }
 
 /*
@@ -75,5 +92,5 @@ func Probe(addr string) {
 		log.Printf("mediaserver: reachable (status %d)", resp.StatusCode)
 		return
 	}
-	log.Printf("mediaserver: probe failed - CDN may not be reachable: %v", lastErr)
+	log.Printf("mediaserver: probe failed- CDN may not be reachable: %v", lastErr)
 }

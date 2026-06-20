@@ -95,7 +95,7 @@ func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer, cove
 
 	var playerLines []string
 	for _, p := range players {
-		playerLines = append(playerLines, fmt.Sprintf("<@%s> - %s (%s)", p.PlayerID, p.Role, p.Status))
+		playerLines = append(playerLines, fmt.Sprintf("<@%s>- %s (%s)", p.PlayerID, p.Role, p.Status))
 	}
 	playersValue := "None"
 	if len(playerLines) > 0 {
@@ -103,7 +103,7 @@ func buildCampaignEmbed(c models.Campaign, players []models.CampaignPlayer, cove
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title:       fmt.Sprintf("%s - %s", campaignType, c.Name),
+		Title:       fmt.Sprintf("%s- %s", campaignType, c.Name),
 		Description: c.Description,
 		Color:       0x5865F2,
 		Fields: []*discordgo.MessageEmbedField{

@@ -1,5 +1,10 @@
 package messages
 
+import (
+	"math/rand"
+	"strings"
+)
+
 /*
 
 	Messages:
@@ -19,8 +24,9 @@ package messages
 // Generic
 const (
 	// identifiers
-	BotVersion = "v1.0.0"
+	BotVersion = "v1.1.1b-adamantine"
 	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
+	// 2026-05-29: started implementing for real on my first big server
 )
 const (
 	// user-facing
@@ -138,7 +144,7 @@ const (
 	PlayerJoinedCampaignMessage    = "🐺 You have joined **%s**!"
 
 	// Westmarch session-capacity tripwire (FCFS soft alert).
-	WestmarchOverCapacityDMAlert      = "⚠️ **INFO:** <@%s> just joined westmarch **%s**. Roster is now %d active player(s). Session capacity is %d. They've been admitted; bring an extra seat or trim attendance for the next session."
+	WestmarchOverCapacityDMAlert      = "⚠️ **INFO:** <@%s> just joined westmarch **%s**. party is now %d active player(s). Session capacity is %d. They've been admitted; bring an extra seat or trim attendance for the next session."
 	WestmarchOverCapacityPlayerNotice = "🐺 You're in **%s**! \n⚠️ Warning!: this westmarch's session capacity (%d) is already met, so the DM has been notified. Talk to your DM for more help."
 )
 
@@ -305,6 +311,7 @@ const (
 	ManageNoDMCampaigns        = "⚠️ You are not the DM of any campaigns."
 	ManageNotAuthorized        = "ℹ️ You must be the DM of this campaign to manage it."
 	ManageCampaignNotFound     = "ℹ️ Campaign not found."
+	ManageDeleteInProgress     = "⏳ Deleting campaign..."
 	ManageDeleteSuccess        = "ℹ️ Campaign **%s** has been deleted."
 	ManageDeleteFailure        = "🚫 Failed to delete campaign."
 	ManageBanNoMembers         = "ℹ️ This campaign has no members to ban."
@@ -314,13 +321,13 @@ const (
 	ManageBanSelectPlaceholder = "Select a member..."
 	ManageCampaignHeader       = "Managing **%s**:"
 	ManageInviteSelectPrompt   = "Select a player to invite to **%s**:"
-	MyCampaignListLine         = "**%s** - %s (%s)"
-	ManageCampaignListLine     = "**%s** - %s"
+	MyCampaignListLine         = "**%s**- %s (%s)"
+	ManageCampaignListLine     = "**%s**- %s"
 )
 
 // Token upload
 const (
-	// identifiers - token gallery
+	// identifiers- token gallery
 	TokensCommandName              = "tokens"
 	TokenGallerySelectPrefix       = "token_gallery_select"
 	TokenGalleryAssignPrefix       = "token_gallery_assign"
@@ -330,7 +337,7 @@ const (
 	TokenDownloadPrefix            = "token_download"
 )
 const (
-	// user-facing - token gallery
+	// user-facing- token gallery
 	TokensCommandDesc                   = "Browse and manage your tokens."
 	TokensLabel                         = "🐺 Tokens"
 	TokenGalleryHeader                  = "Your tokens:"
@@ -368,7 +375,7 @@ const (
 	TokenUploadSourceOptDesc         = "Your photo (JPG/PNG)."
 	TokenUploadFrameOptDesc          = "Frame/border image (PNG with transparency). Cannot be used with color."
 	TokenUploadColorOptDesc          = "Border color as hex (e.g. ff3a7c). Cannot be used with frame."
-	TokenUploadNeedOneOf             = "🚫 Provide either a frame image or a color - not both, not neither."
+	TokenUploadNeedOneOf             = "🚫 Provide either a frame image or a color- not both, not neither."
 	TokenUploadNotImage              = "⚠️ Both files must be images (JPEG or PNG)."
 	TokenUploadTooLarge              = "⚠️ Each file must be under 8 MiB."
 	TokenUploadProcessFailed         = "🚫 Failed to process your token. Please try again."
@@ -484,6 +491,7 @@ const (
 	AnnounceNoMembers        = "ℹ️ This campaign has no members to announce to."
 	AnnounceError            = "⚠️ Failed to send announcement."
 	AnnouncePostedToThread   = "🗣️ Announcement posted to the **%s** announcements thread."
+	AnnounceCooldown         = "⏳ You can post another announcement in %s."
 	AnnounceThreadContent    = "%s**🗣️Announcement from <@%s>:**\n\n%s"
 	AnnounceDMContent        = "**[%s]** 🗣️ Announcement from <@%s>:\n\n%s"
 )
@@ -496,10 +504,36 @@ const (
 	ThreadInitMsgAnnouncements = "📣 Campaign announcements and session news will be posted here."
 	ThreadInitMsgSessions      = "📅 Session schedules and notes will be posted here."
 	ThreadInitMsgDiceRolls     = "🎲 Roll your dice and share your results here!"
-	ThreadInitMsgGeneral       = "💬 General campaign discussion."
+
 	// ThreadInitMsgWelcomeFmt takes the campaign name as its argument.
-	ThreadInitMsgWelcomeFmt = "🐺 Welcome to **%s**! This is your campaign channel. \nCheck the other threads for announcements, sessions, dice rolls, and general discussion."
+	ThreadInitMsgWelcomeFmt    = "🐺 Welcome to **%s**! This is your campaign channel. \nCheck the other threads for announcements, sessions, dice rolls, and general discussion."
+	WelcomeThreadCoverReminder = "-# 📷 DM: Don't forget to add a cover image in campaign settings: it'll appear here and in the billboard! Use `/campaignupload` to upload an image."
+
+	/*
+		ResourcesThreadSyncFmt is the content posted/edited in the resources thread when links change.
+
+		Args: VTT section (may be empty), links section (may be empty).
+	*/
+	ResourcesThreadSyncFmt = "## 🔗 Campaign Resources\n\n%s%s"
+	ResourcesThreadVTTFmt  = "🎲 **VTT:** %s\n"
+	ResourcesThreadLinkFmt = "• %s\n"
+	ResourcesThreadEmpty   = "_No resources set yet. The DM can add links in `/manage` ➡️ Settings ➡️ 🔗 Links._"
 )
+
+// ThreadNavEmoji maps thread slot names to their display emoji in the welcome nav section.
+var ThreadNavEmoji = map[string]string{
+	"announcements": "📣",
+	"sessions":      "📅",
+	"dice-rolls":    "🎲",
+	"characters":    "🧙",
+	"memes":         "😂",
+	"art":           "🎨",
+	"downtime":      "⏳",
+	"resources":     "🔗",
+}
+
+// ThreadNavOrder defines the display order of threads in the welcome nav section.
+var ThreadNavOrder = []string{"announcements", "sessions", "dice-rolls", "characters", "memes", "art", "downtime", "resources"}
 
 // DayOfWeekInput maps accepted day-name inputs (lower-cased) to 0-based weekday index (Mon=0).
 var DayOfWeekInput = map[string]int{
@@ -674,7 +708,7 @@ const (
 	ManageDangerLabel    = "⚠️ Spicy Zone"
 	ManageOpenLabel      = "🟢 Open Campaign"
 	ManageCloseLabel     = "🔴 Close Campaign"
-	CampaignAutoClosedDM = "ℹ️ **%s** has been automatically closed - all %d slots are filled."
+	CampaignAutoClosedDM = "ℹ️ **%s** has been automatically closed- all %d slots are filled."
 )
 
 // Manage campaign: Links
@@ -682,6 +716,9 @@ const (
 	// identifiers
 	ManageLinksPrefix  = "manage_links"
 	ManageLinksModalID = "modal_manage_links"
+
+	ManageGameInfoPrefix  = "manage_game_info"
+	ManageGameInfoModalID = "modal_manage_game_info"
 )
 const (
 	// user-facing
@@ -693,10 +730,22 @@ const (
 	ManageLinksResourcesPlaceholder = "https://drive.google.com/...\nhttps://example.com/map"
 	ManageLinksSuccess              = "✅ Links updated for **%s**."
 	ManageLinksEmbedTitle           = "🔗 Links"
-	ManageReminderLinks             = "\n\n🔗 **Links for tonight:**"
-	ManageReminderVTT               = "\nVTT: %s"
-	ManageReminderSheets            = "\nSheets: %s"
-	ManageReminderResource          = "\n• %s"
+
+	ManageGameInfoLabel            = "🎲 Game Info"
+	ManageGameInfoModalTitle       = "🎲 Game Details"
+	ManageGameInfoRulesLabel       = "House rules / variant (optional)"
+	ManageGameInfoRulesPlaceholder = "e.g. Milestone levelling, no flanking..."
+	ManageGameInfoVTTLabel         = "VTT platform (optional)"
+	ManageGameInfoVTTPlaceholder   = "e.g. Roll20, Foundry VTT, Owlbear Rodeo..."
+	ManageGameInfoBooksLabel       = "Books allowed (comma-separated, optional)"
+	ManageGameInfoBooksPlaceholder = "e.g. PHB, Xanathar's, Tasha's"
+	ManageGameInfoExtraLabel       = "Extra info for players (optional)"
+	ManageGameInfoExtraPlaceholder = "Tone, session zero notes, Discord links..."
+	ManageGameInfoSuccess          = "✅ Game info updated for **%s**."
+	ManageReminderLinks            = "\n\n🔗 **Links for tonight:**"
+	ManageReminderVTT              = "\nVTT: %s"
+	ManageReminderSheets           = "\nSheets: %s"
+	ManageReminderResource         = "\n• %s"
 )
 
 // Manage campaign: additional buttons
@@ -709,6 +758,8 @@ const (
 	ManageDeleteConfirmID      = "manage_delete_confirm"
 	ManageArchiveConfirmID     = "manage_archive_confirm"
 	ManageArchiveCancelID      = "manage_archive_cancel"
+	ManageLinkRolePrefix       = "manage_link_role"
+	ManageLinkRoleSelectPrefix = "manage_link_role_sel"
 )
 const (
 	// user-facing
@@ -721,6 +772,18 @@ const (
 	ManageSetRoleSuccess    = "✅ Linked role **%s** to campaign **%s**."
 	ManageSetRoleFailed     = "🚫 Failed to set role."
 
+	// Thread remap
+	ManageRemapThreadsLabel   = "🔀 Remap Threads"
+	ManageRemapThreadsPrefix  = "manage_remap_threads"
+	ManageRemapConfirmPrefix  = "manage_remap_confirm"
+	ManageRemapHeader         = "**Remap threads for %s**\nSelect the correct thread for each slot. Leave unchanged to keep the current mapping."
+	ManageRemapSuccess        = "✅ Thread mappings updated for **%s**."
+
+	// Link existing role selector
+	ManageLinkRoleLabel       = "🔗 Link Existing Role"
+	ManageLinkRolePlaceholder = "Select the Discord role for this campaign…"
+	ManageLinkRoleSuccess     = "✅ Role linked to **%s**."
+
 	// Delete confirmation + handler
 	ManageDeleteConfirm      = "⚠️ Are you sure you want to delete **%s**? This is permanent and cannot be undone. All members will be removed."
 	ManageDeleteConfirmLabel = "✅ Yes, Delete"
@@ -730,6 +793,7 @@ const (
 	ManageArchiveConfirm      = "⚠️ Are you sure you want to archive **%s**? This is permanent and cannot be undone."
 	ManageArchiveConfirmLabel = "✅ Yes, Archive"
 	ManageArchiveCancelLabel  = "❌ Cancel"
+	ManageArchiveInProgress   = "⏳ Archiving campaign..."
 	ManageArchiveSuccess      = "ℹ️ Campaign **%s** has been archived. It is now an immutable record."
 	ManageArchiveFailed       = "🚫 Failed to archive campaign."
 )
@@ -737,12 +801,14 @@ const (
 // New campaign config (post-modal dropdowns)
 const (
 	// identifiers
-	NewCampaignBookPrefix      = "newcampaign_book"
-	NewCampaignFormatPrefix    = "newcampaign_format"
-	NewCampaignFreqPrefix      = "newcampaign_freq"
-	NewCampaignSubmitPrefix    = "newcampaign_submit"
-	NewCampaignCancelPrefix    = "newcampaign_cancel"
-	NewCampaignScheduleModalID = "modal_newcampaign_schedule"
+	NewCampaignBookPrefix            = "newcampaign_book"
+	NewCampaignFormatPrefix          = "newcampaign_format"
+	NewCampaignFreqPrefix            = "newcampaign_freq"
+	NewCampaignSubmitPrefix          = "newcampaign_submit"
+	NewCampaignCancelPrefix          = "newcampaign_cancel"
+	NewCampaignScheduleModalID       = "modal_newcampaign_schedule"
+	NewCampaignGameDetailsOpenPrefix = "newcampaign_gamedetails_open"
+	NewCampaignSubmitApprovalPrefix  = "newcampaign_submit_approval"
 
 	NewCampaignScheduleDateFieldID = "newcampaign_sched_date"
 	NewCampaignScheduleTimeFieldID = "newcampaign_sched_time"
@@ -769,6 +835,10 @@ const (
 	NewCampaignScheduleInvalidTime     = "⚠️ Invalid time format. Use HH:MM (e.g. 19:00)."
 	NewCampaignScheduleInPast          = "⚠️ That date/time is in the past. Please pick a future date."
 
+	NewCampaignGameDetailsPrompt    = "📅 Schedule saved! **Last step:** add game details (rules, VTT, books, extra info)... or skip and submit for approval now."
+	NewCampaignGameDetailsOpenLabel = "🎲 Add Game Details"
+	NewCampaignSubmitApprovalLabel  = "✅ Submit for Approval"
+
 	// Book dropdown option labels
 	NewCampaignBookLabel5e    = "D&D 5e"
 	NewCampaignBookLabel55e   = "D&D 5.5e (2024)"
@@ -776,10 +846,10 @@ const (
 	NewCampaignBookLabelOther = "Other / Homebrew"
 
 	// Frequency dropdown option labels
-	NewCampaignFreqLabelWeekly    = "Weekly"
-	NewCampaignFreqLabelBiweekly  = "Bi-weekly"
-	NewCampaignFreqLabelMonthly   = "Monthly"
-	NewCampaignFreqLabelIrregular = "Irregular / As-needed"
+	NewCampaignFreqLabelWeekly   = "Weekly"
+	NewCampaignFreqLabelBiweekly = "Bi-weekly"
+	NewCampaignFreqLabelMonthly  = "Monthly"
+	NewCampaignFreqLabelOnce     = "Once"
 
 	// Browse more after joining
 	BrowseMoreLabel = "🔍 Browse more campaigns"
@@ -813,12 +883,21 @@ const (
 	// identifiers
 	NextSessionsPrefix      = "next_sessions"
 	NextSessionsCommandName = "nextsessions"
+	ThisWeekCommandName     = "thisweek"
 )
 const (
 	// user-facing
 	NextSessionsHeader      = "Upcoming sessions:"
 	NextSessionsNone        = "ℹ️ You have no upcoming sessions."
 	NextSessionsCommandDesc = "Show your upcoming sessions."
+
+	ThisWeekHeader      = "📅 Sessions happening this week:"
+	ThisWeekNone        = "ℹ️ No sessions are scheduled in the next 7 days."
+	ThisWeekCommandDesc = "Browse all sessions scheduled this week."
+	ThisWeekSlotsFmt    = "%d/%d slots"
+	ThisWeekSlotsOpen   = "open slots"
+	ThisWeekFull        = "full"
+	ThisWeekClosed      = "closed"
 )
 
 // Player hub: Notifications
@@ -880,17 +959,76 @@ const (
 )
 const (
 	// user-facing
-	AdminDBCampaignLine = "**%s** (`%s`) - DM: <@%s> [%s]"
+	AdminDBCampaignLine = "**%s** (`%s`)- DM: <@%s> [%s]"
 )
 
 // Admin hub: Settings
 const (
 	// identifiers
-	AdminSettingsPrefix = "admin_settings"
+	AdminSettingsPrefix             = "admin_settings"
+	AdminBillboardSetPrefix         = "admin_billboard_set"
+	AdminBillboardFormatCampaign    = "campaign"
+	AdminBillboardFormatOneshot     = "oneshot"
+	AdminBillboardFormatWestmarch   = "westmarch"
+	AdminBillboardSetCategoryPrefix = "admin_billboard_set_category"
+	AdminCampaignChannelSetPrefix   = "admin_campaign_channel_set"
+	AdminCampaignsCategorySetPrefix = "admin_campaigns_category_set"
+	AdminArchivedCategorySetPrefix  = "admin_archived_category_set"
 )
 const (
 	// user-facing
-	AdminSettingsHeader = "Bot settings:"
+	AdminSettingsHeader                = "Bot settings:"
+	AdminSettingsGeneralHeader         = "**⚙️ General Settings**\n\n"
+	AdminBillboardHeader               = "**⚙️ Billboard Channels**\nSelect which forum channel each campaign format posts to when approved.\n\n"
+	AdminBillboardChannelsLabel        = "Billboard channels ➡️"
+	AdminBillboardCampaignLabel        = "🏰 Campaigns"
+	AdminBillboardOneshotLabel         = "📖 One-shots"
+	AdminBillboardWestmarchLabel       = "🛡️ Westmarches"
+	AdminBillboardCampaignPlaceholder  = "Select forum channel for campaigns…"
+	AdminBillboardOneshotPlaceholder   = "Select forum channel for one-shots…"
+	AdminBillboardWestmarchPlaceholder = "Select forum channel for westmarches…"
+	AdminBillboardSavedFmt             = "✅ Billboard channel for **%s** set."
+	AdminBillboardCurrentFmt           = "Current: %s"
+	AdminBillboardNotSet               = "_(not set -auto-create)_"
+
+	AdminBillboardCategoryLabel       = "📁 Billboard category"
+	AdminBillboardCategoryPlaceholder = "Select category for billboard channels…"
+	AdminBillboardCategorySavedFmt    = "✅ Billboard category set to %s."
+
+	AdminCampaignsCategoryLabel       = "📁 Campaign channels category"
+	AdminCampaignsCategoryPlaceholder = "Select category for new campaign channels…"
+
+	AdminArchivedCategoryLabel       = "🗄️ Archived campaigns category"
+	AdminArchivedCategoryPlaceholder = "Select category for retired campaign channels…"
+
+	AdminCampaignChannelLabel       = "📢 Campaign channel"
+	AdminCampaignChannelPlaceholder = "Select campaign announcements channel…"
+	AdminCampaignChannelSavedFmt    = "✅ Campaign channel set to %s."
+
+	AdminAuditLogChannelLabel       = "📋 Audit Log Channel"
+	AdminAuditLogChannelPlaceholder = "Select staff-only audit log channel…"
+	AdminAuditLogChannelSetPrefix   = "admin_audit_log_channel_set"
+)
+
+// Admin hub: Billboard repost
+const (
+	AdminRepostBillboardLabel  = "🪧 Repost Billboard"
+	AdminRepostBillboardPrefix = "admin_repost_billboard"
+)
+
+// Admin hub: Nuke
+const (
+	AdminNukeLabel             = "💣 Nuke Campaign"
+	AdminNukePrefix            = "admin_nuke"
+	AdminNukeSelectPrefix      = "admin_nuke_select"
+	AdminNukeConfirmPrefix     = "admin_nuke_confirm"
+	AdminNukeCancelPrefix      = "admin_nuke_cancel"
+	AdminNukeSelectPlaceholder = "Pick a campaign to permanently delete…"
+	AdminNukeConfirmFmt        = "⚠️ **CONFIRM NUKE** ⚠️\n\nYou are about to permanently delete **%s** (`%s`) from the database *and* Discord.\n\n**This cannot be undone.** All players, sessions, and session data will be erased. An audit entry will be kept."
+	AdminNukeInProgress        = "💣 Nuking campaign…"
+	AdminNukeCancelled         = "❌ Nuke cancelled."
+	AdminNukeChannelMismatch   = "🚫 Safety check failed: the Discord channel does not match the DB record. Aborting."
+	AdminNukeSuccess           = "✅ Campaign **%s** permanently deleted."
 )
 
 // Admin hub: Diagnostics
@@ -931,46 +1069,46 @@ const (
 	ManageSetSessionInvalidDate     = "⚠️ Invalid date format. Use DD/MM/YYYY."
 	ManageSetSessionInvalidTime     = "⚠️ Invalid time format. Use HH:MM (24h)."
 	ManageSetSessionInPast          = "⚠️ Cannot set a session in the past."
-	ManageSetSessionSuccess         = "✅ Next session for **%s** set to **%s** - %s."
+	ManageSetSessionSuccess         = "✅ Next session for **%s** set to **%s**- %s."
 	ManageSetSessionUpdateFailed    = "🚫 Failed to update next session."
 
 	// Reschedule-specific (existing session -> new date + reason).
 	ManageRescheduleModalTitle        = "Reschedule Session"
 	ManageSetSessionReasonLabel       = "Reason for change (optional)"
 	ManageSetSessionReasonPlaceholder = "e.g. DM unavailable this week"
-	ManageSetSessionRescheduleThread  = "📅 Session rescheduled to **%s** - _%s_"
-	ManageSetSessionRescheduleSuccess = "✅ Session for **%s** rescheduled to **%s** - %s. Reason posted to thread."
+	ManageSetSessionRescheduleThread  = "📅 Session rescheduled to **%s**- _%s_"
+	ManageSetSessionRescheduleSuccess = "✅ Session for **%s** rescheduled to **%s**- %s. Reason posted to thread."
 
 	// Session reminder DM (sent ~1 hour before NextSession).
-	ReminderContent = "ℹ️ **Session Reminder: %s**\nYour next session starts in about 1 hour - **%s** (%s)"
+	ReminderContent = "ℹ️ **Session Reminder: %s**\nYour next session starts in about 1 hour- **%s** (%s)"
 
 	InviteSentMessage      = "✅ Invitation sent to <@%s> for **%s**."
 	InviteDMMessage        = "ℹ️ You've been invited to join **%s** by <@%s>!"
 	InviteAcceptedDMUpdate = "✅ You accepted the invitation to **%s**."
 	InviteDeclinedDMUpdate = "ℹ️ You declined the invitation to **%s**."
 	InviteAlreadyProcessed = "ℹ️ This invitation has already been processed."
-	InviteCampaignFull     = "⚠️ Cannot invite - campaign **%s** is full."
+	InviteCampaignFull     = "⚠️ Cannot invite- campaign **%s** is full."
 )
 
-// Session RSVP - legacy (campaign-level, reminder DMs only)
+// Session response - legacy (campaign-level, reminder DMs only)
 const (
 	// identifiers
-	RSVPAcceptPrefix  = "rsvp_accept"
-	RSVPDeclinePrefix = "rsvp_decline"
+	ResponseAcceptPrefix  = "response_accept"
+	ResponseDeclinePrefix = "response_decline"
 )
 const (
 	// user-facing
-	RSVPAcceptLabel      = "✅ I'm Going!"
-	RSVPDeclineLabel     = "❌ I'm Not Going"
-	RSVPAcceptedPlayer   = "✅ Confirmed! The DM has been notified. May the RNG be with you!"
-	RSVPDeclinedPlayer   = "❌ Noted. The DM has been notified. Have a good day!"
-	RSVPDMNotifyAccept   = "✅ <@%s> confirmed assistance at **%s**\n%s."
-	RSVPDMNotifyDecline  = "❌ <@%s> won't be coming for **%s**:\n%s."
-	RSVPAlreadyResponded = "ℹ️ You've already responded for this session. If you changed your mind, talk to your DM."
-	RSVPCampaignGone     = "ℹ️ This campaign is no longer active."
+	ResponseAcceptLabel      = "✅ I'm Going!"
+	ResponseDeclineLabel     = "❌ I'm Not Going"
+	ResponseAcceptedPlayer   = "✅ Confirmed! The DM has been notified. May the RNG be with you!"
+	ResponseDeclinedPlayer   = "❌ Noted. The DM has been notified. Have a good day!"
+	ResponseDMNotifyAccept   = "✅ <@%s> confirmed assistance at **%s**\n%s."
+	ResponseDMNotifyDecline  = "❌ <@%s> won't be coming for **%s**:\n%s."
+	ResponseAlreadyResponded = "ℹ️ You've already responded for this session. If you changed your mind, talk to your DM."
+	ResponseCampaignGone     = "ℹ️ This campaign is no longer active."
 )
 
-// New Session command + per-session RSVP (sessions table)
+// New Session command + per-session response (sessions table)
 const (
 	// identifiers
 	NewSessionCommandName  = "newsession"
@@ -981,10 +1119,14 @@ const (
 	NewSessionNotesFieldID = "new_session_notes"
 	ManageNewSessionPrefix = "manage_new_session"
 
-	SessionRSVPAcceptPrefix  = "session_rsvp_accept"
-	SessionRSVPDeclinePrefix = "session_rsvp_decline"
-	SessionRSVPConfirmPrefix = "session_rsvp_confirm"
-	SessionRSVPCancelPrefix  = "session_rsvp_cancel"
+	SessionResponseAcceptPrefix  = "session_response_accept"
+	SessionResponseDeclinePrefix = "session_response_decline"
+	SessionResponseConfirmPrefix = "session_response_confirm"
+	SessionResponseCancelPrefix  = "session_response_cancel"
+	SessionResponseRetractPrefix = "session_response_retract"
+
+	SessionConflictPrefix    = "session_conflict"
+	SessionConflictSelPrefix = "session_conflict_sel"
 )
 const (
 	// user-facing
@@ -992,41 +1134,56 @@ const (
 	NewSessionOptionDesc       = "Campaign to schedule a session for"
 	NewSessionModalTitle       = "📅 Schedule a New Session"
 	NewSessionNotesLabel       = "What to expect (optional)"
-	NewSessionNotesPlaceholder = "e.g. Picking up from last time - don't forget your character sheet!"
+	NewSessionNotesPlaceholder = "e.g. Picking up from last time- don't forget your character sheet!"
 	ManageNewSessionLabel      = "📅 New Session"
 
 	SessionEmbedGoingFmt = "✅ Going: %d  ·  ❌ Not Going: %d"
 
-	SessionRSVPAcceptLabel  = "✅ Going"
-	SessionRSVPDeclineLabel = "❌ Not Going"
+	SessionResponseAcceptLabel  = "✅ Going"
+	SessionResponseDeclineLabel = "❌ Not Going"
+	SessionResponseRetractLabel = "↩️ Retract"
 
-	SessionRSVPAcceptedMsg   = "✅ You're in! The DM has been notified."
-	SessionRSVPDeclinedMsg   = "❌ Can't make it - the DM has been notified."
-	SessionRSVPWaitlistedMsg = "⏳ Session is full - you're on the waitlist. The DM will confirm the final roster."
-	SessionRSVPConflictFmt   = "⚠️ You already have a session at this time: **%s** on %s.\nConfirm anyway?"
-	SessionRSVPConfirmLabel  = "Confirm anyway"
-	SessionRSVPCancelLabel   = "Cancel"
-	SessionRSVPAlreadySet    = "ℹ️ You've already responded to this session."
-	SessionRSVPNotMember     = "⚠️ Join this campaign before RSVPing to its sessions."
-	SessionRSVPGone          = "ℹ️ This session is no longer active."
+	SessionResponseAcceptedMsg      = "✅ You're in! The DM has been notified."
+	SessionResponseDeclinedMsg      = "❌ Can't make it- the DM has been notified."
+	SessionResponseWaitlistedMsg    = "⏳ Session is full: you're on the waitlist. The DM will confirm the final party."
+	SessionResponseConflictFmt      = "⚠️ You already have a session at this time: **%s** on %s.\nConfirm anyway?"
+	SessionResponseConfirmLabel     = "Confirm anyway"
+	SessionResponseCancelLabel      = "Cancel"
+	SessionResponseRetractedMsg     = "↩️ Your session slot has been retracted. The DM has been notified."
+	SessionResponseCooldown         = "⏳ You just responded. Try again in %s."
+	SessionResponseRetractUsed      = "ℹ️ You can only retract your response once per session."
+	SessionResponseRetractNone      = "ℹ️ You haven't given a response to this session yet."
+	SessionResponseDMNotifyRetract  = "↩️ <@%s> retracted their session assistance response for **%s** · %s"
+	SessionResponseWaitlistPromoted = "✅ A spot opened up for **%s** · %s. You have been moved out of the waiting list. You can play now!"
+	SessionResponseAlreadySet       = "ℹ️ You've already responded to this session."
+	SessionResponseNotMember        = "⚠️ Join this campaign before responding to its sessions."
+	SessionResponseGone             = "ℹ️ This session is no longer active."
 
-	SessionRSVPDMNotifyAccept   = "✅ <@%s> is going to **%s** · %s"
-	SessionRSVPDMNotifyDecline  = "❌ <@%s> can't make it for **%s** · %s"
-	SessionRSVPDMNotifyWaitlist = "⏳ <@%s> is on the waitlist for **%s** · %s (session full)"
+	SessionResponseDMNotifyAccept         = "✅ <@%s> is going to **%s** · %s"
+	SessionResponseDMNotifyAcceptConflict = "✅ <@%s> is going to **%s** · %s ⚠️ They have a scheduling conflict: going to **%s** at the same time."
+	SessionResponseDMNotifyDecline        = "❌ <@%s> can't make it for **%s** · %s"
+	SessionResponseDMNotifyWaitlist       = "⏳ <@%s> is on the waitlist for **%s** · %s (session full)"
 
-	NewSessionAnnouncedFmt    = "✅ Session for **%s** announced - %d member(s) notified."
+	NewSessionAnnouncedFmt    = "✅ Session for **%s** announced- %d member(s) notified."
 	NewSessionNoChannel       = "⚠️ This campaign has no channel. Set one up in campaign settings first."
-	NewSessionDMContentFmt    = "📅 **%s** - New Session!\n<t:%d:F> · <t:%d:R>%s"
+	NewSessionDMContentFmt    = "📅 **%s**- New Session!\n<t:%d:F> · <t:%d:R>%s"
 	SessionReminderContentFmt = "⏰ Reminder: **%s** starts in ~1 hour!\n<t:%d:F>%s"
 
-	SessionEmbedTitleFmt        = "📅 New Session - %s"
-	SessionEmbedGoingLabel      = "✅ Going"
-	SessionEmbedNotGoingLabel   = "❌ Not Going"
-	SessionEmbedWaitlistedLabel = "⏳ Waitlisted"
-	SessionRSVPCancelledMsg     = "ℹ️ RSVP cancelled."
-	SessionRSVPLineEmptyFmt     = "%s (0): -"
-	SessionRSVPLineFmt          = "%s (%d): %s"
-	SessionRSVPLineOverflowFmt  = " +%d more"
+	SessionEmbedTitleFmt           = "📅 New Session- %s"
+	SessionEmbedGoingLabel         = "✅ Going"
+	SessionEmbedNotGoingLabel      = "❌ Not Going"
+	SessionEmbedWaitlistedLabel    = "⏳ Waitlisted"
+	SessionResponseCancelledMsg    = "ℹ️ Response cancelled."
+	SessionResponseLineEmptyFmt    = "%s (0):-"
+	SessionResponseLineFmt         = "%s (%d): %s"
+	SessionResponseLineOverflowFmt = " +%d more"
+
+	SessionConflictButtonLabel  = "⚠️ Schedule conflict"
+	SessionConflictPrompt       = "You have a conflict with another session around this time. Which one would you want to go?"
+	SessionConflictNone         = "ℹ️ No overlapping sessions found for you right now."
+	SessionConflictDMToAbsent   = "⚠️ <@%s> has a schedule conflict and won't attend **%s**'s session (<t:%d:F>). They're playing in **%s** instead."
+	SessionConflictDMToPresent  = "ℹ️ <@%s> intends to attend **%s**'s session (<t:%d:F>) over **%s**. You need to adjust the party."
+	SessionConflictConfirmedFmt = "✅ Both DMs have been notified. Your response for **%s** has been set to not going."
 )
 
 // Player campaign card (player self-service)
@@ -1088,10 +1245,132 @@ const (
 	ImportCampaignOptRole    = "role"
 	ImportCampaignOptDM      = "dm"
 
-	ImportCampaignProcessing = "⏳ Importing campaign, this may take a moment…"
+	// Custom-ID prefixes for the one-step thread-mapping flow.
+	ImportThreadSelPrefix = "import_thread_sel" // import_thread_sel:<sessionID>:<threadName>
+	ImportConfirmPrefix   = "import_confirm"    // import_confirm:<sessionID>
+	ImportCancelPrefix    = "import_cancel"     // import_cancel:<sessionID>
+
+	// Sentinel stored in a session mapping when the user wants the bot to create the thread.
+	ImportCreateNew = "new"
+
+	// Step header.
+	ImportStep1Header = "**Map threads for #%s** (core threads)\nChoose an existing thread for each slot, or leave as **Create new**."
+
+	// Select-menu placeholders (core threads only).
+	ImportSelWelcome       = "🐺 Welcome!"
+	ImportSelAnnouncements = "🗣️ Announcements"
+	ImportSelSessions      = "📅 Sessions"
+	ImportSelDiceRolls     = "🎲 Dice rolls"
+
+	// "Create new" option shown at the top of every select menu.
+	ImportOptCreateNew      = "Create new"
+	ImportOptCreateNewDescr = "Bot will create this thread automatically."
+
+	// Button labels.
+	ImportConfirmLabel = "✅ Confirm Import"
+	ImportCancelLabel  = "❌ Cancel"
+
+	// Terminal messages.
+	ImportCampaignProcessing = "⏳ Fetching threads, just a moment…"
 	ImportCampaignSuccess    = "✅ Imported **%s**: %d member(s) registered, %d thread(s) bound, %d thread(s) created."
+	ImportCampaignCancelled  = "⚠️ Import cancelled."
 	ImportCampaignErrDB      = "❌ Failed to write campaign to the database."
 	ImportCampaignErrChannel = "❌ Could not read the channel. Make sure the bot has access to it."
+	ImportCampaignErrSession = "❌ This import session has expired. Please run /importcampaign again."
+)
+
+// Forum post (all user-facing)
+const (
+	ForumPostFormatCampaign  = "Campaign"
+	ForumPostFormatOneshot   = "One-shot"
+	ForumPostFormatWestmarch = "Westmarch"
+	ForumPostScheduleUnset   = "Unset"
+	ForumPostStatusOpen      = "Open"
+	ForumPostStatusClosed    = "Closed"
+	ForumPostSlotsUnlimited  = "Unlimited"
+	ForumPostNoPlayers       = "*None yet*"
+)
+
+// Billboard
+
+// Campaign billboard: forum channel names (internal)
+const (
+	BillboardChannelCampaign  = "new-campaigns"
+	BillboardChannelOneshot   = "one-shots"
+	BillboardChannelWestmarch = "westmarches"
+)
+
+/*
+BillboardPinMessage is pinned in the campaign channel after the forum thread is created.
+
+%s is the billboard thread/channel ID (rendered as a clickable channel mention).
+*/
+const BillboardPinMessage = "**About this campaign:** <#%s>"
+
+/*
+CampaignAnnouncementThreadFmt is appended to the campaign channel announcement when
+a billboard thread exists.
+
+%s is the thread ID.
+*/
+const CampaignAnnouncementThreadFmt = "🏰 **About this campaign:** <#%s>"
+
+/*
+AnnouncementDMFmt is the DM sent to each campaign member when the DM posts in the announcements thread.
+
+Args: campaign name, DM user ID, message content.
+*/
+const AnnouncementDMFmt = "🗣️ **[%s]** <@%s> says:\n\n%s"
+
+// New campaign modal: schedule step (internal)
+const (
+	NewCampaignWarningsFieldID = "newcampaign_warnings"
+)
+
+// New campaign modal: schedule step (user-facing)
+const (
+	NewCampaignWarningsLabel       = "Content warnings (optional)"
+	NewCampaignWarningsPlaceholder = "e.g. Violence, horror (comma-separated)"
+)
+
+// New campaign modal: game details step (internal)
+const (
+	NewCampaignGameDetailsModalID = "modal_newcampaign_gamedetails"
+	NewCampaignRulesFieldID       = "newcampaign_rules"
+	NewCampaignVTTFieldID         = "newcampaign_vtt"
+	NewCampaignBooksFieldID       = "newcampaign_books"
+	NewCampaignExtraFieldID       = "newcampaign_extra"
+)
+
+// New campaign modal: game details step (user-facing)
+const (
+	NewCampaignGameDetailsModalTitle = "🎲 Game Details"
+	NewCampaignRulesLabel            = "House rules / variant (optional)"
+	NewCampaignRulesPlaceholder      = "e.g. Milestone levelling, no flanking..."
+	NewCampaignVTTLabel              = "VTT platform (optional)"
+	NewCampaignVTTPlaceholder        = "e.g. Roll20, Foundry VTT, Owlbear Rodeo..."
+	NewCampaignBooksLabel            = "Books allowed (comma-separated, optional)"
+	NewCampaignBooksPlaceholder      = "e.g. PHB, Xanathar's, Tasha's"
+	NewCampaignExtraLabel            = "Extra info for players (optional)"
+	NewCampaignExtraPlaceholder      = "Tone, session zero notes, Discord links..."
+)
+
+// Import campaign: billboard channel selector (user-facing)
+const (
+	ImportBillboardSelPrefix      = "import_billboard_sel"
+	ImportBillboardSelPlaceholder = "Select the billboard forum channel…"
+	ImportBillboardPrompt         = "**Select the forum channel** where this campaign's post should appear, link an existing thread, or skip to auto-create one."
+	ImportBillboardSkipPrefix     = "import_billboard_skip"
+	ImportBillboardSkipLabel      = "Auto-create"
+
+	ImportBillboardLinkPrefix           = "import_billboard_link"
+	ImportBillboardLinkModalID          = "modal_import_billboard_link"
+	ImportBillboardLinkLabel            = "🔗 Link existing thread"
+	ImportBillboardLinkFieldID          = "thread_id"
+	ImportBillboardLinkFieldLabel       = "Billboard Thread ID"
+	ImportBillboardLinkFieldPlaceholder = "Paste the forum thread ID (right-click ➡️ Copy ID)…"
+	ImportBillboardLinkSuccess          = "✅ Billboard linked for **%s**."
+	ImportBillboardLinkNotThread        = "🚫 That channel is not a forum thread. Paste the thread ID, not the forum channel ID."
 )
 
 // Timezone preference
@@ -1108,3 +1387,57 @@ const (
 	TimezoneSuccess           = "✅ Timezone set to **%s**."
 	TimezoneInvalid           = "⚠️ Unknown timezone. Please select from the list."
 )
+
+// Campaign role naming
+
+// standard discord colors
+var DiscordRoleColors = []int{
+	0x1ABC9C, 0x2ECC71, 0x3498DB, 0x9B59B6, 0xE91E63,
+	0xF1C40F, 0xE67E22, 0xE74C3C, 0x11806A, 0x1F8B4C,
+	0x206694, 0x71368A, 0xAD1457, 0xC27C0E, 0xA84300,
+	0x992D22, 0x607D8B, 0x99AAB5,
+}
+
+// RandomRoleColor returns a random color from the Discord role palette.
+func RandomRoleColor() int {
+	return DiscordRoleColors[rand.Intn(len(DiscordRoleColors))]
+}
+
+/*
+CampaignRoleName derives a short role name from a campaign name.
+
+Truncates at the first separator (":", " - ") or connector word in
+English ("of", "and", "or", ...) or Spanish ("de", "del", "y", "o", ...).
+*/
+func CampaignRoleName(name string) string {
+	lower := strings.ToLower(name)
+	cutAt := len(name)
+
+	for _, sep := range []string{":", " - "} {
+		if idx := strings.Index(lower, sep); idx != -1 && idx < cutAt {
+			cutAt = idx
+		}
+	}
+	connectors := []string{
+		// EN
+		" and ", " or ", " of ", " the ", " a ", " an ",
+		" in ", " into ", " on ", " at ", " to ", " for ",
+		" with ", " by ", " from ", " vs ", " vs. ",
+
+		// ES
+		" de ", " del ", " y ", " o ", " en ", " con ",
+		" por ", " para ", " desde ", " hasta ", " entre ",
+		" sobre ", " hacia ", " sin ",
+	}
+	for _, conn := range connectors {
+		if idx := strings.Index(lower, conn); idx != -1 && idx < cutAt {
+			cutAt = idx
+		}
+	}
+
+	result := strings.TrimSpace(name[:cutAt])
+	if len(result) < 3 {
+		return strings.TrimSpace(name)
+	}
+	return result
+}

@@ -3,14 +3,14 @@ package interactions
 /*
 	Set / Reschedule Session flow.
 
-	Step 1 - Button (manage_set_session:<campaignID>):
+	Step 1- Button (manage_set_session:<campaignID>):
 		Opens a modal. Title and fields adapt to context:
 		  - First set: "Set Session" title, date + time fields.
 		  - Re-schedule: "Reschedule Session" title, date + time + optional reason.
 		Date/time fields are pre-filled and labelled in the DM's local timezone
 		(from PlayerSettings). Input is parsed in that timezone and stored as UTC.
 
-	Step 2 - Modal (modal_manage_set_session:<campaignID>):
+	Step 2- Modal (modal_manage_set_session:<campaignID>):
 		Validates and writes campaign.Schedule.NextSession (UTC).
 		On re-schedule with a reason: posts to the campaign's announcements thread
 		(if one is set) and writes an audit entry.
@@ -25,6 +25,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/auditlog"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/guard"
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
@@ -49,7 +50,7 @@ func (h *manageSetSession) HandleComponents(s *discordgo.Session, i *discordgo.I
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -142,7 +143,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -202,8 +203,13 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 		helpers.RespondUpdateTerminal(s, i, messages.ManageSetSessionUpdateFailed)
 		return
 	}
+	go func() {
+		if err := helpers.UpdateBillboard(s, h.db, campaign); err != nil {
+			log.Printf("manage_set_session: billboard update for %s: %v", campaign.ID, err)
+		}
+	}()
 	h.sched.Schedule(i.GuildID, campaign)
-	if err := models.ResetCampaignRSVPs(h.db, campaign.ID); err != nil {
+	if err := models.ResetCampaignResponses(h.db, campaign.ID); err != nil {
 		log.Printf("manage_set_session: reset RSVPs for %s: %v", campaign.ID, err)
 	}
 
@@ -217,9 +223,7 @@ func (h *manageSetSessionModal) HandleModal(s *discordgo.Session, i *discordgo.I
 				log.Printf("manage_set_session: post to thread %s: %v", campaign.AnnouncementsThreadID, err)
 			}
 		}
-		if err := models.InsertAuditEntry(h.db, userID, userID, models.AuditSessionReschedule, reason); err != nil {
-			log.Printf("manage_set_session: audit entry for campaign %s: %v", campaign.ID, err)
-		}
+		auditlog.Post(s, h.db, i.GuildID, userID, userID, models.AuditSessionReschedule, reason)
 		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageSetSessionRescheduleSuccess, campaign.Name, displayTime, remaining))
 		return
 	}

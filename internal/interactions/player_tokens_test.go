@@ -29,13 +29,13 @@ There is no `WHERE owner_id = ?` clause and no post-load comparison against
 helpers.GetUserID(i). A user who learns or guesses another user's mediaID
 (via leaked link, message scrape, or simply iterating UUIDs in dev) can:
 
-	- Assign someone else's token to their own campaign roster
+	- Assign someone else's token to their own campaign party
 	- Download the raw PNG bytes
 	- Delete the record + file
 
 These tests assert the *correct* behavior: an interaction from a non-owner
 must not mutate state, must not return file bytes, and should respond with
-an error message. They will FAIL on current main - that's the point. They
+an error message. They will FAIL on current main- that's the point. They
 document the missing guard for the fix PR.
 */
 
@@ -108,7 +108,7 @@ Expected:
 
 Development Note (v0.12.6, 20260511):
 
-	Currently FAILS - handler reads the file and replies with the bytes.
+	Currently FAILS- handler reads the file and replies with the bytes.
 */
 func TestTokenDownload_RejectsNonOwner(t *testing.T) {
 	database := testutil.NewTestDB(t)
@@ -253,7 +253,7 @@ func TestTokenGalleryAssignSelect_RejectsNonOwner(t *testing.T) {
 		Where("media_id = ?", tokVictimMID).Count(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, 0, count,
-		"attacker assigned victim's token to a campaign - ownership check missing")
+		"attacker assigned victim's token to a campaign- ownership check missing")
 }
 
 /*

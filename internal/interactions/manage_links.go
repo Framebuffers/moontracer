@@ -1,6 +1,7 @@
 package interactions
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -9,7 +10,9 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/framebuffers/moontracer/internal/db"
+	"github.com/framebuffers/moontracer/internal/guard"
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
+	"github.com/framebuffers/moontracer/internal/manager/models"
 	"github.com/framebuffers/moontracer/internal/messages"
 )
 
@@ -47,7 +50,7 @@ func (h *manageLinksHandler) HandleComponents(s *discordgo.Session, i *discordgo
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -105,7 +108,7 @@ func (h *manageLinksModal) HandleModal(s *discordgo.Session, i *discordgo.Intera
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -139,6 +142,13 @@ func (h *manageLinksModal) HandleModal(s *discordgo.Session, i *discordgo.Intera
 		return
 	}
 
+	go func() {
+		if err := helpers.UpdateBillboard(s, h.db, campaign); err != nil {
+			log.Printf("manage_links: billboard update for %s: %v", campaignID, err)
+		}
+		syncResourcesThread(s, h.db, campaign)
+	}()
+
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageLinksSuccess, campaign.Name))
 }
 
@@ -151,4 +161,43 @@ func parseLinks(raw string) []string {
 		}
 	}
 	return out
+}
+
+// syncResourcesThread posts or edits the pinned resources message in the campaign's resources thread.
+func syncResourcesThread(s *discordgo.Session, database *bun.DB, c *models.Campaign) {
+	if c.ResourcesThreadID == "" {
+		return
+	}
+
+	var vttPart, linksPart string
+	if c.Game.VTT != "" {
+		vttPart = fmt.Sprintf(messages.ResourcesThreadVTTFmt, c.Game.VTT)
+	}
+	for _, link := range c.Links {
+		linksPart += fmt.Sprintf(messages.ResourcesThreadLinkFmt, link)
+	}
+	if vttPart == "" && linksPart == "" {
+		linksPart = messages.ResourcesThreadEmpty
+	}
+	content := fmt.Sprintf(messages.ResourcesThreadSyncFmt, vttPart, linksPart)
+
+	if c.ResourcesPinMsgID != "" {
+		if _, err := guard.ChannelMessageEdit(s, c.ResourcesThreadID, c.ResourcesPinMsgID, content); err != nil {
+			log.Printf("manage_links: edit resources pin for %s: %v", c.ID, err)
+		}
+		return
+	}
+
+	msg, err := guard.ChannelMessageSend(s, c.ResourcesThreadID, content)
+	if err != nil {
+		log.Printf("manage_links: send resources message for %s: %v", c.ID, err)
+		return
+	}
+	if err := guard.ChannelMessagePin(s, c.ResourcesThreadID, msg.ID); err != nil {
+		log.Printf("manage_links: pin resources message for %s: %v", c.ID, err)
+	}
+	c.ResourcesPinMsgID = msg.ID
+	if _, err := database.NewUpdate().Model(c).Column("resources_pin_msg_id").WherePK().Exec(context.Background()); err != nil {
+		log.Printf("manage_links: save resources_pin_msg_id for %s: %v", c.ID, err)
+	}
 }

@@ -26,19 +26,19 @@ import (
 type Scope string
 
 const (
-	// ScopePlayer - any registered player (exists in players table, not banned).
+	// ScopePlayer- any registered player (exists in players table, not banned).
 	ScopePlayer Scope = "player"
 
-	// ScopeMember - an active participant in a specific campaign.
+	// ScopeMember- an active participant in a specific campaign.
 	ScopeMember Scope = "member"
 
-	// ScopeDM - the dungeon master of a specific campaign.
+	// ScopeDM- the dungeon master of a specific campaign.
 	ScopeDM Scope = "dm"
 
-	// ScopeMod - a user with the mod or admin server role.
+	// ScopeMod- a user with the mod or admin server role.
 	ScopeMod Scope = "mod"
 
-	// ScopeAdmin - a user with the admin server role.
+	// ScopeAdmin- a user with the admin server role.
 	ScopeAdmin Scope = "admin"
 )
 

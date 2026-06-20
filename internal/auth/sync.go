@@ -96,7 +96,7 @@ func syncRoles(database *bun.DB, adminIDs, modIDs []string) error {
 			// Production: env var confirms the Discord role (two-factor).
 			log.Printf("sync: debug admin %s confirmed by Discord role", guard.DebugAdminID)
 		} else {
-			log.Printf("sync: WARNING - debug admin %s does not have the Discord admin role; elevation denied", guard.DebugAdminID)
+			log.Printf("sync: WARNING- debug admin %s does not have the Discord admin role; elevation denied", guard.DebugAdminID)
 		}
 	}
 

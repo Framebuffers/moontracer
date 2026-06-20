@@ -99,8 +99,17 @@ func adminHubData() *discordgo.InteractionResponseData {
 		},
 	}
 
+	row2 := []discordgo.MessageComponent{
+		discordgo.Button{
+			Label:    messages.AdminNukeLabel,
+			Style:    discordgo.DangerButton,
+			CustomID: messages.AdminNukePrefix,
+		},
+	}
+
 	components := []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: row1},
+		discordgo.ActionsRow{Components: row2},
 	}
 	if guard.DevMode {
 		components = append(components, discordgo.ActionsRow{Components: []discordgo.MessageComponent{

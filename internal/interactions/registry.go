@@ -78,6 +78,10 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&manageCampaignAnnounce{db: db},
 		&manageCampaignReschedule{db: db},
 		&manageSetRole{db: db},
+		&manageLinkRoleHandler{db: db},
+		&manageLinkRoleSelectHandler{db: db},
+		&manageRemapThreadsHandler{db: db},
+		&manageRemapConfirmHandler{db: db},
 		&manageArchive{db: db},
 		&manageArchiveConfirm{db: db, sched: sched},
 		&manageSetCover{db: db},
@@ -98,12 +102,15 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// Quick registration button (shown on all "not registered" surfaces).
 		&quickRegisterHandler{db: db},
 
-		// Session announce + RSVP
+		// Session announce + response
 		&manageNewSessionButton{db: db},
-		&sessionRSVPAcceptHandler{db: db, dispatcher: d},
-		&sessionRSVPDeclineHandler{db: db, dispatcher: d},
-		&sessionRSVPConfirmHandler{db: db, dispatcher: d},
-		&sessionRSVPCancelHandler{},
+		&sessionResponseAcceptHandler{db: db, dispatcher: d},
+		&sessionResponseDeclineHandler{db: db, dispatcher: d},
+		&sessionResponseConfirmHandler{db: db, dispatcher: d},
+		&sessionResponseCancelHandler{},
+		&sessionResponseRetractHandler{db: db, dispatcher: d},
+		&sessionConflictHandler{db: db, dispatcher: d},
+		&sessionConflictSelHandler{db: db, dispatcher: d},
 
 		// New campaign config (post-modal)
 		&newCampaignBookHandler{db: db},
@@ -111,6 +118,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&newCampaignFrequencyHandler{db: db},
 		&newCampaignSubmitHandler{db: db, dispatcher: d},
 		&newCampaignCancelHandler{db: db},
+		&newCampaignGameDetailsOpenHandler{db: db},
+		&newCampaignSubmitApprovalHandler{db: db, dispatcher: d},
 
 		// Player hub
 		&nextSessionsHandler{db: db},
@@ -122,14 +131,28 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		// Admin hub
 		&adminCampaignsHandler{db: db},
 		&adminCampaignSelectHandler{db: db},
+		&adminRepostBillboardHandler{db: db},
 		&adminBroadcastHandler{db: db, dispatcher: d},
 		&adminDatabaseHandler{db: db},
 		&adminSettingsHandler{db: db},
+		&adminBillboardSetHandler{db: db},
+		&adminBillboardSetCategoryHandler{db: db},
+		&adminCampaignsCategoryHandler{db: db},
+		&adminArchivedCategoryHandler{db: db},
+		&adminCampaignChannelSetHandler{db: db},
+		&adminAuditLogChannelSetHandler{db: db},
 		&adminDiagHandler{db: db},
 
-		// Manage: new campaign from button, links, player tokens
+		// Admin nuke
+		&adminNukeHandler{db: db},
+		&adminNukeSelectHandler{db: db},
+		&adminNukeCancelHandler{},
+		&adminNukeConfirmHandler{db: db},
+
+		// Manage: new campaign from button, links, game info, player tokens
 		&manageNewCampaignButton{db: db},
 		&manageLinksHandler{db: db},
+		&manageGameInfoHandler{db: db},
 		&manageDownloadTokensHandler{db: db},
 
 		// Token generator confirm/discard/assign
@@ -158,15 +181,25 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&playerDownloadTokensHandler{db: db},
 		&playerDownloadSelectHandler{db: db},
 
-		// Session RSVP (buttons on reminder DMs)
-		&rsvpAcceptHandler{db: db, dispatcher: d},
-		&rsvpDeclineHandler{db: db, dispatcher: d},
+		// Session response (buttons on reminder DMs)
+		&responseAcceptHandler{db: db, dispatcher: d},
+		&responseDeclineHandler{db: db, dispatcher: d},
 
 		// Invitations
 		&manageCampaignInvite{db: db, dispatcher: d},
 		&manageCampaignInviteSelect{db: db, dispatcher: d},
 		&campaignInviteAccept{db: db},
 		&campaignInviteDecline{db: db},
+
+		// Campaign import thread-mapping flow
+		&importThreadSelHandler{},
+		&importCancelHandler{},
+		&importConfirmHandler{db: db},
+
+		// Campaign import billboard channel selector
+		&importBillboardSelHandler{db: db},
+		&importBillboardSkipHandler{db: db},
+		&importBillboardLinkHandler{},
 	}
 }
 
@@ -175,16 +208,19 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, d
 	return []ModalHandler{
 		&modalCampaignCreate{db: db, dispatch: d},
 		&newCampaignScheduleModal{db: db, dispatcher: d},
+		&newCampaignGameDetailsModal{db: db, dispatcher: d},
 		&newSessionModal{db: db, dispatcher: d, sched: sched},
 		&campaignDenyModal{db: db, dispatcher: d},
 		&manageCampaignAnnounceModal{db: db, dispatcher: d},
 		&manageCampaignRescheduleModal{db: db},
 		&manageSetRoleModal{db: db},
 		&manageLinksModal{db: db},
+		&manageGameInfoModal{db: db},
 		&manageSetSessionModal{db: db, sched: sched},
 		&adminBroadcastModal{db: db, dispatcher: d},
 		&playerSetSheetModal{db: db},
 		&playerContactDMModal{db: db, dispatcher: d},
 		&tokenApplyModal{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
+		&importBillboardLinkModal{db: db},
 	}
 }

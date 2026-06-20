@@ -58,6 +58,7 @@ func All(db *bun.DB, d *dispatch.Dispatcher, dataDir, mediaBaseURL string) []Com
 		&tokensCommand{db: db},
 		&manageCommand{db: db},
 		&nextSessionsCommand{db: db},
+		&thisWeekCommand{db: db},
 		&campaignsCommand{db: db},
 		&searchCommand{db: db},
 		&banCommand{db: db},

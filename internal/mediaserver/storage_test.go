@@ -19,7 +19,7 @@ Download() is invoked from /uploadtoken and /uploadcover with a Discord CDN
 URL the user supplied via attachment. Discord vouches for those URLs, BUT:
 
 	- Discord could serve a redirect to anywhere (Download follows redirects).
-	- Discord CDN content is whatever the user uploaded - Discord does not
+	- Discord CDN content is whatever the user uploaded- Discord does not
 	  validate that an attachment with ContentType "image/png" is actually a
 	  PNG. The bot must validate the magic bytes itself.
 	- A pathological response (huge body, slow drip) can exhaust disk and
@@ -89,7 +89,7 @@ func TestDownload_RejectsNonImageMIME(t *testing.T) {
 	assert.Error(t, err, "Download must reject non-image MIME types")
 	_, statErr := os.Stat(dst)
 	assert.True(t, os.IsNotExist(statErr),
-		"non-image content was persisted to disk at %s - Download lacks MIME enforcement", dst)
+		"non-image content was persisted to disk at %s- Download lacks MIME enforcement", dst)
 }
 
 /*
@@ -108,7 +108,7 @@ Expected:
 
 Development Note (v0.12.6, 20260511):
 
-	Currently FAILS - io.Copy is unbounded.
+	Currently FAILS- io.Copy is unbounded.
 */
 func TestDownload_BoundsResponseSize(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

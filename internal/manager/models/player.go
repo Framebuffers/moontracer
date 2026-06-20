@@ -47,6 +47,7 @@ const (
 	AuditCampaignBan       AuditAction = "campaign_ban"
 	AuditCampaignArchive   AuditAction = "campaign_archive"
 	AuditSessionReschedule AuditAction = "session_reschedule"
+	AuditCampaignNuke      AuditAction = "campaign_nuke"
 )
 
 // AuditEntry is an immutable moderation log record.

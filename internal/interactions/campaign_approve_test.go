@@ -158,7 +158,7 @@ Plain player cannot approve.
 
 When:
 
-	A regular player (ServerRolePlayer) clicks Approve - e.g. via a forged
+	A regular player (ServerRolePlayer) clicks Approve- e.g. via a forged
 	CustomID or leaked DM button.
 
 Expected:

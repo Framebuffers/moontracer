@@ -60,7 +60,7 @@ When:
 
 Expected:
 
-	The returned extension is bounded - at minimum, no separators. Currently
+	The returned extension is bounded- at minimum, no separators. Currently
 	uses filepath.Ext which only returns text after the last dot, so most
 	traversal payloads collapse safely; but ".png/../etc" -> "" -> default,
 	and "foo.png\x00bad" returns ".png\x00bad" on Linux. Pin behavior.

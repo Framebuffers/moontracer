@@ -3,13 +3,16 @@ package interactions
 import (
 	"fmt"
 	"log"
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strings"
+	"time"
+
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/cooldown"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/dispatch"
 	"github.com/framebuffers/moontracer/internal/guard"
@@ -48,7 +51,7 @@ func (h *manageCampaignAnnounce) HandleComponents(s *discordgo.Session, i *disco
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -124,8 +127,15 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
+		return
+	}
+
+	cdKey := "announce:" + campaignID
+	if !cooldown.Global.Allow(cdKey, 15*time.Minute) {
+		remaining := cooldown.Global.Remaining(cdKey)
+		helpers.Respond(s, i, fmt.Sprintf(messages.AnnounceCooldown, cooldown.FormatRemaining(remaining)))
 		return
 	}
 
@@ -150,6 +160,11 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	}
 
 	if campaign.AnnouncementsThreadID != "" {
+		// ensure the thread is locked
+		if err := guard.LockThread(s, campaign.AnnouncementsThreadID); err != nil {
+			log.Printf("campaign_announce: lock announcements thread %s: %v", campaign.AnnouncementsThreadID, err)
+		}
+
 		rolePing := ""
 		if campaign.RoleID != "" {
 			rolePing = fmt.Sprintf("<@&%s> ", campaign.RoleID)
@@ -157,17 +172,17 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 		content := fmt.Sprintf(messages.AnnounceThreadContent, rolePing, userID, message) + buildAnnounceLinkBlock(campaign, "")
 		if _, err := guard.ChannelMessageSend(s, campaign.AnnouncementsThreadID, content); err != nil {
 			log.Printf("campaign_announce: failed to post to thread %s: %v", campaign.AnnouncementsThreadID, err)
-			helpers.RespondUpdateTerminal(s, i, messages.AnnounceError)
+			helpers.Respond(s, i, messages.AnnounceError)
 			return
 		}
-		helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.AnnouncePostedToThread, campaign.Name))
+		helpers.Respond(s, i, fmt.Sprintf(messages.AnnouncePostedToThread, campaign.Name))
 		return
 	}
 
 	players, err := models.GetCampaignPlayers(h.db, campaignID)
 	if err != nil {
 		log.Printf("campaign_announce: failed to load players: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.AnnounceError)
+		helpers.Respond(s, i, messages.AnnounceError)
 		return
 	}
 
@@ -196,11 +211,11 @@ func (h *manageCampaignAnnounceModal) HandleModal(s *discordgo.Session, i *disco
 	}
 
 	if sent == 0 {
-		helpers.RespondUpdateTerminal(s, i, messages.AnnounceNoMembers)
+		helpers.Respond(s, i, messages.AnnounceNoMembers)
 		return
 	}
 
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.AnnounceSentMessage, sent, campaign.Name))
+	helpers.Respond(s, i, fmt.Sprintf(messages.AnnounceSentMessage, sent, campaign.Name))
 }
 
 func buildAnnounceLinkBlock(campaign *models.Campaign, sheetURL string) string {

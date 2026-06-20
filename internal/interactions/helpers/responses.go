@@ -119,6 +119,39 @@ func RespondUpdateTerminal(s *discordgo.Session, i *discordgo.InteractionCreate,
 }
 
 /*
+DeferUpdate acknowledges a component interaction without changing the message yet,
+to circumvent the Discord 3-second rule for interactions.
+
+Call this at the top of any handler that does slow work (Discord API calls, DB writes)
+to prevent the "interaction failed" timeout.
+
+Follow this up with EditTerminal or a manual s.InteractionResponseEdit call.
+*/
+func DeferUpdate(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredMessageUpdate,
+	})
+}
+
+/*
+EditTerminal edits the deferred response to plain text + Home button.
+
+Use after DeferUpdate once the slow work is done.
+*/
+func EditTerminal(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {
+	homeBtn := router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe)
+	components := []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{homeBtn}},
+	}
+	emptyEmbeds := []*discordgo.MessageEmbed{}
+	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Content:    &content,
+		Components: &components,
+		Embeds:     &emptyEmbeds,
+	})
+}
+
+/*
 BackRow builds an ActionsRow with a back button pointing at target.
 When target is not ViewMe, a secondary Home button (-> ViewMe) is appended so
 users can always return to the player hub from any depth.

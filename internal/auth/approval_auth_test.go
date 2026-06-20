@@ -12,7 +12,7 @@ import (
 )
 
 /*
-Unit Testing: approval authorization - who can approve/deny campaigns.
+Unit Testing: approval authorization- who can approve/deny campaigns.
 */
 
 /*

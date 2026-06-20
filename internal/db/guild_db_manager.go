@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"sync"
 
+	"github.com/framebuffers/moontracer/internal/messages"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/driver/sqliteshim"
@@ -21,16 +22,16 @@ Each guild gets its own database file (<dataDir>/<guildID>.db), created and
 migrated on first access.
 */
 type GuildDBManager struct {
-	mu      sync.RWMutex
-	dbs     map[string]*bun.DB
-	dataDir string
+	mu    sync.RWMutex
+	dbs   map[string]*bun.DB
+	dbDir string
 }
 
 // NewGuildDBManager creates a manager that stores guild databases in dataDir.
 func NewGuildDBManager(dataDir string) *GuildDBManager {
 	return &GuildDBManager{
-		dbs:     make(map[string]*bun.DB),
-		dataDir: dataDir,
+		dbs:   make(map[string]*bun.DB),
+		dbDir: dataDir,
 	}
 }
 
@@ -108,7 +109,10 @@ func (m *GuildDBManager) Close() {
 }
 
 func (m *GuildDBManager) openAndMigrate(guildID string) (*bun.DB, error) {
-	path := filepath.Join(m.dataDir, guildID+".db")
+	if !messages.IsSnowflake(guildID) {
+		return nil, fmt.Errorf("guild_db_manager: invalid guildID %q", guildID)
+	}
+	path := filepath.Join(m.dbDir, guildID+".db")
 	sqldb, err := sql.Open(sqliteshim.ShimName, path+"?_pragma=foreign_keys(1)")
 	if err != nil {
 		return nil, fmt.Errorf("open guild DB %s: %w", guildID, err)

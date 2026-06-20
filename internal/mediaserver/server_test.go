@@ -172,7 +172,7 @@ When:
 Expected:
 
 	No HTML index of cover/ contents. http.FileServer auto-indexes by default
-	unless the directory contains an index.html - this test pins current
+	unless the directory contains an index.html- this test pins current
 	behavior so a future change that disables it (or adds index.html guarding)
 	is intentional and reviewed.
 
@@ -192,5 +192,5 @@ func TestCDN_DirectoryListingBehavior(t *testing.T) {
 
 	// NOTE: Directory listings disclose filenames. A hardened server should 404.
 	assert.NotContains(t, body, "legit.png",
-		"directory listing exposes filenames - wrap FileServer to reject dir requests")
+		"directory listing exposes filenames- wrap FileServer to reject dir requests")
 }

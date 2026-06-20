@@ -18,6 +18,7 @@ services:
       MOD_ROLE_NAME: ${MOD_ROLE_NAME}
       MEDIA_BASE_URL: ${MEDIA_BASE_URL}
       MEDIA_PORT: ${MEDIA_PORT}
+      MOONTRACER_DATA_DIR: /app/data
     volumes:
       - ${MOONTRACER_DATA_DIR:-./data}:/app/data
     networks:

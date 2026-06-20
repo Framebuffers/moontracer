@@ -11,7 +11,7 @@ import (
 )
 
 /*
-LoadDMCampaign authorizes the invoking user as a DM of campaignID and loads
+LoadCampaignAsDM authorizes the invoking user as a DM of campaignID and loads
 the campaign by ID. On either failure it sends the standard response and
 returns (nil, false), so callers can early-return.
 
@@ -26,7 +26,7 @@ Handlers that load before authorizing (campaign_leave, campaign_toggle, RenderMa
 that look up by tag (campaign_join), or that use a different scope
 (campaign_approve via checkModAuth) are intentionally omitted.
 */
-func LoadDMCampaign(
+func LoadCampaignAsDM(
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
 	database *bun.DB,
@@ -62,7 +62,7 @@ func IsCampaignMutable(s *discordgo.Session, i *discordgo.InteractionCreate, c *
 }
 
 /*
-LoadModCampaign authorizes the invoking user as a mod (ScopeMod) and loads the
+LoadCampaignAsMod authorizes the invoking user as a mod (ScopeMod) and loads the
 campaign by ID. On either failure it sends the approval-flow response and
 returns (nil, false), so callers can early-return.
 
@@ -70,7 +70,7 @@ This is the mod-scoped counterpart to LoadDMCampaign, used by the campaign
 approval/denial handlers. Sites that only need the auth check (no load) should
 keep using checkModAuth.
 */
-func LoadModCampaign(
+func LoadCampaignAsMod(
 	s *discordgo.Session,
 	i *discordgo.InteractionCreate,
 	database *bun.DB,

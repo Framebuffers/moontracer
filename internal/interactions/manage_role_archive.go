@@ -16,12 +16,14 @@ package interactions
 import (
 	"fmt"
 	"log"
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strings"
+
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/auditlog"
 	"github.com/framebuffers/moontracer/internal/commands"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/guard"
@@ -51,6 +53,25 @@ func (h *manageSetRole) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	}
 	campaignID := parts[1]
 
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
+	if !ok {
+		return
+	}
+
+	// Pre-fill with the current Discord role name when one is already assigned.
+	var currentName string
+	if campaign.RoleID != "" {
+		roles, err := s.GuildRoles(i.GuildID)
+		if err == nil {
+			for _, r := range roles {
+				if r.ID == campaign.RoleID {
+					currentName = r.Name
+					break
+				}
+			}
+		}
+	}
+
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseModal,
 		Data: &discordgo.InteractionResponseData{
@@ -65,6 +86,7 @@ func (h *manageSetRole) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 						Required:    true,
 						MaxLength:   100,
 						Placeholder: "e.g. Curse of Strahd",
+						Value:       currentName,
 					},
 				}},
 			},
@@ -93,7 +115,7 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -102,48 +124,37 @@ func (h *manageSetRoleModal) HandleModal(s *discordgo.Session, i *discordgo.Inte
 		return
 	}
 
-	roleName := i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value
+	roleName := strings.TrimSpace(i.ModalSubmitData().Components[0].(*discordgo.ActionsRow).Components[0].(*discordgo.TextInput).Value)
 	if roleName == "" {
 		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
 		return
 	}
 
-	// discord role: find or create
-	var roleID string
-	roles, err := s.GuildRoles(i.GuildID)
-	if err != nil {
-		log.Printf("manage_role: failed to fetch guild roles: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
-		return
-	}
-
-	for _, role := range roles {
-		if strings.EqualFold(role.Name, roleName) {
-			roleID = role.ID
-			break
+	if campaign.RoleID != "" {
+		// Rename the existing campaign role.
+		if _, err := guard.GuildRoleEdit(s, i.GuildID, campaign.RoleID, &discordgo.RoleParams{Name: roleName}); err != nil {
+			log.Printf("manage_role: failed to rename role %s: %v", campaign.RoleID, err)
+			helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
+			return
 		}
-	}
-
-	if roleID == "" {
-		role, err := guard.GuildRoleCreate(s, i.GuildID, &discordgo.RoleParams{
-			Name: roleName,
-		})
+		log.Printf("manage_role: %s renamed role %s to %q for campaign %s", userID, campaign.RoleID, roleName, campaign.Name)
+	} else {
+		// No role yet: create one and link it.
+		role, err := guard.GuildRoleCreate(s, i.GuildID, &discordgo.RoleParams{Name: roleName})
 		if err != nil {
 			log.Printf("manage_role: failed to create role: %v", err)
 			helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
 			return
 		}
-		roleID = role.ID
+		campaign.RoleID = role.ID
+		if err := db.Update(h.db, campaign); err != nil {
+			log.Printf("manage_role: failed to update campaign: %v", err)
+			helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
+			return
+		}
+		log.Printf("manage_role: %s created and linked role %s (%s) to campaign %s", userID, roleName, role.ID, campaign.Name)
 	}
 
-	campaign.RoleID = roleID
-	if err := db.Update(h.db, campaign); err != nil {
-		log.Printf("manage_role: failed to update campaign: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
-		return
-	}
-
-	log.Printf("manage_role: %s linked role %s (%s) to campaign %s", userID, roleName, roleID, campaign.Name)
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageSetRoleSuccess, roleName, campaign.Name))
 }
 
@@ -167,7 +178,7 @@ func (h *manageArchive) HandleComponents(s *discordgo.Session, i *discordgo.Inte
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -222,7 +233,7 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -231,20 +242,129 @@ func (h *manageArchiveConfirm) HandleComponents(s *discordgo.Session, i *discord
 		return
 	}
 
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content:    messages.ManageArchiveInProgress,
+			Embeds:     []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{},
+			Flags:      discordgo.MessageFlagsEphemeral,
+		},
+	})
+
 	if err := commands.ArchiveCampaign(h.db, campaign, messages.AbandonReasonDM); err != nil {
 		log.Printf("manage_archive: failed to archive campaign %s: %v", campaign.ID, err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageArchiveFailed)
+		helpers.EditTerminal(s, i, messages.ManageArchiveFailed)
 		return
 	}
 	h.sched.Cancel(i.GuildID, campaign.ID)
 	RetireChannel(s, i.GuildID, campaign)
+	MoveToArchivedCategory(h.db, s, campaign)
+	DeleteBillboard(s, campaign)
 
-	if err := models.InsertAuditEntry(h.db, userID, userID, models.AuditCampaignArchive, fmt.Sprintf("archived campaign %s (%s) via manage menu", campaign.Name, campaign.Tag)); err != nil {
-		log.Printf("manage_archive: failed to write audit entry: %v", err)
-	}
+	auditlog.Post(s, h.db, i.GuildID, userID, userID, models.AuditCampaignArchive, fmt.Sprintf("archived campaign %s (%s) via manage menu", campaign.Name, campaign.Tag))
 
 	log.Printf("manage_archive: %s archived campaign %s (%s)", userID, campaign.Name, campaign.ID)
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name), nil, []discordgo.MessageComponent{
-		helpers.BackRow(router.ViewManage),
+	helpers.EditTerminal(s, i, fmt.Sprintf(messages.ManageArchiveSuccess, campaign.Name))
+}
+
+/*
+manageLinkRoleHandler shows a Discord role select menu so the DM can link an existing
+guild role to their campaign without creating a new one.
+
+CustomID: manage_link_role:<campaignID>
+*/
+type manageLinkRoleHandler struct {
+	db *bun.DB
+}
+
+func (h *manageLinkRoleHandler) CustomIDPrefix() string { return messages.ManageLinkRolePrefix }
+
+func (h *manageLinkRoleHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
+	if !ok {
+		return
+	}
+	if !helpers.IsCampaignMutable(s, i, campaign) {
+		return
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("**Link an existing role to %s**\nPick the Discord role that gates access to this campaign's channel.", campaign.Name),
+			Embeds:  []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{
+				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+					discordgo.SelectMenu{
+						MenuType:    discordgo.RoleSelectMenu,
+						CustomID:    fmt.Sprintf("%s:%s", messages.ManageLinkRoleSelectPrefix, campaignID),
+						Placeholder: messages.ManageLinkRolePlaceholder,
+					},
+				}},
+				helpers.BackRow(router.ViewManageSettings, campaignID),
+			},
+			Flags: discordgo.MessageFlagsEphemeral,
+		},
 	})
+}
+
+/*
+manageLinkRoleSelectHandler saves the selected role to the campaign and applies channel
+permissions so the role grants access immediately.
+
+CustomID: manage_link_role_sel:<campaignID>
+*/
+type manageLinkRoleSelectHandler struct {
+	db *bun.DB
+}
+
+func (h *manageLinkRoleSelectHandler) CustomIDPrefix() string {
+	return messages.ManageLinkRoleSelectPrefix
+}
+
+func (h *manageLinkRoleSelectHandler) HandleComponents(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	parts, ok := helpers.SplitCustomID(s, i, i.MessageComponentData().CustomID, 2)
+	if !ok {
+		return
+	}
+	campaignID := parts[1]
+
+	values := i.MessageComponentData().Values
+	if len(values) == 0 {
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	roleID := values[0]
+
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
+	if !ok {
+		return
+	}
+	if !helpers.IsCampaignMutable(s, i, campaign) {
+		return
+	}
+
+	campaign.RoleID = roleID
+	if err := db.Update(h.db, campaign); err != nil {
+		log.Printf("manage_link_role_sel: update campaign %s: %v", campaignID, err)
+		helpers.RespondUpdateTerminal(s, i, messages.ManageSetRoleFailed)
+		return
+	}
+
+	if messages.IsSnowflake(campaign.ChannelID) {
+		if err := guard.ChannelPermissionSet(s, campaign.ChannelID, roleID,
+			discordgo.PermissionOverwriteTypeRole, discordgo.PermissionViewChannel, 0); err != nil {
+			log.Printf("manage_link_role_sel: allow role %s on channel %s: %v", roleID, campaign.ChannelID, err)
+		}
+	}
+
+	_ = strings.TrimSpace // keep strings import used
+	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageLinkRoleSuccess, campaign.Name))
 }

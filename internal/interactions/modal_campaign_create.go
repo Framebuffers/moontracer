@@ -11,7 +11,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
-	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/dispatch"
 	"github.com/framebuffers/moontracer/internal/manager/models"
 	"github.com/framebuffers/moontracer/internal/messages"
@@ -74,7 +73,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		slots = parsed
 	}
 
-	tag, err := uniqueTag(m.db, models.NormalizeTag(name))
+	tag, err := models.UniqueTag(m.db, models.NormalizeTag(name))
 	if err != nil {
 		log.Printf("modal_campaign_create: tag dedup failed: %v", err)
 		helpers.RespondUpdateTerminal(s, i, messages.CampaignCreationFailureErrorMessage)
@@ -95,7 +94,7 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 		conf,
 		slots,
 		true,  // open by default
-		false, // isOneshot - chosen later via dropdown
+		false, // isOneshot- chosen later via dropdown
 		nil,
 		"",
 		schedule,
@@ -119,20 +118,4 @@ func (m *modalCampaignCreate) HandleModal(s *discordgo.Session, i *discordgo.Int
 			Flags:      discordgo.MessageFlagsEphemeral,
 		},
 	})
-}
-
-// uniqueTag returns base unchanged if no campaign owns it; otherwise appends -2, -3, ...
-func uniqueTag(database *bun.DB, base string) (string, error) {
-	if base == "" {
-		base = "campaign"
-	}
-	candidate := base
-	for n := 2; n < 1000; n++ {
-		_, err := db.GetByTag[models.Campaign](database, candidate)
-		if err != nil {
-			return candidate, nil
-		}
-		candidate = fmt.Sprintf("%s-%d", base, n)
-	}
-	return "", fmt.Errorf("could not find a unique tag for %q", base)
 }

@@ -82,7 +82,7 @@ func RenderManageCampaignMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 		return
 	}
 
-	// Pending campaigns are awaiting staff approval - only show the danger zone.
+	// Pending campaigns are awaiting staff approval- only show the danger zone.
 	if !campaign.IsApproved {
 		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseUpdateMessage,
@@ -140,7 +140,7 @@ func (h *manageCampaignDelete) HandleComponents(s *discordgo.Session, i *discord
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -194,7 +194,7 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -203,24 +203,43 @@ func (h *manageDeleteConfirm) HandleComponents(s *discordgo.Session, i *discordg
 		return
 	}
 
-	ctx := context.Background()
-	_, err := h.db.NewDelete().Model((*models.CampaignPlayer)(nil)).
-		Where("campaign_id = ?", campaignID).Exec(ctx)
-	if err != nil {
-		log.Printf("manage_delete_confirm: failed to delete campaign players: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageDeleteFailure)
-		return
-	}
-
-	if err := db.Delete[models.Campaign](h.db, campaignID); err != nil {
-		log.Printf("manage_delete_confirm: failed to delete campaign: %v", err)
-		helpers.RespondUpdateTerminal(s, i, messages.ManageDeleteFailure)
-		return
-	}
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content:    messages.ManageDeleteInProgress,
+			Embeds:     []*discordgo.MessageEmbed{},
+			Components: []discordgo.MessageComponent{},
+			Flags:      discordgo.MessageFlagsEphemeral,
+		},
+	})
 
 	RetireChannel(s, i.GuildID, campaign)
+	MoveToArchivedCategory(h.db, s, campaign)
+	DeleteBillboard(s, campaign)
+
+	if campaign.RoleID != "" {
+		if err := guard.GuildRoleDelete(s, i.GuildID, campaign.RoleID); err != nil {
+			log.Printf("manage_delete_confirm: failed to delete role %s for campaign %s: %v", campaign.RoleID, campaignID, err)
+		}
+	}
+
+	// Purge relational data and clear operational fields, keeping only embed content.
+	if err := models.PurgeCampaignData(h.db, campaign); err != nil {
+		log.Printf("manage_delete_confirm: purge failed for %s: %v", campaignID, err)
+		// Non-fatal: proceed with soft-delete even if purge partially failed.
+	}
+
+	// Soft-delete the campaign row: sets deleted_at, preserves embed snapshot.
+	ctx := context.Background()
+	_, err := h.db.NewDelete().Model(campaign).WherePK().Exec(ctx)
+	if err != nil {
+		log.Printf("manage_delete_confirm: failed to soft-delete campaign: %v", err)
+		helpers.EditTerminal(s, i, messages.ManageDeleteFailure)
+		return
+	}
+
 	log.Printf("manage_delete_confirm: %s deleted campaign %s (%s)", userID, campaign.Name, campaignID)
-	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
+	helpers.EditTerminal(s, i, fmt.Sprintf(messages.ManageDeleteSuccess, campaign.Name))
 }
 
 /*
@@ -307,7 +326,7 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 		}
 		label := p.PlayerID
 		if p.Player != nil {
-			label = p.Player.ID // Discord user ID - shown as fallback
+			label = p.Player.ID // Discord user ID- shown as fallback
 		}
 		options = append(options, discordgo.SelectMenuOption{
 			Label: label,
