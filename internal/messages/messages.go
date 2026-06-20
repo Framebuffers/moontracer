@@ -24,7 +24,7 @@ import (
 // Generic
 const (
 	// identifiers
-	BotVersion = "v1.1.3b-adamantine"
+	BotVersion = "v1.1.4b-adamantine"
 	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
 	// 2026-05-29: started implementing for real on my first big server
 )
@@ -539,7 +539,7 @@ var ThreadNavEmoji = map[string]string{
 }
 
 // ThreadNavOrder defines the display order of threads in the welcome nav section.
-var ThreadNavOrder = []string{"announcements", "sessions", "dice-rolls", "characters", "memes", "art", "downtime", "resources"}
+var ThreadNavOrder = []string{"announcements"}
 
 // DayOfWeekInput maps accepted day-name inputs (lower-cased) to 0-based weekday index (Mon=0).
 var DayOfWeekInput = map[string]int{
