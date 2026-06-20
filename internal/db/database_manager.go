@@ -18,7 +18,7 @@ func (d *DatabaseManager) Get(connectionString string) (*bun.DB, error) {
 		Note:
 		This assumes connectionString is a bare path (no existing query params).
 		If the DSN ever includes a "?" (e.g. "file:data/moontracer.db?cache=shared"),
-		this concatenation will break — use "&" instead of "?" in that case.
+		this concatenation will break- use "&" instead of "?" in that case.
 
 		Right now, the bot passes a bare string, so this is not important *for now*.
 	*/

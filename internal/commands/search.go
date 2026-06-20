@@ -76,9 +76,7 @@ func (c *searchCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCr
 	}
 
 	if len(buttons) > 0 {
-		resp.Data.Components = []discordgo.MessageComponent{
-			discordgo.ActionsRow{Components: buttons},
-		}
+		resp.Data.Components = buttons
 	}
 
 	s.InteractionRespond(i.Interaction, resp)

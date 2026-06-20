@@ -123,7 +123,7 @@ func TestSyncRoles_DebugAdminElevatedWithDiscordRole(t *testing.T) {
 		guard.DebugAdminID = origID
 	})
 
-	// "debug1" is in the Discord admin set — two-factor confirmed
+	// "debug1" is in the Discord admin set- two-factor confirmed
 	err = syncRoles(database, []string{"debug1"}, nil)
 	require.NoError(t, err)
 

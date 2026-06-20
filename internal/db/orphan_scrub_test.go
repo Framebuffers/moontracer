@@ -41,7 +41,7 @@ func newTestDB(t *testing.T) *bun.DB {
 
 /*
 Unit Testing
-ScrubOrphanedCampaignPlayers — guild-DB sanity sweep
+ScrubOrphanedCampaignPlayers- guild-DB sanity sweep
 
 Covers the cleanup helper that runs on every guild-DB open.
 The function is idempotent and safe to call when no orphans exist.

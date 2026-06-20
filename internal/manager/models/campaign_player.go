@@ -60,17 +60,17 @@ const (
 )
 
 /*
-RSVPStatus records a player's attendance response for the current session.
+ResponseStatus records a player's attendance response for the current session.
 
-Reset to RSVPPending whenever NextSession changes.
+Reset to ResponsePending whenever NextSession changes.
 */
-type RSVPStatus string
+type ResponseStatus string
 
 const (
-	RSVPPending    RSVPStatus = ""
-	RSVPAccepted   RSVPStatus = "accepted"
-	RSVPDeclined   RSVPStatus = "declined"
-	RSVPWaitlisted RSVPStatus = "waitlisted"
+	ResponsePending    ResponseStatus = ""
+	ResponseAccepted   ResponseStatus = "accepted"
+	ResponseDeclined   ResponseStatus = "declined"
+	ResponseWaitlisted ResponseStatus = "waitlisted"
 )
 
 /*
@@ -94,7 +94,7 @@ type CampaignPlayer struct {
 	BanReason             string               `bun:",nullzero" json:"ban_reason,omitempty"`
 	BannedFromCampaign    bool                 `bun:",notnull,default:false" json:"banned_from_campaign"`
 	BanReasonFromCampaign string               `bun:",nullzero" json:"ban_reason_from_campaign,omitempty"`
-	RSVPStatus            RSVPStatus           `bun:",notnull,default:''" json:"rsvp_status"`
+	ResponseStatus        ResponseStatus       `bun:"response_status,notnull,default:''" json:"response_status"`
 	SheetURL              string               `bun:",nullzero" json:"sheet_url,omitempty"`
 }
 
@@ -163,7 +163,7 @@ BulkSetCampaignPlayerStatus updates campaign memberships for a player in bulk.
 
 skipLogic decides which entries to leave untouched. nil means skip nothing.
 
-Returns updated/skipped counts and a map of campaignID→error for any failures.
+Returns updated/skipped counts and a map of campaignID->error for any failures.
 */
 func BulkSetCampaignPlayerStatus(db *bun.DB, playerID string, campaigns []CampaignPlayer, to CampaignPlayerStatus, skipLogic func(CampaignPlayer) bool) (updated int, skipped int, errs map[string]error) {
 	errors := make(map[string]error)
@@ -189,18 +189,24 @@ func BulkSetCampaignPlayerStatus(db *bun.DB, playerID string, campaigns []Campai
 /*
 BulkAddCampaignMembers creates CampaignPlayer rows for each player ID, skipping any that already exist.
 
+dmID receives RoleDM; all other IDs receive RolePlayer.
 Preserves existing membership data (role, ban state, etc.) via ON CONFLICT DO NOTHING.
 */
-func BulkAddCampaignMembers(db *bun.DB, campaignID string, playerIDs []string) error {
+func BulkAddCampaignMembers(db *bun.DB, campaignID, dmID string, playerIDs []string) error {
 	if len(playerIDs) == 0 {
 		return nil
 	}
 	ctx := context.Background()
 	rows := make([]CampaignPlayer, 0, len(playerIDs))
 	for _, id := range playerIDs {
+		role := RolePlayer
+		if id == dmID {
+			role = RoleDM
+		}
 		rows = append(rows, CampaignPlayer{
 			PlayerID:   id,
 			CampaignID: campaignID,
+			Role:       role,
 			Status:     StatusActive,
 		})
 	}
@@ -211,13 +217,13 @@ func BulkAddCampaignMembers(db *bun.DB, campaignID string, playerIDs []string) e
 }
 
 /*
-ResetCampaignRSVPs clears the RSVP status for all players in a campaign.
+ResetCampaignResponses clears the response status for all players in a campaign.
 
 Call whenever NextSession is updated so responses from the previous session don't persist.
 */
-func ResetCampaignRSVPs(db *bun.DB, campaignID string) error {
+func ResetCampaignResponses(db *bun.DB, campaignID string) error {
 	_, err := db.NewUpdate().Model((*CampaignPlayer)(nil)).
-		Set("rsvp_status = ?", RSVPPending).
+		Set("response_status = ?", ResponsePending).
 		Where("campaign_id = ?", campaignID).
 		Exec(context.Background())
 	return err

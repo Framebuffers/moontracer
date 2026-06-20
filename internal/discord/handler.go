@@ -48,7 +48,14 @@ func NewHandler(
 		defer func() {
 			if r := recover(); r != nil {
 				log.Printf("handler: panic recovered: %v", r)
-				respondEphemeral(s, i, "An unexpected error occurred. Please try again.")
+				if i.Type == discordgo.InteractionApplicationCommandAutocomplete {
+					s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+						Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+						Data: &discordgo.InteractionResponseData{},
+					})
+				} else {
+					respondEphemeral(s, i, "An unexpected error occurred. Please try again.")
+				}
 			}
 		}()
 
@@ -78,7 +85,7 @@ func NewHandler(
 		guildDB, err := guildDBM.GetOrCreate(guildID)
 		if err != nil {
 			log.Printf("handler: failed to get DB for guild %s: %v", guildID, err)
-			respondEphemeral(s, i, "Internal error — please try again later.")
+			respondSafe(s, i, "Internal error- please try again later.")
 			return
 		}
 
@@ -199,4 +206,21 @@ func respondEphemeral(s *discordgo.Session, i *discordgo.InteractionCreate, cont
 			Flags:   discordgo.MessageFlagsEphemeral,
 		},
 	})
+}
+
+/*
+respondSafe sends an appropriate response based on the interaction type.
+
+Use for early exit error paths that run before the type switch, so autocomplete
+interactions receive an empty result instead of a channel message (which Discord rejects).
+*/
+func respondSafe(s *discordgo.Session, i *discordgo.InteractionCreate, content string) {
+	if i.Type == discordgo.InteractionApplicationCommandAutocomplete {
+		s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionApplicationCommandAutocompleteResult,
+			Data: &discordgo.InteractionResponseData{},
+		})
+		return
+	}
+	respondEphemeral(s, i, content)
 }

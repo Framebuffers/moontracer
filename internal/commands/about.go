@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -101,19 +102,22 @@ var ascii2 = "```" + `
 
 var ascii = fmt.Sprintf(`
 %s
-%s
--# Released under the %s license.
--# %s
 
 %s
+
+-# %s
+-# Released under the %s license.
+-# %s, go: %s, discordgo: %s
 
 -# %s
 -# 🐺 %s 🌕
 `, ascii2,
+	messages.AboutCommandHelp,
 	messages.AboutCommandCopyright,
 	messages.AboutCommandLicense,
 	messages.BotVersion,
-	messages.AboutCommandHelp,
+	runtime.Version(),
+	discordgo.VERSION,
 	messages.AboutCommandAttributions,
 	messages.AboutCommandAwoo,
 )

@@ -23,7 +23,8 @@ func Migrate(db *bun.DB) error {
 		(*models.AuditEntry)(nil),
 		(*models.PlayerSettings)(nil),
 		(*models.Session)(nil),
-		(*models.SessionRSVP)(nil),
+		(*models.SessionAssistance)(nil),
+		(*models.GuildSettings)(nil),
 	}
 
 	for _, model := range tables {
@@ -36,15 +37,15 @@ func Migrate(db *bun.DB) error {
 	/*
 		Migration process (three passes, all idempotent):
 
-		1. CreateTable loop above — `IfNotExists`, so fresh DBs get every column
+		1. CreateTable loop above -`IfNotExists`, so fresh DBs get every column
 		   from the model struct tags. Existing DBs skip this entirely.
-		2. `alterStmts` below — `ADD COLUMN` retrofits for columns that were added
+		2. `alterStmts` below -`ADD COLUMN` retrofits for columns that were added
 		   to a model after deploy. Each statement is wrapped by `isDuplicateColumn`:
 		   SQLite errors "duplicate column name ..." on re-run, which we swallow.
 		   Any other error aborts migration. Columns MUST be appended (never
 		   reordered or removed) so old deploys advancing N versions at once
 		   replay history in order.
-		3. Post-migration cleanup — dedup passes, unique indexes, backfills.
+		3. Post-migration cleanup -dedup passes, unique indexes, backfills.
 		   Each runs on every boot; must be idempotent.
 
 		Adding a new model:
@@ -57,7 +58,7 @@ func Migrate(db *bun.DB) error {
 
 		Why this shape: bun has no migration framework wired up here, so the
 		three passes stand in. Ordering matters within `alterStmts` only when a
-		later statement depends on an earlier column existing — otherwise append
+		later statement depends on an earlier column existing -otherwise append
 		is safe.
 	*/
 
@@ -95,11 +96,21 @@ func Migrate(db *bun.DB) error {
 		"ALTER TABLE campaigns ADD COLUMN session_capacity INTEGER NOT NULL DEFAULT 6",
 		"UPDATE campaigns SET slots = 2147483647 WHERE is_westmarch = 1 AND slots = -1",
 		"ALTER TABLE player_settings ADD COLUMN timezone TEXT NOT NULL DEFAULT 'UTC'",
-		"ALTER TABLE campaign_players ADD COLUMN rsvp_status TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE campaign_players ADD COLUMN response_status TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE campaign_players ADD COLUMN media_id TEXT",
 		"ALTER TABLE media ADD COLUMN url TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE campaigns ADD COLUMN player_sheet_url TEXT NOT NULL DEFAULT ''",
 		"ALTER TABLE campaign_players ADD COLUMN sheet_url TEXT",
+		"ALTER TABLE campaigns ADD COLUMN deleted_at TIMESTAMP",
+		"ALTER TABLE campaigns ADD COLUMN billboard_channel_id TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN billboard_thread_id TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE guild_settings ADD COLUMN billboard_category_id TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE guild_settings ADD COLUMN campaign_channel_id TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE guild_settings ADD COLUMN campaigns_category_id TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE guild_settings ADD COLUMN archived_category_id TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN resources_thread_id TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE campaigns ADD COLUMN resources_pin_msg_id TEXT NOT NULL DEFAULT ''",
+		"ALTER TABLE guild_settings ADD COLUMN audit_log_channel_id TEXT NOT NULL DEFAULT ''",
 	}
 	for _, stmt := range alterStmts {
 		if _, err := db.ExecContext(ctx, stmt); err != nil {

@@ -26,7 +26,7 @@ import (
 		4. Respond with InteractionResponseChannelMessageWithSource
 		   (fresh ephemeral message).
 
-	Flow (back navigation → RenderMeHub):
+	Flow (back navigation -> RenderMeHub):
 		1. User clicks "Back" on any child view that pointed at ViewMe.
 		2. navHandler -> router.Navigate -> the ViewMe adapter in views.go.
 		3. Adapter calls RenderMeHub(s, i, db, userID).
@@ -42,7 +42,7 @@ import (
 		   - Probe auth.Authorize(ScopeMod): if true, add Admin Panel.
 		     ScopeAdmin is a superset of ScopeMod so this covers both.
 		4. On probe failure (DB error), the button is silently omitted
-		   rather than blocking the whole hub — /me must always render
+		   rather than blocking the whole hub- /me must always render
 		   something for a registered user.
 */
 
@@ -114,4 +114,3 @@ func buildMeHubComponents() []discordgo.MessageComponent {
 		}},
 	}
 }
-

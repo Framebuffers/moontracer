@@ -4,11 +4,11 @@ package interactions
 	Player invitation flow.
 
 	Flow:
-		1. DM clicks "Invite Player" on manage menu → user select dropdown.
-		2. DM picks a user → validate (registered, not in campaign, campaign not full).
+		1. DM clicks "Invite Player" on manage menu -> user select dropdown.
+		2. DM picks a user -> validate (registered, not in campaign, campaign not full).
 		3. Create CampaignPlayer with StatusPending, send invitation DM with Accept/Decline.
-		4. Target clicks Accept → status becomes active, role assigned, DM message updated.
-		5. Target clicks Decline → CampaignPlayer removed, DM message updated.
+		4. Target clicks Accept -> status becomes active, role assigned, DM message updated.
+		5. Target clicks Decline -> CampaignPlayer removed, DM message updated.
 
 	CustomID formats:
 		manage_invite:<campaignID>
@@ -20,6 +20,7 @@ package interactions
 import (
 	"fmt"
 	"log"
+
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
@@ -51,7 +52,7 @@ func (h *manageCampaignInvite) HandleComponents(s *discordgo.Session, i *discord
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -98,7 +99,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 	campaignID := parts[1]
 	userID := helpers.GetUserID(i)
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}

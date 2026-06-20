@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+
 	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
@@ -68,7 +69,7 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 		Auth + DB load are fast; handle errors here before the defer so we can still
 		call InteractionRespond without conflicting with a deferred response.
 	*/
-	campaign, ok := helpers.LoadModCampaign(s, i, c.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsMod(s, i, c.db, campaignID)
 	if !ok {
 		return
 	}
@@ -110,13 +111,17 @@ func (c *campaignApprove) HandleComponents(s *discordgo.Session, i *discordgo.In
 
 	// Channel + thread creation is slow; run after responding so the mod interaction resolves immediately.
 	go func() {
-		if err := SetupNewChannel(s, guildID, campaign); err != nil {
+		if err := SetupNewChannel(c.db, s, guildID, campaign); err != nil {
 			log.Printf("campaign_approve: channel setup for %s: %v", campaignID, err)
 			return
 		}
 		if err := db.Update(c.db, campaign); err != nil {
 			log.Printf("campaign_approve: save channel IDs for %s: %v", campaignID, err)
 		}
+		if err := PostBillboard(c.db, s, campaign, guildID); err != nil {
+			log.Printf("campaign_approve: billboard for %s: %v", campaignID, err)
+		}
+		PostCampaignChannelAnnouncement(c.db, s, campaign, senderID)
 	}()
 }
 
@@ -223,7 +228,7 @@ func (m *campaignDenyModal) HandleModal(s *discordgo.Session, i *discordgo.Inter
 		userID = i.Member.User.ID
 	}
 
-	campaign, ok := helpers.LoadModCampaign(s, i, m.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsMod(s, i, m.db, campaignID)
 	if !ok {
 		return
 	}

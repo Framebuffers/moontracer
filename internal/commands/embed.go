@@ -39,8 +39,8 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL,
 		if p.Status == models.StatusBanned {
 			continue
 		}
-		playerLines = append(playerLines, fmt.Sprintf("<@%s> — %s (%s, %d sessions)",
-			p.PlayerID, p.Role, p.Status, p.SessionsPlayed))
+		playerLines = append(playerLines, fmt.Sprintf("<@%s>- %s (%s)",
+			p.PlayerID, p.Role, p.Status))
 	}
 	playersValue := messages.NoneLabel
 	if len(playerLines) > 0 {
@@ -79,7 +79,7 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL,
 		&discordgo.MessageEmbedField{Name: "Synopsis", Value: synopsis, Inline: false},
 		&discordgo.MessageEmbedField{Name: "Schedule", Value: FormatSchedule(c), Inline: false},
 		&discordgo.MessageEmbedField{Name: "Warnings", Value: warnings, Inline: false},
-		&discordgo.MessageEmbedField{Name: fmt.Sprintf("Players (%d)", len(playerLines)), Value: playersValue, Inline: false},
+		&discordgo.MessageEmbedField{Name: fmt.Sprintf("👥 Players (%d)", len(playerLines)), Value: playersValue, Inline: false},
 	)
 
 	if links := formatEmbedLinks(c); links != "" {
@@ -87,7 +87,7 @@ func CampaignEmbed(c models.Campaign, players []models.CampaignPlayer, coverURL,
 	}
 
 	embed := &discordgo.MessageEmbed{
-		Title:  fmt.Sprintf("%s — %s", campaignType, c.Name),
+		Title:  fmt.Sprintf("%s- %s", campaignType, c.Name),
 		Color:  messages.EmbedColor,
 		Fields: fields,
 	}
@@ -221,13 +221,17 @@ func FormatSchedule(c models.Campaign) string {
 	sched := c.Schedule
 
 	if !sched.HasSchedule() {
-		if sched.Frequency == "" {
-			return "Schedule not set"
+		nextPart := ""
+		if !sched.NextSession.IsZero() {
+			nextPart = fmt.Sprintf("\nNext: %s", sched.NextSession.Format("2006-01-02"))
 		}
-		return fmt.Sprintf("%s — schedule not set", sched.Frequency)
+		if sched.Frequency == "" {
+			return "Schedule not set" + nextPart
+		}
+		return fmt.Sprintf("%s- schedule not set", sched.Frequency) + nextPart
 	}
 
-	line := fmt.Sprintf("%s — %s %s UTC (%.0fh)", sched.Frequency, sched.DayName(), sched.StartTime, sched.DurationHours)
+	line := fmt.Sprintf("%s- %s %s UTC (%.0fh)", sched.Frequency, sched.DayName(), sched.StartTime, sched.DurationHours)
 
 	if !sched.NextSession.IsZero() {
 		line += fmt.Sprintf("\nNext: %s", sched.NextSession.Format("2006-01-02"))

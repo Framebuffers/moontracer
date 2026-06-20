@@ -19,7 +19,7 @@ package interactions
 	Flow (RenderManageList):
 		1. Load CampaignPlayer rows for the user.
 		2. Filter down to entries where Role == DM.
-		3. Empty filtered set → empty-state message with Back only.
+		3. Empty filtered set -> empty-state message with Back only.
 		4. Otherwise render a manage select plus a Back + "New Campaign"
 		   button row.
 
@@ -35,8 +35,9 @@ package interactions
 
 import (
 	"fmt"
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strings"
+
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -115,7 +116,7 @@ func RenderManageList(s *discordgo.Session, i *discordgo.InteractionCreate, db *
 		label := e.Campaign.Name
 		desc := "DM"
 		if !e.Campaign.IsApproved {
-			desc = "Pending approval — enter to cancel"
+			desc = "Pending approval- enter to cancel"
 		} else if e.Campaign.IsArchived {
 			desc = "Archived"
 		}

@@ -14,7 +14,7 @@ A **D&D Campaign Manager Discord bot** for players, DMs and spectators!
 
 Moontracer can manage everything you need to organise your TTRPG experience online: **manage campaigns, players, alerts, and more!**
 
-## 🚀 Quick Start
+## 🎲 Quick Start
 
 ### 1. Create a Discord application
 
@@ -85,7 +85,7 @@ Once the bot is online in your server, run `/register` to create your player pro
 
 - DMs schedule their sessions via `/newsession` (modal: date DD/MM/YYYY, time, and optional notes).
 - Sessions announce to the campaign's `#announcements` thread with a role mention.
-- Session embed includes: title, date/time, DM, capacity, RSVP counts (who's going/not going/on a waitlist).
+- Session embed includes: title, date/time, DM, capacity, Response counts (who's going/not going/on a waitlist).
 - Players can say if they're going or not via a button on their DMs or on the `#announcements` message.
 - Conflict detection: warns when a player already has a session scheduled at the same time.
 - Session reminders: if the player opts-in, they can receive notifications 1 hour before a session starts.
@@ -150,7 +150,7 @@ Once the bot is online in your server, run `/register` to create your player pro
 - Built-in HTTP media server (Go stdlib net/http) for serving cover art and tokens.
 - One-time opaque download endpoint (claim store, UUID, 10-min TTL).
 - All Discord-mutating operations wrapped in a guard package that respects SAFE_MODE.
-- Command registration uses ApplicationCommandBulkOverwrite — stale commands auto-removed on startup.
+- Command registration uses ApplicationCommandBulkOverwrite- stale commands auto-removed on startup.
 - Global/guild command mode: 
     - guild ID set -> instant registration (dev); 
     - unset -> global (up to 1h propagation).
@@ -159,17 +159,17 @@ Once the bot is online in your server, run `/register` to create your player pro
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `DISCORD_BOT_TOKEN` | Yes | — | Bot token from Discord Developer Portal |
-| `ADMIN_ROLE_NAME` | Yes | — | Name of the admin/owner role on the server |
-| `MOD_ROLE_NAME` | No | — | Name of the moderator role (optional) |
-| `DISCORD_GUILD_ID` | No | — | Limit command registration to one guild (dev mode) |
+| `DISCORD_BOT_TOKEN` | Yes |- | Bot token from Discord Developer Portal |
+| `ADMIN_ROLE_NAME` | Yes |- | Name of the admin/owner role on the server |
+| `MOD_ROLE_NAME` | No |- | Name of the moderator role (optional) |
+| `DISCORD_GUILD_ID` | No |- | Limit command registration to one guild (dev mode) |
 | `MEDIA_PORT` | No | `8090` | Port for the built-in media server |
 | `MEDIA_BASE_URL` | No | `http://localhost:8090/api/v1/cdn` | Public CDN root URL |
 | `MEDIA_DOWNLOAD_URL` | No | `http://localhost:8090` | Public server root for `/dl/` download links |
-| `SAFE_MODE` | No | — | Disable Discord mutations (roles, DMs) |
-| `DEV_MODE` | No | — | Development mode flag |
-| `DEBUG_ADMIN_ID` | No | — | Developer override Discord user ID |
-| `VERBOSE` | No | — | Enable verbose logging with timestamps |
+| `SAFE_MODE` | No |- | Disable Discord mutations (roles, DMs) |
+| `DEV_MODE` | No |- | Development mode flag |
+| `DEBUG_ADMIN_ID` | No |- | Developer override Discord user ID |
+| `VERBOSE` | No |- | Enable verbose logging with timestamps |
 
 ## 📦 Deployment
 

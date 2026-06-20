@@ -3,9 +3,10 @@ package interactions
 import (
 	"fmt"
 	"log"
-	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 	"strconv"
 	"strings"
+
+	"github.com/framebuffers/moontracer/internal/interactions/helpers"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
@@ -121,7 +122,7 @@ func (h *manageCampaignRescheduleModal) HandleModal(s *discordgo.Session, i *dis
 	}
 	campaignID := parts[1]
 
-	campaign, ok := helpers.LoadDMCampaign(s, i, h.db, campaignID)
+	campaign, ok := helpers.LoadCampaignAsDM(s, i, h.db, campaignID)
 	if !ok {
 		return
 	}
@@ -179,6 +180,11 @@ func (h *manageCampaignRescheduleModal) HandleModal(s *discordgo.Session, i *dis
 		helpers.RespondUpdateTerminal(s, i, messages.RescheduleError)
 		return
 	}
+	go func() {
+		if err := helpers.UpdateBillboard(s, h.db, campaign); err != nil {
+			log.Printf("campaign_reschedule: billboard update for %s: %v", campaign.ID, err)
+		}
+	}()
 
 	dayName := campaign.Schedule.DayName()
 	helpers.RespondUpdateTerminal(s, i, fmt.Sprintf(messages.RescheduleSuccess, campaign.Name, dayName, timeStr, durStr, freqStr))

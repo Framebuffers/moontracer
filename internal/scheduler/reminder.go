@@ -83,14 +83,14 @@ func fireReminder(s *Scheduler, guildID, campaignID string) {
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.Button{
-						Label:    messages.RSVPAcceptLabel,
+						Label:    messages.ResponseAcceptLabel,
 						Style:    discordgo.SuccessButton,
-						CustomID: fmt.Sprintf("%s:%s:%s", messages.RSVPAcceptPrefix, guildID, campaignID),
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.ResponseAcceptPrefix, guildID, campaignID),
 					},
 					discordgo.Button{
-						Label:    messages.RSVPDeclineLabel,
+						Label:    messages.ResponseDeclineLabel,
 						Style:    discordgo.DangerButton,
-						CustomID: fmt.Sprintf("%s:%s:%s", messages.RSVPDeclinePrefix, guildID, campaignID),
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.ResponseDeclinePrefix, guildID, campaignID),
 					},
 				}},
 			},
@@ -98,11 +98,11 @@ func fireReminder(s *Scheduler, guildID, campaignID string) {
 		sent++
 	}
 
-	log.Printf("scheduler: fired reminder for %s (%s, guild %s) — %d DM(s) queued",
+	log.Printf("scheduler: fired reminder for %s (%s, guild %s)- %d DM(s) queued",
 		campaign.Name, campaignID, guildID, sent)
 }
 
-// fireSessionReminder sends RSVP reminder DMs for a session-table session.
+// fireSessionReminder sends response reminder DMs for a session-table session.
 func fireSessionReminder(s *Scheduler, guildID, sessionID string) {
 	gdb, err := s.guildDBM.GetOrCreate(guildID)
 	if err != nil {
@@ -154,27 +154,27 @@ func fireSessionReminder(s *Scheduler, guildID, sessionID string) {
 		)
 		_ = displayTime // shown via Discord <t:> timestamp in content
 		s.dispatcher.Push(dispatch.DirectMessage{
-			ID:     fmt.Sprintf("session-reminder:%s:%s", sessionID, p.PlayerID),
-			Target: p.PlayerID,
+			ID:      fmt.Sprintf("session-reminder:%s:%s", sessionID, p.PlayerID),
+			Target:  p.PlayerID,
 			Content: content,
 			Components: []discordgo.MessageComponent{
 				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 					discordgo.Button{
-						Label:    messages.SessionRSVPAcceptLabel,
+						Label:    messages.SessionResponseAcceptLabel,
 						Style:    discordgo.SuccessButton,
-						CustomID: fmt.Sprintf("%s:%s:%s", messages.SessionRSVPAcceptPrefix, guildID, sessionID),
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.SessionResponseAcceptPrefix, guildID, sessionID),
 					},
 					discordgo.Button{
-						Label:    messages.SessionRSVPDeclineLabel,
+						Label:    messages.SessionResponseDeclineLabel,
 						Style:    discordgo.DangerButton,
-						CustomID: fmt.Sprintf("%s:%s:%s", messages.SessionRSVPDeclinePrefix, guildID, sessionID),
+						CustomID: fmt.Sprintf("%s:%s:%s", messages.SessionResponseDeclinePrefix, guildID, sessionID),
 					},
 				}},
 			},
 		})
 		sent++
 	}
-	log.Printf("scheduler: fired session reminder for %s (guild %s) — %d DM(s) queued", sessionID, guildID, sent)
+	log.Printf("scheduler: fired session reminder for %s (guild %s)- %d DM(s) queued", sessionID, guildID, sent)
 }
 
 func formatReminderLinks(c *models.Campaign, sheetURL string) string {

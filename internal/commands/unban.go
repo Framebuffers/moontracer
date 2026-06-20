@@ -7,6 +7,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/uptrace/bun"
 
+	"github.com/framebuffers/moontracer/internal/auditlog"
 	"github.com/framebuffers/moontracer/internal/auth"
 	"github.com/framebuffers/moontracer/internal/db"
 	"github.com/framebuffers/moontracer/internal/manager/models"
@@ -79,9 +80,7 @@ func (u *unbanCommand) Execute(s *discordgo.Session, i *discordgo.InteractionCre
 	/*
 		Unbanning a member only clears the global ban flag. A Player's membership to a Campaign remains untouched.
 	*/
-	if err := models.InsertAuditEntry(u.db, target.ID, invokerID, models.AuditUnban, "global ban lifted"); err != nil {
-		log.Printf("unban: failed to write audit entry: %v", err)
-	}
+	auditlog.Post(s, u.db, i.GuildID, target.ID, invokerID, models.AuditUnban, "global ban lifted")
 
 	log.Printf("unban: %s unbanned %s", invokerID, target.ID)
 	respond(s, i, fmt.Sprintf(messages.UnbanSuccessMessage, targetUser.ID))

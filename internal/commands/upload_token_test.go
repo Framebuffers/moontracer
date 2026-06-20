@@ -13,8 +13,8 @@ parseHexColor coverage.
 The function gates a color.RGBA value that is later passed straight into
 the gradient generator. It currently accepts:
 
-	- 6 hex chars, with or without leading "#"
-	- Any case
+  - 6 hex chars, with or without leading "#"
+  - Any case
 
 It rejects everything else. These tests pin behavior so a future change
 (e.g. accepting #RGB shorthand or named colors) is intentional.
@@ -60,7 +60,7 @@ When:
 
 Expected:
 
-	The returned extension is bounded — at minimum, no separators. Currently
+	The returned extension is bounded- at minimum, no separators. Currently
 	uses filepath.Ext which only returns text after the last dot, so most
 	traversal payloads collapse safely; but ".png/../etc" -> "" -> default,
 	and "foo.png\x00bad" returns ".png\x00bad" on Linux. Pin behavior.

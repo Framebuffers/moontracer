@@ -26,8 +26,8 @@ type Campaign struct {
 
 	// Details about your campaign, like open slots, the style, trigger warnings, extra info by the DM to be added to the Campaign's description.
 
-	Slots           int      `bun:",notnull,default:0" json:"slots"`            // Total roster cap. Westmarches set this to math.MaxInt32 (effectively unlimited) and gate per-session admission via SessionCapacity instead.
-	SessionCapacity int      `bun:",notnull,default:6" json:"session_capacity"` // Westmarch tripwire — seats per sitting. Joining past this admits anyway and DMs the campaign DM. Ignored for non-westmarch campaigns.
+	Slots           int      `bun:",notnull,default:0" json:"slots"`            // Total party cap. Westmarches set this to math.MaxInt32 (effectively unlimited) and gate per-session admission via SessionCapacity instead.
+	SessionCapacity int      `bun:",notnull,default:6" json:"session_capacity"` // Westmarch tripwire- seats per sitting. Joining past this admits anyway and DMs the campaign DM. Ignored for non-westmarch campaigns.
 	IsOpen          bool     `bun:",notnull,default:false" json:"is_open"`
 	IsOneshot       bool     `bun:",notnull,default:false" json:"is_oneshot"`
 	IsWestmarch     bool     `bun:",notnull,default:false" json:"is_westmarch"`
@@ -56,6 +56,8 @@ type Campaign struct {
 	ChannelID             string `bun:",default:''" json:"channel_id"`
 	CategoryID            string `bun:",default:''" json:"category_id"`
 	AnnouncementsThreadID string `bun:",default:''" json:"announcements_thread_id"`
+	ResourcesThreadID     string `bun:",default:''" json:"resources_thread_id"`
+	ResourcesPinMsgID     string `bun:",default:''" json:"resources_pin_msg_id"`
 
 	// Has this campaign been approved to be published?
 	IsApproved bool `bun:",notnull,default:false"`
@@ -65,6 +67,14 @@ type Campaign struct {
 	IsArchived     bool      `bun:",notnull,default:false"`
 	ArchivedAt     time.Time `bun:",nullzero"`
 	ArchivedReason string    `bun:",nullzero"`
+
+	// Soft delete: staff-triggered. Row is retained for the admin historical log.
+	// bun automatically adds WHERE deleted_at IS NULL to all normal queries.
+	DeletedAt time.Time `bun:",soft_delete,nullzero"`
+
+	// Billboard: Discord Forum Channel thread created on approval.
+	BillboardChannelID string `bun:",default:''" json:"billboard_channel_id,omitempty"`
+	BillboardThreadID  string `bun:",default:''" json:"billboard_thread_id,omitempty"`
 }
 
 // CanMutate returns false if the campaign is archived (immutable).
@@ -73,9 +83,9 @@ func (c *Campaign) CanMutate() bool {
 }
 
 /*
-DisplaySlots renders the roster cap for player-facing UI.
+DisplaySlots renders the party cap for player-facing UI.
 
-Westmarches store math.MaxInt32 to mean "no roster cap" and must never leak that number;
+Westmarches store math.MaxInt32 to mean "no party cap" and must never leak that number;
 legacy rows with Slots <= 0 mean unset/unlimited.
 
 The "10+" form is similar to the stock counter at a dept-store: hide the exact figure once it stops being meaningful.
@@ -185,6 +195,26 @@ func NormalizeTag(name string) string {
 	}
 
 	return tag
+}
+
+// UniqueTag returns base if no campaign owns it; otherwise appends -2, -3, … until one is free.
+func UniqueTag(database *bun.DB, base string) (string, error) {
+	if base == "" {
+		base = "campaign"
+	}
+	candidate := base
+	ctx := context.Background()
+	for n := 2; n < 1000; n++ {
+		exists, err := database.NewSelect().Model((*Campaign)(nil)).WhereAllWithDeleted().Where("tag = ?", candidate).Exists(ctx)
+		if err != nil {
+			return "", fmt.Errorf("checking tag %q: %w", candidate, err)
+		}
+		if !exists {
+			return candidate, nil
+		}
+		candidate = fmt.Sprintf("%s-%d", base, n)
+	}
+	return "", fmt.Errorf("could not find a unique tag for %q", base)
 }
 
 // CampaignFrequency defines how often will sessions in this Campaign will occur.
@@ -298,8 +328,12 @@ func (c *Campaign) CreateCampaign(
 	return campaign, nil
 }
 
-// RefreshNextSession updates Campaign.Schedule.NextSession to the earliest upcoming session
-// in the sessions table. Should be called after inserting or deleting a Session.
+/*
+RefreshNextSession updates Campaign.Schedule.NextSession to the earliest upcoming session
+in the sessions table.
+
+Should be called after inserting or deleting a Session.
+*/
 func (c *Campaign) RefreshNextSession(db *bun.DB) error {
 	ctx := context.Background()
 	var earliest Session
@@ -309,7 +343,7 @@ func (c *Campaign) RefreshNextSession(db *bun.DB) error {
 		Limit(1).
 		Scan(ctx)
 	if err != nil {
-		// No upcoming sessions — clear NextSession.
+		// No upcoming sessions, clear NextSession.
 		c.Schedule.NextSession = time.Time{}
 		c.Schedule.AlertSent = false
 	} else {
@@ -321,4 +355,78 @@ func (c *Campaign) RefreshNextSession(db *bun.DB) error {
 		Where("id = ?", c.ID).
 		Exec(ctx)
 	return err2
+}
+
+// GetCampaignByAnnouncementsThreadID finds a campaign whose announcements thread matches threadID.
+func GetCampaignByAnnouncementsThreadID(database *bun.DB, threadID string) (*Campaign, error) {
+	c := &Campaign{}
+	err := database.NewSelect().Model(c).
+		Where("announcements_thread_id = ?", threadID).
+		Limit(1).
+		Scan(context.Background())
+	return c, err
+}
+
+// GetCampaignByBillboardThreadID finds an approved campaign whose billboard thread matches threadID.
+func GetCampaignByBillboardThreadID(database *bun.DB, threadID string) (*Campaign, error) {
+	c := &Campaign{}
+	err := database.NewSelect().Model(c).
+		Where("billboard_thread_id = ?", threadID).
+		Where("is_approved = 1").
+		Limit(1).
+		Scan(context.Background())
+	return c, err
+}
+
+/*
+PurgeCampaignData applies the delete policy: purge all relational data (players, sessions,
+non-cover media) and clear operational Discord fields, keeping only what is needed to
+reconstruct the campaign embed (name, description, game config, schedule, warnings, links,
+cover art).
+
+Call this before soft-deleting the campaign row so bun's soft-delete filter does not
+interfere with the UPDATE.
+*/
+func PurgeCampaignData(database *bun.DB, c *Campaign) error {
+	ctx := context.Background()
+
+	if _, err := database.NewDelete().
+		TableExpr("session_responses").
+		Where("session_id IN (SELECT id FROM sessions WHERE campaign_id = ?)", c.ID).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("delete session_responses: %w", err)
+	}
+
+	if _, err := database.NewDelete().Model((*Session)(nil)).
+		Where("campaign_id = ?", c.ID).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("delete sessions: %w", err)
+	}
+
+	if _, err := database.NewDelete().Model((*CampaignPlayer)(nil)).
+		Where("campaign_id = ?", c.ID).
+		Exec(ctx); err != nil {
+		return fmt.Errorf("delete campaign_players: %w", err)
+	}
+
+	c.RoleID = ""
+	c.ChannelID = ""
+	c.CategoryID = ""
+	c.AnnouncementsThreadID = ""
+	c.ResourcesThreadID = ""
+	c.ResourcesPinMsgID = ""
+	c.BillboardChannelID = ""
+	c.BillboardThreadID = ""
+	c.IsApproved = false
+	c.IsOpen = false
+	c.CanOverflow = false
+
+	_, err := database.NewUpdate().Model(c).
+		Column("role_id", "channel_id", "category_id", "announcements_thread_id",
+			"resources_thread_id", "resources_pin_msg_id",
+			"billboard_channel_id", "billboard_thread_id",
+			"is_approved", "is_open", "can_overflow").
+		WherePK().
+		Exec(ctx)
+	return err
 }

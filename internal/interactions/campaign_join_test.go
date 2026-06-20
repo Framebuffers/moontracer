@@ -47,7 +47,7 @@ westmarchJoinFixture seeds:
 prefillPlayers does NOT include the DM (DM is always seeded). To test the
 3rd joiner against capacity=2 with the DM filling seat 1, pass prefill=1
 (which adds one extra active member, so DM + 1 prefill = 2 active, joiner
-is the 3rd → tripwire).
+is the 3rd -> tripwire).
 */
 func westmarchJoinFixture(t *testing.T, database *bun.DB, sessionCapacity, prefillPlayers int) *dispatch.Dispatcher {
 	t.Helper()
