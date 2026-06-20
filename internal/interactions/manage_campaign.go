@@ -324,12 +324,8 @@ func (h *manageCampaignBan) HandleComponents(s *discordgo.Session, i *discordgo.
 		if p.Role == models.RoleDM || p.Status == models.StatusBanned || p.PlayerID == userID {
 			continue
 		}
-		label := p.PlayerID
-		if p.Player != nil {
-			label = p.Player.ID // Discord user ID- shown as fallback
-		}
 		options = append(options, discordgo.SelectMenuOption{
-			Label: label,
+			Label: helpers.MemberName(s, i.GuildID, p.PlayerID),
 			Value: fmt.Sprintf("%s:%s", campaignID, p.PlayerID),
 		})
 	}

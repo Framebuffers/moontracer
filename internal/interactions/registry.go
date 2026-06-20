@@ -75,6 +75,8 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&manageDeleteConfirm{db: db},
 		&manageCampaignBan{db: db},
 		&manageCampaignBanSelect{db: db},
+		&manageCampaignUnban{db: db},
+		&manageCampaignUnbanSelect{db: db},
 		&manageCampaignAnnounce{db: db},
 		&manageCampaignReschedule{db: db},
 		&manageSetRole{db: db},

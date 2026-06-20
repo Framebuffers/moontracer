@@ -34,13 +34,11 @@ welcome is last so the nav section can reference all other thread IDs.
 
 Locked threads (welcome, announcements, sessions) are DM/bot-only. The rest are open to players.
 */
-var standardThreads = []string{"announcements", "sessions", "dice-rolls", "characters", "memes", "art", "downtime", "resources", "welcome"}
+var standardThreads = []string{"announcements", "welcome"}
 
 // threadInitMessages is the pinned welcome message sent to each standard thread on creation.
 var threadInitMessages = map[string]string{
 	"announcements": messages.ThreadInitMsgAnnouncements,
-	"sessions":      messages.ThreadInitMsgSessions,
-	"dice-rolls":    messages.ThreadInitMsgDiceRolls,
 }
 
 /*
@@ -239,7 +237,7 @@ func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Cam
 			Players can view but not post: the DM and bot can post because they have ManageThreads
 			on the parent channel.
 		*/
-		if name == "welcome" || name == "sessions" || name == "announcements" {
+		if name == "welcome" || name == "announcements" {
 			if err := guard.LockThread(s, thread.ID); err != nil {
 				log.Printf("campaign_threads: lock %s thread %s: %v", name, thread.ID, err)
 			}
@@ -292,7 +290,7 @@ func createStandardThreads(database *bun.DB, s *discordgo.Session, c *models.Cam
 		before the campaign row is fully settled.
 	*/
 	if _, err := database.NewUpdate().Model(c).
-		Column("announcements_thread_id", "resources_thread_id").
+		Column("announcements_thread_id").
 		WherePK().
 		Exec(context.Background()); err != nil {
 		log.Printf("campaign_threads: save thread IDs for %s: %v", c.ID, err)
