@@ -24,7 +24,7 @@ import (
 // Generic
 const (
 	// identifiers
-	BotVersion = "v1.1.2b-adamantine"
+	BotVersion = "v1.1.3b-adamantine"
 	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
 	// 2026-05-29: started implementing for real on my first big server
 )
@@ -424,6 +424,12 @@ const (
 const (
 	ManageDeleteLabel           = "🗑️ Delete"
 	ManageBanLabel              = "🚫 Ban Member"
+	ManageUnbanLabel            = "✅ Unban Member"
+	ManageUnbanSelectPlaceholder = "Select a banned player..."
+	ManageUnbanNoBanned         = "ℹ️ No players are currently banned from this campaign."
+	ManageUnbanSuccess          = "✅ <@%s> has been unbanned from **%s**."
+	ManageUnbanFailure          = "🚫 Failed to unban player."
+	ManageUnbanDMMessage        = "You have been unbanned from **%s**. You may rejoin using the Join button in the campaign channel."
 	ManageAnnounceLabel         = "🏰 New Session"
 	ManageRescheduleLabel       = "📅 Configure Schedule"
 	ManageCampaignButtonLabel   = "⚙️ Manage"
@@ -1060,6 +1066,13 @@ const (
 const (
 	// identifiers
 	ManageNewCampaignPrefix = "manage_newcampaign"
+)
+
+// Manage campaign: Unban Player
+const (
+	// identifiers
+	ManageUnbanPrefix       = "manage_unban"
+	ManageUnbanSelectPrefix = "manage_unban_select"
 )
 
 // Manage campaign: Invite Player

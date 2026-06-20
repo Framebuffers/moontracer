@@ -217,8 +217,11 @@ func (h *newSessionModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 		if p.Status != models.StatusActive {
 			continue
 		}
+		if p.Role == models.RoleDM {
+			continue
+		}
 		if p.PlayerID == userID {
-			continue // NOTE: don't DM the DM who just set this up
+			continue
 		}
 		pSettings, _ := models.GetOrCreatePlayerSettings(h.db, p.PlayerID)
 		if !pSettings.NotifySessionRemind {

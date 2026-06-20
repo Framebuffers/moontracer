@@ -91,6 +91,11 @@ func RenderManagePlayersMenu(s *discordgo.Session, i *discordgo.InteractionCreat
 				CustomID: fmt.Sprintf("manage_ban:%s", campaignID),
 			},
 			discordgo.Button{
+				Label:    messages.ManageUnbanLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageUnbanPrefix, campaignID),
+			},
+			discordgo.Button{
 				Label:    messages.ManageInviteLabel,
 				Style:    discordgo.SecondaryButton,
 				CustomID: fmt.Sprintf("%s:%s", messages.ManageInvitePrefix, campaignID),
