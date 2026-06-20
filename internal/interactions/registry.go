@@ -82,6 +82,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&manageLinkRoleSelectHandler{db: db},
 		&manageRemapThreadsHandler{db: db},
 		&manageRemapConfirmHandler{db: db},
+		&manageEditCapacity{db: db},
 		&manageArchive{db: db},
 		&manageArchiveConfirm{db: db, sched: sched},
 		&manageSetCover{db: db},
@@ -222,5 +223,6 @@ func AllModals(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Scheduler, d
 		&playerContactDMModal{db: db, dispatcher: d},
 		&tokenApplyModal{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
 		&importBillboardLinkModal{db: db},
+		&manageEditCapacityModal{db: db},
 	}
 }

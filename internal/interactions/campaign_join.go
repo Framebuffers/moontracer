@@ -116,7 +116,7 @@ func (h *campaignJoin) HandleComponents(s *discordgo.Session, i *discordgo.Inter
 	*/
 	activePlayerCount := 0
 	for _, p := range players {
-		if p.Status == models.StatusActive {
+		if p.Status == models.StatusActive && p.Role != models.RoleDM {
 			activePlayerCount++
 		}
 	}

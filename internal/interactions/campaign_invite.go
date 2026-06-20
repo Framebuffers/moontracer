@@ -138,7 +138,7 @@ func (h *manageCampaignInviteSelect) HandleComponents(s *discordgo.Session, i *d
 			helpers.RespondUpdateTerminal(s, i, messages.AddPlayerAlreadyInCampaign)
 			return
 		}
-		if p.Status == models.StatusActive {
+		if p.Status == models.StatusActive && p.Role != models.RoleDM {
 			activeCount++
 		}
 	}

@@ -24,7 +24,7 @@ import (
 // Generic
 const (
 	// identifiers
-	BotVersion = "v1.1.1b-adamantine"
+	BotVersion = "v1.1.2b-adamantine"
 	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
 	// 2026-05-29: started implementing for real on my first big server
 )
@@ -746,6 +746,25 @@ const (
 	ManageReminderVTT              = "\nVTT: %s"
 	ManageReminderSheets           = "\nSheets: %s"
 	ManageReminderResource         = "\n• %s"
+)
+
+// Manage campaign: Edit Capacity
+const (
+	// identifiers
+	ManageEditCapacityPrefix  = "manage_edit_capacity"
+	ManageEditCapacityModalID = "modal_manage_edit_capacity"
+	ManageEditCapacitySlotsFieldID      = "capacity_slots"
+	ManageEditCapacitySessionCapFieldID = "capacity_session"
+)
+const (
+	// user-facing
+	ManageEditCapacityLabel          = "🔢 Edit Capacity"
+	ManageEditCapacityModalTitle     = "Edit Slot Capacity"
+	ManageEditCapacitySlotsLabel     = "Player Slots"
+	ManageEditCapacitySessionCapLabel = "Session Capacity (Westmarch)"
+	ManageEditCapacitySuccess        = "✅ Capacity updated for **%s**."
+	ManageEditCapacityTooLow         = "⚠️ New capacity cannot be less than the current active player count (%d)."
+	ManageEditCapacityInvalid        = "⚠️ Enter a positive number."
 )
 
 // Manage campaign: additional buttons

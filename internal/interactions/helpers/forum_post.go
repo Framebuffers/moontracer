@@ -270,6 +270,9 @@ func activeCampaignPlayers(players []models.CampaignPlayer) []models.CampaignPla
 		if cp.Status != models.StatusActive {
 			continue
 		}
+		if cp.Role == models.RoleDM {
+			continue
+		}
 		out = append(out, cp)
 	}
 	return out
