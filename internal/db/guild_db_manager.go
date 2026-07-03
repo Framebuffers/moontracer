@@ -113,7 +113,10 @@ func (m *GuildDBManager) openAndMigrate(guildID string) (*bun.DB, error) {
 		return nil, fmt.Errorf("guild_db_manager: invalid guildID %q", guildID)
 	}
 	path := filepath.Join(m.dbDir, guildID+".db")
-	sqldb, err := sql.Open(sqliteshim.ShimName, path+"?_pragma=foreign_keys(1)")
+	// locking_mode=EXCLUSIVE holds the file lock for the connection lifetime
+	// rather than re-acquiring it per transaction. Required for SQLite on NFS,
+	// where fcntl() locks are unreliable and repeated lock/unlock causes CANTOPEN.
+	sqldb, err := sql.Open(sqliteshim.ShimName, path+"?_pragma=foreign_keys(1)&_pragma=locking_mode(EXCLUSIVE)")
 	if err != nil {
 		return nil, fmt.Errorf("open guild DB %s: %w", guildID, err)
 	}
