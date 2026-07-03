@@ -113,10 +113,14 @@ func (m *GuildDBManager) openAndMigrate(guildID string) (*bun.DB, error) {
 		return nil, fmt.Errorf("guild_db_manager: invalid guildID %q", guildID)
 	}
 	path := filepath.Join(m.dbDir, guildID+".db")
-	// journal_mode=MEMORY keeps the rollback journal in RAM instead of creating
-	// a <db>-journal file on disk. Required for SQLite on NFS, where creating
-	// that file triggers a fcntl() lock that NFS cannot service (CANTOPEN/14).
-	sqldb, err := sql.Open(sqliteshim.ShimName, path+"?_pragma=foreign_keys(1)&_pragma=journal_mode(MEMORY)")
+	// NFS-safe SQLite settings:
+	//   mmap_size(0)        — disables mmap on the database file; without this, SQLite
+	//                         memory-maps the .db file and NFS stale-file-handle errors
+	//                         arrive as SIGBUS (BUS_ADRERR) rather than I/O errors.
+	//   journal_mode(MEMORY) — keeps the rollback journal in RAM; avoids creating a
+	//                         <guild>.db-journal file on NFS where fcntl() locks are
+	//                         unreliable (would cause CANTOPEN/14 on every write).
+	sqldb, err := sql.Open(sqliteshim.ShimName, path+"?_pragma=foreign_keys(1)&_pragma=mmap_size(0)&_pragma=journal_mode(MEMORY)")
 	if err != nil {
 		return nil, fmt.Errorf("open guild DB %s: %w", guildID, err)
 	}
