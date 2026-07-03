@@ -24,7 +24,7 @@ import (
 // Generic
 const (
 	// identifiers
-	BotVersion = "v1.1.4b-adamantine"
+	BotVersion = "v1.1.5b-adamantine"
 	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
 	// 2026-05-29: started implementing for real on my first big server
 )
@@ -783,8 +783,9 @@ const (
 	ManageDeleteConfirmID      = "manage_delete_confirm"
 	ManageArchiveConfirmID     = "manage_archive_confirm"
 	ManageArchiveCancelID      = "manage_archive_cancel"
-	ManageLinkRolePrefix       = "manage_link_role"
-	ManageLinkRoleSelectPrefix = "manage_link_role_sel"
+	ManageLinkRolePrefix         = "manage_link_role"
+	ManageLinkRoleSelectPrefix   = "manage_link_role_sel"
+	ManageRefreshBillboardPrefix = "manage_refresh_billboard"
 )
 const (
 	// user-facing
@@ -805,7 +806,10 @@ const (
 	ManageRemapSuccess        = "✅ Thread mappings updated for **%s**."
 
 	// Link existing role selector
-	ManageLinkRoleLabel       = "🔗 Link Existing Role"
+	ManageRefreshBillboardLabel  = "🪧 Refresh Billboard"
+	ManageRefreshBillboardSuccess = "✅ Billboard refreshed for **%s**."
+	ManageRefreshBillboardFailed  = "🚫 Failed to refresh billboard."
+	ManageLinkRoleLabel           = "🔗 Link Existing Role"
 	ManageLinkRolePlaceholder = "Select the Discord role for this campaign…"
 	ManageLinkRoleSuccess     = "✅ Role linked to **%s**."
 

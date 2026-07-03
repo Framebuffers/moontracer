@@ -183,6 +183,11 @@ func RenderManageSettingsMenu(s *discordgo.Session, i *discordgo.InteractionCrea
 				Style:    discordgo.SecondaryButton,
 				CustomID: fmt.Sprintf("%s:%s", messages.ManageEditCapacityPrefix, campaignID),
 			},
+			discordgo.Button{
+				Label:    messages.ManageRefreshBillboardLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.ManageRefreshBillboardPrefix, campaignID),
+			},
 			router.NavButton(messages.ManageDangerLabel, discordgo.DangerButton, router.ViewManageDanger, campaignID),
 		}},
 		helpers.BackRow(router.ViewManageCampaign, campaignID),

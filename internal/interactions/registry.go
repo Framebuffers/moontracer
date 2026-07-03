@@ -85,6 +85,7 @@ func AllComponents(db *bun.DB, d *dispatch.Dispatcher, sched *scheduler.Schedule
 		&manageRemapThreadsHandler{db: db},
 		&manageRemapConfirmHandler{db: db},
 		&manageEditCapacity{db: db},
+		&manageRefreshBillboard{db: db},
 		&manageArchive{db: db},
 		&manageArchiveConfirm{db: db, sched: sched},
 		&manageSetCover{db: db},

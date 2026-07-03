@@ -1,6 +1,7 @@
 package discord
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -124,6 +125,9 @@ func (b *Bot) Run() error {
 
 	b.dispatcher.Start()
 
+	if b.session.State == nil || b.session.State.User == nil {
+		return fmt.Errorf("bot: session READY event not received (Discord may have rejected IDENTIFY; try again in a few seconds)")
+	}
 	appID := b.session.State.User.ID
 	log.Printf("bot: logged in as %s (app %s)", b.session.State.User.Username, appID)
 
