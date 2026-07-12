@@ -16,6 +16,8 @@ Moontracer can manage everything you need to organise your TTRPG experience onli
 
 ## 🎲 Quick Start
 
+💾 [Install it by clicking this link here!](https://discord.com/oauth2/authorize?client_id=1456356154748698728)
+
 ### 1. Create a Discord application
 
 1. Go to the [Discord Developer Portal](https://discord.com/developers/applications) and create a new application.
