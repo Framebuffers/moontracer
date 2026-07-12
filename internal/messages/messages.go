@@ -361,7 +361,6 @@ const (
 	TokenUploadCommandName      = "newtoken"
 	TokenUploadSourceOptName    = "source"
 	TokenUploadFrameOptName     = "frame"
-	TokenUploadColorOptName     = "color"
 	TokenApplyPrefix            = "token_apply"
 	TokenApplyModalPrefix       = "token_apply_modal"
 	TokenDiscardPrefix          = "token_discard"
@@ -371,12 +370,10 @@ const (
 )
 const (
 	// user-facing
-	TokenUploadCommandDesc           = "Create a player token from a photo, with a frame image or a solid color border."
-	TokenUploadSourceOptDesc         = "Your photo (JPG/PNG)."
-	TokenUploadFrameOptDesc          = "Frame/border image (PNG with transparency). Cannot be used with color."
-	TokenUploadColorOptDesc          = "Border color as hex (e.g. ff3a7c). Cannot be used with frame."
-	TokenUploadNeedOneOf             = "🚫 Provide either a frame image or a color- not both, not neither."
-	TokenUploadNotImage              = "⚠️ Both files must be images (JPEG or PNG)."
+	TokenUploadCommandDesc  = "Create a player token from a photo."
+	TokenUploadSourceOptDesc = "Your photo (JPG/PNG)."
+	TokenUploadFrameOptDesc  = "Optional frame/border image (PNG with transparency)."
+	TokenUploadNotImage      = "⚠️ Both files must be images (JPEG or PNG)."
 	TokenUploadTooLarge              = "⚠️ Each file must be under 8 MiB."
 	TokenUploadProcessFailed         = "🚫 Failed to process your token. Please try again."
 	TokenUploadPreviewContent        = "ℹ️ Here's a preview of your token. Apply it to your profile or discard."
@@ -390,7 +387,7 @@ const (
 	TokenNameModalTitle              = "Name Your Token"
 	TokenNameFieldLabel              = "Character Name"
 	TokenNameFieldPlaceholder        = "e.g. Soft Doggo"
-	TokenApplySuccess                = "✅ Token saved as **%s**!"
+	TokenApplySuccess                = "✅ Token saved as **%s**! Right-click the image and select **Save As** to download."
 	TokenDiscardSuccess              = "ℹ️ Token discarded."
 	TokenApplyFailed                 = "⚠️ Failed to save token. Please try again."
 )

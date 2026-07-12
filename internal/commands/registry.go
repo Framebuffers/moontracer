@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"path/filepath"
 
 	"github.com/uptrace/bun"
 
@@ -69,7 +70,7 @@ func All(db *bun.DB, d *dispatch.Dispatcher, dataDir, mediaBaseURL string) []Com
 		&newCampaignCommand{db: db},
 		&newSessionCommand{db: db},
 		&campaignUploadCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
-		&uploadTokenCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL},
+		&uploadTokenCommand{db: db, dataDir: dataDir, mediaBaseURL: mediaBaseURL, defaultFramePath: filepath.Join(dataDir, "default_frame.png")},
 		&importCampaignCommand{db: db},
 	}
 

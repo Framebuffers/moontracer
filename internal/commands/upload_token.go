@@ -1,9 +1,7 @@
 package commands
 
 import (
-	"encoding/hex"
 	"fmt"
-	"image/color"
 	"log"
 	"os"
 	"path/filepath"
@@ -21,18 +19,19 @@ import (
 uploadTokenCommand implements /uploadtoken.
 
 	Flow:
-		1. User runs /uploadtoken source:<photo> frame:<frame>.
+		1. User runs /uploadtoken source:<photo> [frame:<frame>].
 		2. Bot defers the response.
-		3. Downloads both attachments to temp paths.
+		3. Downloads the source; uses the uploaded frame or the server default.
 		4. Calls mediaserver.ProcessToken.
 		5. Edits the deferred response with a preview embed + Apply/Discard buttons.
 		6. Apply: saves the Media record and removes temps.
 				Discard: removes all three temp files.
 */
 type uploadTokenCommand struct {
-	db           *bun.DB
-	dataDir      string
-	mediaBaseURL string
+	db               *bun.DB
+	dataDir          string
+	mediaBaseURL     string
+	defaultFramePath string
 }
 
 func (c *uploadTokenCommand) Data() *discordgo.ApplicationCommand {
@@ -52,12 +51,6 @@ func (c *uploadTokenCommand) Data() *discordgo.ApplicationCommand {
 				Description: messages.TokenUploadFrameOptDesc,
 				Required:    false,
 			},
-			{
-				Type:        discordgo.ApplicationCommandOptionString,
-				Name:        messages.TokenUploadColorOptName,
-				Description: messages.TokenUploadColorOptDesc,
-				Required:    false,
-			},
 		},
 	}
 }
@@ -71,23 +64,14 @@ func (c *uploadTokenCommand) Execute(s *discordgo.Session, i *discordgo.Interact
 	}
 
 	data := i.ApplicationCommandData()
-	var sourceID, frameID, colorHex string
+	var sourceID, frameID string
 	for _, opt := range data.Options {
 		switch opt.Name {
 		case messages.TokenUploadSourceOptName:
 			sourceID = opt.Value.(string)
 		case messages.TokenUploadFrameOptName:
 			frameID = opt.Value.(string)
-		case messages.TokenUploadColorOptName:
-			colorHex = opt.Value.(string)
 		}
-	}
-
-	hasFrame := frameID != ""
-	hasColor := colorHex != ""
-	if hasFrame == hasColor {
-		respond(s, i, messages.TokenUploadNeedOneOf)
-		return
 	}
 
 	source := data.Resolved.Attachments[sourceID]
@@ -104,9 +88,9 @@ func (c *uploadTokenCommand) Execute(s *discordgo.Session, i *discordgo.Interact
 		return
 	}
 
-	var frame *discordgo.MessageAttachment
-	if hasFrame {
-		frame = data.Resolved.Attachments[frameID]
+	var frameURL string
+	if frameID != "" {
+		frame := data.Resolved.Attachments[frameID]
 		if frame == nil {
 			respond(s, i, messages.GenericErrorMessage)
 			return
@@ -119,16 +103,7 @@ func (c *uploadTokenCommand) Execute(s *discordgo.Session, i *discordgo.Interact
 			respond(s, i, messages.TokenUploadTooLarge)
 			return
 		}
-	}
-
-	var frameColor color.RGBA
-	if hasColor {
-		parsed, err := parseHexColor(colorHex)
-		if err != nil {
-			respond(s, i, messages.TokenUploadNeedOneOf)
-			return
-		}
-		frameColor = parsed
+		frameURL = frame.URL
 	}
 
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -147,31 +122,38 @@ func (c *uploadTokenCommand) Execute(s *discordgo.Session, i *discordgo.Interact
 		return
 	}
 
-	if hasFrame {
-		frameExt := extOrDefault(frame.Filename, ".png")
-		frameDsk, _ := mediaserver.TokenPath(c.dataDir, c.mediaBaseURL, i.GuildID, userID, "frm_"+token, frameExt)
-		if _, err := mediaserver.Download(frame.URL, frameDsk); err != nil {
+	var frameDsk string
+	if frameURL != "" {
+		frameExt := ".png"
+		if frame := data.Resolved.Attachments[frameID]; frame != nil {
+			frameExt = extOrDefault(frame.Filename, ".png")
+		}
+		frameDsk, _ = mediaserver.TokenPath(c.dataDir, c.mediaBaseURL, i.GuildID, userID, "frm_"+token, frameExt)
+		if _, err := mediaserver.Download(frameURL, frameDsk); err != nil {
 			log.Printf("uploadtoken: download frame failed for %s: %v", userID, err)
 			cleanupFiles(sourceDsk)
 			editDeferred(s, i, messages.TokenUploadProcessFailed)
 			return
 		}
-		if err := mediaserver.ProcessToken(sourceDsk, frameDsk, outDisk); err != nil {
-			log.Printf("uploadtoken: processing failed for %s: %v", userID, err)
-			cleanupFiles(sourceDsk, frameDsk)
-			editDeferred(s, i, messages.TokenUploadProcessFailed)
-			return
-		}
-		cleanupFiles(frameDsk)
 	} else {
-		if err := mediaserver.ProcessBasicToken(sourceDsk, outDisk, frameColor); err != nil {
-			log.Printf("uploadtoken: basic processing failed for %s: %v", userID, err)
-			cleanupFiles(sourceDsk)
-			editDeferred(s, i, messages.TokenUploadProcessFailed)
-			return
-		}
+		frameDsk = c.defaultFramePath
 	}
+
+	if err := mediaserver.ProcessToken(sourceDsk, frameDsk, outDisk); err != nil {
+		log.Printf("uploadtoken: processing failed for %s: %v", userID, err)
+		if frameURL != "" {
+			cleanupFiles(sourceDsk, frameDsk)
+		} else {
+			cleanupFiles(sourceDsk)
+		}
+		editDeferred(s, i, messages.TokenUploadProcessFailed)
+		return
+	}
+
 	cleanupFiles(sourceDsk)
+	if frameURL != "" {
+		cleanupFiles(frameDsk)
+	}
 
 	// format: token_apply:{guildID}:{userID}:{token}
 	applyID := fmt.Sprintf("%s:%s:%s:%s", messages.TokenApplyPrefix, i.GuildID, userID, token)
@@ -213,13 +195,3 @@ func editDeferred(s *discordgo.Session, i *discordgo.InteractionCreate, content 
 }
 
 func strPtr(s string) *string { return &s }
-
-// parseHexColor accepts 6-char hex strings (with or without a leading #) and returns color.RGBA.
-func parseHexColor(s string) (color.RGBA, error) {
-	s = strings.TrimPrefix(s, "#")
-	b, err := hex.DecodeString(s)
-	if err != nil || len(b) != 3 {
-		return color.RGBA{}, fmt.Errorf("invalid hex color: %q", s)
-	}
-	return color.RGBA{R: b[0], G: b[1], B: b[2], A: 255}, nil
-}

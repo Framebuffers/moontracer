@@ -157,15 +157,15 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 	log.Printf("token_apply_modal: token %q saved for player %s, media %s", name, playerID, media.ID)
 
 	// Load campaigns where the player is an active non-DM member.
-	downloadURL := mediaserver.Register(outDisk, name)
-	downloadRow := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: downloadURL},
-		router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
-	}}
+	homeRow := []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
+		}},
+	}
 
 	allCPs, err := models.GetPlayerCampaigns(h.db, playerID)
 	if err != nil {
-		helpers.RespondUpdate(s, i, fmt.Sprintf(messages.TokenApplySuccess, name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{downloadRow})
+		respondWithTokenFile(s, i, outDisk, name, fmt.Sprintf(messages.TokenApplySuccess, name), homeRow)
 		return
 	}
 	var activeCPs []models.CampaignPlayer
@@ -175,7 +175,7 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 		}
 	}
 	if len(activeCPs) == 0 {
-		helpers.RespondUpdate(s, i, fmt.Sprintf(messages.TokenApplySuccess, name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{downloadRow})
+		respondWithTokenFile(s, i, outDisk, name, fmt.Sprintf(messages.TokenApplySuccess, name), homeRow)
 		return
 	}
 
@@ -187,35 +187,21 @@ func (h *tokenApplyModal) HandleModal(s *discordgo.Session, i *discordgo.Interac
 		})
 	}
 
-	embed := &discordgo.MessageEmbed{
-		Title: name,
-		Color: messages.EmbedColor,
-		Image: &discordgo.MessageEmbedImage{URL: outURL},
-	}
-	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-		Type: discordgo.InteractionResponseUpdateMessage,
-		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf(messages.TokenPostcreateHeader, name),
-			Embeds:  []*discordgo.MessageEmbed{embed},
-			Components: []discordgo.MessageComponent{
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.SelectMenu{
-						CustomID:    fmt.Sprintf("%s:%s", messages.TokenPostcreateSelectPrefix, media.ID),
-						Placeholder: messages.TokenPostcreateSelectPlaceholder,
-						Options:     options,
-					},
-				}},
-				discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-					discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: downloadURL},
-					discordgo.Button{
-						Label:    messages.TokenSkipLabel,
-						Style:    discordgo.SecondaryButton,
-						CustomID: fmt.Sprintf("%s:%s", messages.TokenSkipPrefix, media.ID),
-					},
-				}},
+	respondWithTokenFile(s, i, outDisk, name, fmt.Sprintf(messages.TokenPostcreateHeader, name), []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.SelectMenu{
+				CustomID:    fmt.Sprintf("%s:%s", messages.TokenPostcreateSelectPrefix, media.ID),
+				Placeholder: messages.TokenPostcreateSelectPlaceholder,
+				Options:     options,
 			},
-			Flags: discordgo.MessageFlagsEphemeral,
-		},
+		}},
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			discordgo.Button{
+				Label:    messages.TokenSkipLabel,
+				Style:    discordgo.SecondaryButton,
+				CustomID: fmt.Sprintf("%s:%s", messages.TokenSkipPrefix, media.ID),
+			},
+		}},
 	})
 }
 
@@ -264,17 +250,18 @@ func (h *playerTokenPostcreateSelectHandler) HandleComponents(s *discordgo.Sessi
 		return
 	}
 
-	downloadRow := discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-		discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: mediaserver.Register(media.Path, media.Name)},
-		router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
-	}}
+	homeRow := []discordgo.MessageComponent{
+		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
+			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
+		}},
+	}
 
 	campaign, err := db.GetByID[models.Campaign](h.db, campaignID)
 	if err != nil {
-		helpers.RespondUpdate(s, i, fmt.Sprintf(messages.TokenPostcreateAssigned, campaignID), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{downloadRow})
+		respondWithTokenFile(s, i, media.Path, media.Name, fmt.Sprintf(messages.TokenPostcreateAssigned, campaignID), homeRow)
 		return
 	}
-	helpers.RespondUpdate(s, i, fmt.Sprintf(messages.TokenPostcreateAssigned, campaign.Name), []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{downloadRow})
+	respondWithTokenFile(s, i, media.Path, media.Name, fmt.Sprintf(messages.TokenPostcreateAssigned, campaign.Name), homeRow)
 }
 
 /*
@@ -298,9 +285,8 @@ func (h *playerTokenSkipHandler) HandleComponents(s *discordgo.Session, i *disco
 		helpers.RespondUpdateTerminal(s, i, messages.TokenSavedNoAssign)
 		return
 	}
-	helpers.RespondUpdate(s, i, messages.TokenSavedNoAssign, []*discordgo.MessageEmbed{}, []discordgo.MessageComponent{
+	respondWithTokenFile(s, i, media.Path, media.Name, messages.TokenSavedNoAssign, []discordgo.MessageComponent{
 		discordgo.ActionsRow{Components: []discordgo.MessageComponent{
-			discordgo.Button{Label: messages.TokenDownloadLabel, Style: discordgo.LinkButton, URL: mediaserver.Register(media.Path, media.Name)},
 			router.NavButton(messages.HomeLabel, discordgo.DangerButton, router.ViewMe),
 		}},
 	})
@@ -340,4 +326,36 @@ func (h *tokenDiscardHandler) HandleComponents(s *discordgo.Session, i *discordg
 	}
 
 	helpers.RespondUpdateTerminal(s, i, messages.TokenDiscardSuccess)
+}
+
+// respondWithTokenFile sends the token file as an ephemeral attachment so the user
+// can right-click → Save As, without going through the media server.
+func respondWithTokenFile(s *discordgo.Session, i *discordgo.InteractionCreate, diskPath, name, content string, components []discordgo.MessageComponent) {
+	f, err := os.Open(diskPath)
+	if err != nil {
+		log.Printf("respondWithTokenFile: open %s: %v", diskPath, err)
+		helpers.RespondUpdateTerminal(s, i, messages.GenericErrorMessage)
+		return
+	}
+	defer f.Close()
+
+	filename := name
+	if filename == "" {
+		filename = "token"
+	}
+
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseUpdateMessage,
+		Data: &discordgo.InteractionResponseData{
+			Content: content,
+			Embeds:  []*discordgo.MessageEmbed{},
+			Files: []*discordgo.File{{
+				Name:        filename + ".png",
+				ContentType: "image/png",
+				Reader:      f,
+			}},
+			Components: components,
+			Flags:      discordgo.MessageFlagsEphemeral,
+		},
+	})
 }

@@ -1,0 +1,21 @@
+# TERMS OF SERVICE AGREEMENT
+
+This Terms of Service Agreement (the "Agreement") is entered into between [Framebuffer] ("Bot Owner") and the user ("User") of the [Moontracer] Discord bot (the "Bot").
+
+By using the Bot, the User agrees to be bound by the terms of this Agreement.
+If the User does not agree to the terms of this Agreement, they should immediately discontinue use of the Bot.
+
+1. Use of the Bot: The Bot Owner grants the User a non-exclusive, non-transferable, limited license to use the Bot for personal or non-commercial purposes.
+2. Prohibited Use: The User may not use the Bot in any way that violates applicable laws, rules, or regulations or infringes upon the rights of any third party. The User may not use the Bot for any commercial purposes without the express written consent of the Bot Owner.
+3. Limitation of Liability: The Bot Owner shall not be liable for any damages arising out of the use or inability to use the Bot, including but not limited to, damages for loss of profits, loss of data, or other intangible losses.
+4. Modifications to the Bot: The Bot Owner may modify or discontinue the Bot at any time without notice. The User agrees that the Bot Owner shall not be liable to the User or any third party for any modification, suspension, or discontinuance of the Bot.
+5. Intellectual Property: The Bot and all intellectual property rights related to the Moontracer branding, iconography, naming, creative assets and image therein are and shall remain the property of the Bot Owner. The Bot Owner grants the User the rights provided by the AGPL-3.0 license, of which the User agrees to abide to in order to use, modify, distribute or fork the source code of the Bot. This right applies only to the source code contained in this repository.
+6. Indemnification: The User agrees to indemnify and hold harmless the Bot Owner, its affiliates, and their respective directors, officers, employees, and agents from any and all claims, damages, liabilities, costs, and expenses, including reasonable attorneys' fees, arising out of the User's use of the Bot.
+7. Termination: This Agreement may be terminated by either party at any time for any reason. Upon termination, the User must immediately cease all use of the Bot.
+8. Governing Law: This Agreement shall be governed by and construed in accordance with the laws of Chile. Any dispute arising under or in connection with this Agreement shall be resolved by arbitration in accordance with the rules of Chilean arbitration and legal dispute processes.
+9. Entire Agreement: This Agreement constitutes the entire agreement between the parties and supersedes all prior or contemporaneous agreements or representations, whether written or oral, relating to the Bot.
+10. Compliance: The Bot Owner shall not be held liable for data stored by the User, and grants the right and duty to the Bot Owner to delete all data and assets that violate Discord's Terms and Conditions, Community Guidelines, and any and all requests by authorities. The Bot Owner shall comply with any legal seizure of information, in accordance to Chilean law, following the proper legal processes and regulations. 
+11. Data Protection: The Bot Owner shall not be held responsible for the security of data stored, processed, both temporarily and permanently, inside or outside the Bot Owner's premises. The User shall not store any personal identifiable information (PII), sensitive data, passwords, credentials, illegal content, or any sort of data that can compromise the Bot Owner, the User, or any other Users of the Moontracer bot. The Bot Owner holds only holds information about: player tokens and campaign information; its process can be audited publicly by accessing the source code and sending an Issue through GitHub.
+12. Copyright: The User shall not use the Bot to store, process, alter, or distribute any kind of Copyrighted material. The Bot Owner will comply immediately to any Copyright claim, reserving the right to terminate and ban the User from using the Bot and its services in case of a violation. Any and all violations of copyright can be sent to `compliance[at]framebuffer[dot]cl`.
+
+By using the Bot, the User acknowledges that they have read this Agreement, understand it, and agree to be bound by its terms and conditions.

@@ -27,12 +27,9 @@ func Serve(mediaDir, addr string) {
 
 	mux.Handle("/api/v1/cdn/", http.StripPrefix("/api/v1/cdn/",
 		extAllowListHandler(filesOnlyHandler(mediaDir))))
-	mux.Handle("/dl/", http.StripPrefix("/dl/", http.HandlerFunc(dlHandler)))
-
-	startSweep()
 
 	go func() {
-		log.Printf("mediaserver: listening on %s: /api/v1/cdn/ /dl/", addr)
+		log.Printf("mediaserver: listening on %s: /api/v1/cdn/", addr)
 		if err := http.ListenAndServe(addr, mux); err != nil {
 			log.Fatalf("mediaserver: %v", err)
 		}
