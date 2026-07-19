@@ -81,10 +81,11 @@ func RespondUpdate(s *discordgo.Session, i *discordgo.InteractionCreate, content
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseUpdateMessage,
 		Data: &discordgo.InteractionResponseData{
-			Content:    content,
-			Embeds:     embeds,
-			Components: components,
-			Flags:      discordgo.MessageFlagsEphemeral,
+			Content:     content,
+			Embeds:      embeds,
+			Components:  components,
+			Attachments: &[]*discordgo.MessageAttachment{},
+			Flags:       discordgo.MessageFlagsEphemeral,
 		},
 	})
 }

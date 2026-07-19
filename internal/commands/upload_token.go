@@ -114,7 +114,7 @@ func (c *uploadTokenCommand) Execute(s *discordgo.Session, i *discordgo.Interact
 	token := uuid.NewString()
 	sourceExt := extOrDefault(source.Filename, ".jpg")
 	sourceDsk, _ := mediaserver.TokenPath(c.dataDir, c.mediaBaseURL, i.GuildID, userID, "src_"+token, sourceExt)
-	outDisk, outURL := mediaserver.TokenPath(c.dataDir, c.mediaBaseURL, i.GuildID, userID, "out_"+token, ".png")
+	outDisk, _ := mediaserver.TokenPath(c.dataDir, c.mediaBaseURL, i.GuildID, userID, "out_"+token, ".png")
 
 	if _, err := mediaserver.Download(source.URL, sourceDsk); err != nil {
 		log.Printf("uploadtoken: download source failed for %s: %v", userID, err)
@@ -159,15 +159,18 @@ func (c *uploadTokenCommand) Execute(s *discordgo.Session, i *discordgo.Interact
 	applyID := fmt.Sprintf("%s:%s:%s:%s", messages.TokenApplyPrefix, i.GuildID, userID, token)
 	discardID := fmt.Sprintf("%s:%s:%s:%s", messages.TokenDiscardPrefix, i.GuildID, userID, token)
 
-	embed := &discordgo.MessageEmbed{
-		Title: "Token Preview",
-		Color: messages.EmbedColor,
-		Image: &discordgo.MessageEmbedImage{URL: outURL},
+	f, err := os.Open(outDisk)
+	if err != nil {
+		log.Printf("uploadtoken: open preview %s: %v", outDisk, err)
+		editDeferred(s, i, messages.TokenUploadProcessFailed)
+		return
 	}
+	defer f.Close()
 
 	s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
 		Content: strPtr(messages.TokenUploadPreviewContent),
-		Embeds:  &[]*discordgo.MessageEmbed{embed},
+		Embeds:  &[]*discordgo.MessageEmbed{},
+		Files:   []*discordgo.File{{Name: "preview.png", ContentType: "image/png", Reader: f}},
 		Components: &[]discordgo.MessageComponent{
 			discordgo.ActionsRow{Components: []discordgo.MessageComponent{
 				discordgo.Button{Label: messages.TokenApplyLabel, Style: discordgo.SuccessButton, CustomID: applyID},
