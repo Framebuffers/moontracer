@@ -24,7 +24,7 @@ import (
 // Generic
 const (
 	// identifiers
-	BotVersion = "v1.1.1b-adamantine"
+	BotVersion = "v1.1.1b-nightly-mythril"
 	// 2026-05-17: took a long time to get here, but here we are. v1.0. time to roll initiative for the first release, i guess
 	// 2026-05-29: started implementing for real on my first big server
 )
@@ -773,11 +773,11 @@ const (
 	ManageSetRoleFailed     = "🚫 Failed to set role."
 
 	// Thread remap
-	ManageRemapThreadsLabel   = "🔀 Remap Threads"
-	ManageRemapThreadsPrefix  = "manage_remap_threads"
-	ManageRemapConfirmPrefix  = "manage_remap_confirm"
-	ManageRemapHeader         = "**Remap threads for %s**\nSelect the correct thread for each slot. Leave unchanged to keep the current mapping."
-	ManageRemapSuccess        = "✅ Thread mappings updated for **%s**."
+	ManageRemapThreadsLabel  = "🔀 Remap Threads"
+	ManageRemapThreadsPrefix = "manage_remap_threads"
+	ManageRemapConfirmPrefix = "manage_remap_confirm"
+	ManageRemapHeader        = "**Remap threads for %s**\nSelect the correct thread for each slot. Leave unchanged to keep the current mapping."
+	ManageRemapSuccess       = "✅ Thread mappings updated for **%s**."
 
 	// Link existing role selector
 	ManageLinkRoleLabel       = "🔗 Link Existing Role"
